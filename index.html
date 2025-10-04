@@ -12,7 +12,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .fade-in-up { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
-        .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+        .visible .fade-in-up { opacity: 1; transform: translateY(0); }
         .glowing-button { box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6, 0 0 15px #3b82f6; }
         .gradient-text { background: linear-gradient(to right, #2563eb, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; transform: translateY(-20px); }
@@ -31,56 +31,79 @@
                 <a href="#how-it-works" class="text-slate-600 hover:text-blue-600">How It Works</a>
                 <a href="#testimonials" class="text-slate-600 hover:text-blue-600">Testimonials</a>
             </nav>
-            <div class="flex items-center space-x-4">
-                <div id="auth-links" class="flex items-center space-x-4">
-                    <a href="#" id="login-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700"><i class="fas fa-right-to-bracket mr-2"></i>Log In</a>
-                </div>
-                <div id="user-dashboard-link" class="hidden items-center space-x-4">
-                    <a href="#dashboard" class="font-semibold text-blue-600">My Dashboard</a>
-                    <button id="logout-btn" class="text-slate-500 hover:text-red-500" title="Logout"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
-                </div>
+            <div class="hidden md:flex items-center space-x-4">
+                <a href="#" id="login-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700"><i class="fas fa-right-to-bracket mr-2"></i>Log In / Sign Up</a>
             </div>
-            <button id="mobile-menu-button" class="md:hidden text-slate-800"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
+            <button id="mobile-menu-button" class="md:hidden text-slate-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
         </div>
         <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 space-y-2">
             <a href="#features" class="block py-2 text-slate-600">Features</a>
             <a href="#how-it-works" class="block py-2 text-slate-600">How It Works</a>
             <a href="#testimonials" class="block py-2 text-slate-600">Testimonials</a>
-            <a id="mobile-dashboard-link" href="#dashboard" class="hidden py-2 text-blue-600 font-semibold">My Dashboard</a>
             <hr/>
-            <div id="mobile-auth-links"><a href="#" id="mobile-login-btn" class="block bg-blue-600 text-white text-center px-5 py-2 rounded-lg font-semibold"><i class="fas fa-right-to-bracket mr-2"></i>Log In</a></div>
-            <div id="mobile-user-actions" class="hidden"><button id="mobile-logout-btn" class="w-full mt-2 bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button></div>
+            <a href="#" id="mobile-login-btn" class="block bg-blue-600 text-white text-center px-5 py-2 rounded-lg font-semibold"><i class="fas fa-right-to-bracket mr-2"></i>Log In / Sign Up</a>
         </div>
     </header>
 
     <main>
         <section class="pt-32 pb-20 bg-slate-100">
             <div class="container mx-auto px-6 text-center md:text-left">
-                <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-4">Prepare <span class="gradient-text">Smarter</span>, Not Harder</h1>
-                <p class="text-lg text-slate-600 mb-8 max-w-xl mx-auto md:mx-0">Your personalized AI mentor for cracking the Civil Services Exam.</p>
-                <a href="#" id="start-trial-btn" class="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 shadow-lg glowing-button">Start Your Free Trial</a>
+                 <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-4">Prepare <span class="gradient-text">Smarter</span>, Not Harder</h1>
+                 <p class="text-lg text-slate-600 mb-8 max-w-xl mx-auto md:mx-0">Your personalized AI mentor for cracking the Civil Services Exam.</p>
+                 <a href="#" id="start-trial-btn" class="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 shadow-lg glowing-button">Start Your Free Trial</a>
             </div>
         </section>
 
         <section id="features" class="py-20">
             <div class="container mx-auto px-6 text-center">
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-12">The Ultimate Toolkit for UPSC Success</h2>
-                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
                     <div id="planner-feature-card" class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">AI-Powered Study Plan</h3>
                         <p class="text-slate-500">A dynamic schedule that adapts to your progress and goals.</p>
                     </div>
-                    <a href="https://maintor.vercel.app" target="_blank" rel="noopener noreferrer">
+                    <a href="https://maintor.vercel.app" target="_blank" rel="noopener noreferrer" class="block">
                         <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all h-full">
                             <h3 class="text-xl font-semibold text-slate-900 mb-2">Mains Answer Evaluation</h3>
                             <p class="text-slate-500">Get instant, data-driven feedback on your answer writing.</p>
                         </div>
                     </a>
-                    </div>
+                </div>
             </div>
         </section>
 
-        </main>
+        <section id="how-it-works" class="py-20 bg-slate-100">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Your Path to Success in 3 Simple Steps</h2>
+                    <p class="text-slate-600 max-w-2xl mx-auto">We've simplified the journey. Focus on what matters most.</p>
+                </div>
+                <div class="relative">
+                    <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-blue-200 -translate-y-1/2"></div>
+                    <div class="grid md:grid-cols-3 gap-16 relative">
+                        <div class="text-center"><div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200 mx-auto">1</div><h3 class="text-xl font-semibold mt-6 mb-2">Generate Your AI Plan</h3><p class="text-slate-500">Answer a few questions to get a personalized study plan.</p></div>
+                        <div class="text-center"><div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200 mx-auto">2</div><h3 class="text-xl font-semibold mt-6 mb-2">Follow The Schedule</h3><p class="text-slate-500">Execute your daily tasks from reading to answer writing.</p></div>
+                        <div class="text-center"><div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200 mx-auto">3</div><h3 class="text-xl font-semibold mt-6 mb-2">Track & Improve</h3><p class="text-slate-500">Save your plans and monitor your progress over time.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="testimonials" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">What Our Aspirants Say</h2>
+                </div>
+                <div class="grid md:grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-white rounded-xl shadow-lg p-8"><p class="text-slate-600 mb-6">"The AI study planner is a game-changer. It removed all guesswork and helped me cover the syllabus in a structured manner."</p><div class="flex items-center"><img src="https://placehold.co/48x48/e0e7ff/3730a3?text=PS" alt="Priya Sharma" class="w-12 h-12 rounded-full mr-4"><div><h4 class="font-semibold text-slate-900">Priya Sharma</h4><p class="text-slate-500 text-sm">UPSC Aspirant</p></div></div></div>
+                    <div class="bg-white rounded-xl shadow-lg p-8"><p class="text-slate-600 mb-6">"Instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure."</p><div class="flex items-center"><img src="https://placehold.co/48x48/d1fae5/047857?text=RS" alt="Rohan Singh" class="w-12 h-12 rounded-full mr-4"><div><h4 class="font-semibold text-slate-900">Rohan Singh</h4><p class="text-slate-500 text-sm">UPSC Aspirant</p></div></div></div>
+                    <div class="bg-white rounded-xl shadow-lg p-8"><p class="text-slate-600 mb-6">"Finally, a platform that connects current affairs to the static syllabus seamlessly. This has saved me hours of work."</p><div class="flex items-center"><img src="https://placehold.co/48x48/fce7f3/831843?text=AV" alt="Anjali Verma" class="w-12 h-12 rounded-full mr-4"><div><h4 class="font-semibold text-slate-900">Anjali Verma</h4><p class="text-slate-500 text-sm">UPSC Aspirant</p></div></div></div>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <footer class="bg-slate-900 text-slate-400 text-center py-8">
         <p>&copy; <span id="copyright-year">2025</span> iasmaintor. All rights reserved.</p>
@@ -97,35 +120,35 @@
                     <form id="planner-questionnaire">
                         <div data-step="1" class="active">
                             <h3 class="text-xl font-semibold mb-4">Step 1: About You</h3>
-                            <label class="block mb-2">Preparation Level:</label>
-                            <select name="level" class="w-full p-2 border rounded" required>
-                                <option value="beginner">Beginner</option>
-                                <option value="intermediate">Intermediate</option>
-                                <option value="veteran">Veteran</option>
+                            <label class="block mb-2 font-medium text-slate-700">Preparation Level:</label>
+                            <select name="level" class="w-full p-2 border border-slate-300 rounded-lg" required>
+                                <option value="beginner">Beginner (Just starting)</option>
+                                <option value="intermediate">Intermediate (Covered syllabus once)</option>
+                                <option value="veteran">Veteran (Multiple attempts)</option>
                             </select>
-                            <div class="flex justify-end mt-4"><button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg">Next</button></div>
+                            <div class="flex justify-end mt-6"><button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button></div>
                         </div>
                         <div data-step="2">
                             <h3 class="text-xl font-semibold mb-4">Step 2: Your Schedule</h3>
-                            <label class="block mb-2">Commitment:</label>
-                            <select name="commitment" class="w-full p-2 border rounded" required>
-                                <option value="full-time aspirant">Full-time</option>
+                            <label class="block mb-2 font-medium text-slate-700">Commitment:</label>
+                            <select name="commitment" class="w-full p-2 border border-slate-300 rounded-lg" required>
+                                <option value="full-time aspirant">Full-time Aspirant</option>
                                 <option value="working professional">Working Professional</option>
                             </select>
-                            <label class="block mt-4 mb-2">Hours per day:</label>
-                            <input type="number" name="hours" class="w-full p-2 border rounded" min="2" max="14" required>
-                            <div class="flex justify-between mt-4">
-                                <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 px-6 py-2 rounded-lg">Back</button>
-                                <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg">Next</button>
+                            <label class="block mt-4 mb-2 font-medium text-slate-700">Hours per day you can study:</label>
+                            <input type="number" name="hours" class="w-full p-2 border border-slate-300 rounded-lg" min="2" max="14" required>
+                            <div class="flex justify-between mt-6">
+                                <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
+                                <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
                             </div>
                         </div>
                         <div data-step="3">
                             <h3 class="text-xl font-semibold mb-4">Step 3: Your Subjects</h3>
-                            <label class="block mb-2">Optional Subject:</label>
-                            <input type="text" name="optional" class="w-full p-2 border rounded" required placeholder="e.g., PSIR, Sociology">
-                            <div class="flex justify-between mt-4">
-                                <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 px-6 py-2 rounded-lg">Back</button>
-                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg">Generate AI Plan</button>
+                            <label class="block mb-2 font-medium text-slate-700">Optional Subject:</label>
+                            <input type="text" name="optional" class="w-full p-2 border border-slate-300 rounded-lg" required placeholder="e.g., PSIR, Sociology, History">
+                            <div class="flex justify-between mt-6">
+                                <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
+                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">Generate AI Plan</button>
                             </div>
                         </div>
                     </form>
@@ -138,11 +161,11 @@
     <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity"></div>
 
     <script type="module">
-        // NOTE: Firebase imports and logic would go here if needed.
-        // This version focuses on the AI planner functionality.
-
         document.addEventListener('DOMContentLoaded', function() {
             const DOMElements = {
+                header: document.getElementById('header'),
+                mobileMenu: document.getElementById('mobile-menu'),
+                mobileMenuButton: document.getElementById('mobile-menu-button'),
                 plannerModal: {
                     modal: document.getElementById('planner-modal'),
                     questionnaire: document.getElementById('planner-questionnaire'),
@@ -171,15 +194,24 @@
                 planResult.classList.add('hidden');
                 planResult.innerHTML = '';
                 questionnaire.querySelectorAll('[data-step]').forEach((step, index) => {
-                    step.style.display = index === 0 ? 'block' : 'none';
-                    if(index === 0) step.classList.add('active');
-                    else step.classList.remove('active');
+                    step.classList.toggle('active', index === 0);
                 });
             };
 
             // --- Event Listeners ---
             DOMElements.copyrightYear.textContent = new Date().getFullYear();
             
+            // Mobile menu toggle (FIXED)
+            DOMElements.mobileMenuButton.addEventListener('click', () => {
+                DOMElements.mobileMenu.classList.toggle('hidden');
+            });
+
+            // Sticky header shadow on scroll
+            window.addEventListener('scroll', () => {
+                DOMElements.header.classList.toggle('shadow-md', window.scrollY > 50);
+            });
+
+            // Planner Modal Logic
             DOMElements.plannerCard.addEventListener('click', () => {
                 resetPlannerModal();
                 openModal(DOMElements.plannerModal.modal);
@@ -187,6 +219,7 @@
 
             DOMElements.plannerModal.closeBtn.addEventListener('click', () => closeModal(DOMElements.plannerModal.modal));
             
+            // Planner navigation (FIXED)
             DOMElements.plannerModal.questionnaire.addEventListener('click', (e) => {
                 const nextBtn = e.target.closest('.next-step-btn');
                 const prevBtn = e.target.closest('.prev-step-btn');
@@ -194,14 +227,13 @@
 
                 const currentStep = e.target.closest('[data-step]');
                 currentStep.classList.remove('active');
-                currentStep.style.display = 'none';
 
                 const targetStepSelector = nextBtn ? `[data-step="${nextBtn.dataset.next}"]` : `[data-step="${prevBtn.dataset.prev}"]`;
                 const targetStep = DOMElements.plannerModal.questionnaire.querySelector(targetStepSelector);
                 targetStep.classList.add('active');
-                targetStep.style.display = 'block';
             });
             
+            // Planner form submission
             DOMElements.plannerModal.questionnaire.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const planResultDiv = DOMElements.plannerModal.planResult;
@@ -229,31 +261,43 @@
                         const { level, commitment, optional } = userInputs;
                         const tableRows = schedule.map(day => `
                             <tr>
-                                <td class="font-semibold p-2 border">${day.day}</td>
-                                <td class="p-2 border">${day.subjectFocus}</td>
-                                <td class="p-2 border"><ul class="list-disc list-inside">${day.dailyTasks.map(t => `<li>${t}</li>`).join('')}</ul></td>
+                                <td class="font-semibold p-2 border border-slate-200">Day ${day.day}</td>
+                                <td class="p-2 border border-slate-200">${day.subjectFocus}</td>
+                                <td class="p-2 border border-slate-200"><ul class="list-disc list-inside">${day.dailyTasks.map(t => `<li>${t}</li>`).join('')}</ul></td>
                             </tr>`).join('');
                         
                         return `
                             <h3 class="text-2xl font-bold mb-4">Your AI-Powered 7-Day Plan</h3>
-                            <p class="mb-4"><strong>Level:</strong> ${level} | <strong>Commitment:</strong> ${commitment} | <strong>Optional:</strong> ${optional}</p>
-                            <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400">${focus}</p>
-                            <div class="overflow-x-auto"><table class="w-full text-sm border-collapse">
-                                <thead class="bg-slate-100"><tr><th class="p-2 border">Day</th><th class="p-2 border">Focus</th><th class="p-2 border">Daily Tasks</th></tr></thead>
+                            <p class="mb-4 text-slate-600"><strong>Level:</strong> ${level} | <strong>Commitment:</strong> ${commitment} | <strong>Optional:</strong> ${optional}</p>
+                            <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">${focus}</p>
+                            <div class="overflow-x-auto"><table class="w-full text-sm text-left border-collapse">
+                                <thead class="bg-slate-100"><tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Daily Tasks</th></tr></thead>
                                 <tbody>${tableRows}</tbody>
                             </table></div>
-                            <div class="mt-8 flex gap-4"><button data-action="modify-plan" class="bg-slate-200 px-6 py-3 rounded-lg w-full">Start Over</button></div>`;
+                            <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                                <button data-action="save-plan" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">Save Plan</button>
+                                <button data-action="modify-plan" class="bg-slate-200 text-slate-800 px-6 py-3 rounded-lg font-semibold flex-1">Start Over</button>
+                            </div>`;
                     };
 
                     planResultDiv.innerHTML = formatAIPlanToHTML(aiPlan, answers);
                 } catch (error) {
                     console.error('Error generating plan:', error);
-                    planResultDiv.innerHTML = '<p class="text-center text-red-600">Sorry, something went wrong. Please try again.</p><div class="mt-4 text-center"><button data-action="modify-plan" class="bg-slate-200 px-6 py-3 rounded-lg">Start Over</button></div>';
+                    planResultDiv.innerHTML = '<p class="text-center text-red-600">Sorry, something went wrong. Please try again.</p><div class="mt-4 text-center"><button data-action="modify-plan" class="bg-slate-200 text-slate-800 px-6 py-3 rounded-lg font-semibold">Start Over</button></div>';
                 }
             });
 
+            // Event listener for "Start Over" and "Save Plan" buttons
             DOMElements.plannerModal.planResult.addEventListener('click', (e) => {
-                if (e.target.dataset.action === 'modify-plan') resetPlannerModal();
+                const action = e.target.dataset.action;
+                if (action === 'modify-plan') {
+                    resetPlannerModal();
+                } else if (action === 'save-plan') {
+                    // This is where you would add logic to save the plan.
+                    // For now, it just shows a notification.
+                    showNotification('Save feature coming soon!');
+                    closeModal(DOMElements.plannerModal.modal);
+                }
             });
         });
     </script>
