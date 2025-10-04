@@ -8,40 +8,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* slate-50 */
-        }
-        .fade-in-up {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-        }
-        .fade-in-up.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .glowing-button {
-            box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6, 0 0 15px #3b82f6;
-        }
-        .gradient-text {
-            background: linear-gradient(to right, #2563eb, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .modal-backdrop {
-            transition: opacity 0.3s ease-in-out;
-        }
-        .modal-content {
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-            transform: translateY(-20px);
-        }
-        .modal.active .modal-content {
-            transform: translateY(0);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .fade-in-up { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+        .glowing-button { box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6, 0 0 15px #3b82f6; }
+        .gradient-text { background: linear-gradient(to right, #2563eb, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; transform: translateY(-20px); }
+        .modal.active .modal-content { transform: translateY(0); }
         [data-step] { display: none; }
         [data-step].active { display: block; }
     </style>
@@ -52,380 +27,105 @@
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="#" class="text-2xl font-bold text-slate-900">iasmaintor</a>
             <nav class="hidden md:flex items-center space-x-8">
-                <a href="#features" class="text-slate-600 hover:text-blue-600 transition-colors">Features</a>
-                <a href="#how-it-works" class="text-slate-600 hover:text-blue-600 transition-colors">How It Works</a>
-                <a href="#testimonials" class="text-slate-600 hover:text-blue-600 transition-colors">Testimonials</a>
+                <a href="#features" class="text-slate-600 hover:text-blue-600">Features</a>
+                <a href="#how-it-works" class="text-slate-600 hover:text-blue-600">How It Works</a>
+                <a href="#testimonials" class="text-slate-600 hover:text-blue-600">Testimonials</a>
             </nav>
             <div class="flex items-center space-x-4">
                 <div id="auth-links" class="flex items-center space-x-4">
-                    <a href="#" id="login-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-transform hover:scale-105 shadow-md flex items-center justify-center">
-                        <i class="fas fa-right-to-bracket mr-2"></i>Log In
-                    </a>
+                    <a href="#" id="login-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700"><i class="fas fa-right-to-bracket mr-2"></i>Log In</a>
                 </div>
                 <div id="user-dashboard-link" class="hidden items-center space-x-4">
-                    <a href="#dashboard" class="font-semibold text-blue-600 hover:text-blue-700 transition-colors">My Dashboard</a>
-                    <button id="logout-btn" class="text-slate-500 hover:text-red-500 transition-colors" title="Logout">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                    </button>
+                    <a href="#dashboard" class="font-semibold text-blue-600">My Dashboard</a>
+                    <button id="logout-btn" class="text-slate-500 hover:text-red-500" title="Logout"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
                 </div>
             </div>
-            <button id="mobile-menu-button" class="md:hidden text-slate-800">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
+            <button id="mobile-menu-button" class="md:hidden text-slate-800"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
         </div>
         <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 space-y-2">
-            <a href="#features" class="block py-2 text-slate-600 hover:text-blue-600">Features</a>
-            <a href="#how-it-works" class="block py-2 text-slate-600 hover:text-blue-600">How It Works</a>
-            <a href="#testimonials" class="block py-2 text-slate-600 hover:text-blue-600">Testimonials</a>
+            <a href="#features" class="block py-2 text-slate-600">Features</a>
+            <a href="#how-it-works" class="block py-2 text-slate-600">How It Works</a>
+            <a href="#testimonials" class="block py-2 text-slate-600">Testimonials</a>
             <a id="mobile-dashboard-link" href="#dashboard" class="hidden py-2 text-blue-600 font-semibold">My Dashboard</a>
             <hr/>
-            <div id="mobile-auth-links">
-                <a href="#" id="mobile-login-btn" class="block bg-blue-600 text-white text-center px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center">
-                   <i class="fas fa-right-to-bracket mr-2"></i>Log In
-                </a>
-            </div>
-            <div id="mobile-user-actions" class="hidden">
-                 <button id="mobile-logout-btn" class="w-full mt-2 bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button>
-            </div>
+            <div id="mobile-auth-links"><a href="#" id="mobile-login-btn" class="block bg-blue-600 text-white text-center px-5 py-2 rounded-lg font-semibold"><i class="fas fa-right-to-bracket mr-2"></i>Log In</a></div>
+            <div id="mobile-user-actions" class="hidden"><button id="mobile-logout-btn" class="w-full mt-2 bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button></div>
         </div>
     </header>
 
     <main>
         <section class="pt-32 pb-20 bg-slate-100">
-            <div class="container mx-auto px-6">
-                <div class="grid md:grid-cols-2 gap-12 items-center">
-                    <div class="text-center md:text-left">
-                        <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 leading-tight mb-4">
-                            Prepare <span class="gradient-text">Smarter</span>, Not Harder for UPSC
-                        </h1>
-                        <p class="text-lg text-slate-600 mb-8 max-w-xl mx-auto md:mx-0">
-                            Your personalized AI mentor for cracking the Civil Services Exam. Get dynamic study plans, Mains answer feedback, and integrated resources—all in one place.
-                        </p>
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                            <a href="#" id="start-trial-btn" class="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-transform hover:scale-105 shadow-lg glowing-button">Start Your 7-Day Free Trial</a>
-                        </div>
-                    </div>
-                    <div class="flex justify-center items-center p-4">
-                        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-lg mx-auto">
-                            <defs>
-                                <linearGradient id="aspirantGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stop-color="#475569"/>
-                                    <stop offset="100%" stop-color="#1e293b"/>
-                                </linearGradient>
-                                <filter id="glow">
-                                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
-                                    <feMerge>
-                                        <feMergeNode in="coloredBlur"/>
-                                        <feMergeNode in="SourceGraphic"/>
-                                    </feMerge>
-                                </filter>
-                            </defs>
-                            <rect x="100" y="250" width="200" height="20" rx="2" fill="#94a3b8"/>
-                            <rect x="105" y="230" width="190" height="20" rx="2" fill="#64748b"/>
-                            <rect x="100" y="210" width="200" height="20" rx="2" fill="#94a3b8"/>
-                            <rect x="110" y="190" width="180" height="20" rx="2" fill="#64748b"/>
-                            <rect x="105" y="170" width="190" height="20" rx="2" fill="#94a3b8"/>
-                            <path d="M200 165 C 200 145, 190 140, 180 130 A 15 15 0 1 1 220 130 C 210 140, 200 145, 200 165 Z" fill="url(#aspirantGradient)" transform="translate(0, -55)">
-                                <animateTransform attributeName="transform" type="translate" values="0 -55; 0 -57; 0 -55" dur="3s" repeatCount="indefinite" />
-                            </path>
-                            <path d="M350 50 L355.878 67.639 L374.264 67.639 L359.193 78.881 L365.071 96.52 L350 85.278 L334.929 96.52 L340.807 78.881 L325.736 67.639 L344.122 67.639 Z" fill="#3b82f6" filter="url(#glow)">
-                                <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite" />
-                            </path>
-                            <circle cx="80" cy="220" r="10" fill="#cbd5e1" />
-                            <rect x="70" y="230" width="20" height="30" rx="5" fill="#cbd5e1" />
-                            <rect x="50" y="260" width="60" height="10" rx="2" fill="#e2e8f0" />
-                            <circle cx="320" cy="230" r="8" fill="#cbd5e1" />
-                            <rect x="312" y="238" width="16" height="25" rx="4" fill="#cbd5e1" />
-                            <rect x="295" y="263" width="50" height="7" rx="2" fill="#e2e8f0" />
-                        </svg>
-                    </div>
-                </div>
+            <div class="container mx-auto px-6 text-center md:text-left">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-4">Prepare <span class="gradient-text">Smarter</span>, Not Harder</h1>
+                <p class="text-lg text-slate-600 mb-8 max-w-xl mx-auto md:mx-0">Your personalized AI mentor for cracking the Civil Services Exam.</p>
+                <a href="#" id="start-trial-btn" class="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 shadow-lg glowing-button">Start Your Free Trial</a>
             </div>
         </section>
 
         <section id="features" class="py-20">
             <div class="container mx-auto px-6 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">The Ultimate Toolkit for UPSC Success</h2>
-                <p class="text-slate-600 max-w-3xl mx-auto mb-12">Stop juggling countless resources. We bring everything you need into one intelligent platform, designed to optimize your preparation.</p>
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-12">The Ultimate Toolkit for UPSC Success</h2>
                 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div id="planner-feature-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer">
-                        <div class="bg-blue-100 text-blue-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M5.636 5.636l-1.414-1.414M19.778 5.636l-1.414 1.414M18.364 18.364l1.414 1.414M4.222 18.364l1.414-1.414M12 12a3 3 0 100-6 3 3 0 000 6z" /></svg>
-                        </div>
+                    <div id="planner-feature-card" class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">AI-Powered Study Plan</h3>
-                        <p class="text-slate-500">A dynamic schedule that adapts to your progress, syllabus weightage, and time available.</p>
+                        <p class="text-slate-500">A dynamic schedule that adapts to your progress and goals.</p>
                     </div>
                     <a href="https://maintor.vercel.app" target="_blank" rel="noopener noreferrer">
-                        <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
-                             <div class="bg-green-100 text-green-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
-                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
-                             </div>
-                             <h3 class="text-xl font-semibold text-slate-900 mb-2">Mains Answer Evaluation</h3>
-                             <p class="text-slate-500">Get instant, data-driven feedback on your answer structure, content, and relevance.</p>
+                        <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all h-full">
+                            <h3 class="text-xl font-semibold text-slate-900 mb-2">Mains Answer Evaluation</h3>
+                            <p class="text-slate-500">Get instant, data-driven feedback on your answer writing.</p>
                         </div>
                     </a>
-                    <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
-                         <div class="bg-indigo-100 text-indigo-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6" /></svg>
-                         </div>
-                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Integrated Current Affairs</h3>
-                         <p class="text-slate-500">Daily news linked directly to syllabus topics, with notes and revision quizzes.</p>
                     </div>
-                    <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 450ms;">
-                         <div class="bg-rose-100 text-rose-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                         </div>
-                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Performance Analytics</h3>
-                         <p class="text-slate-500">Track your progress, identify weak areas, and get actionable insights to improve.</p>
-                    </div>
-                </div>
             </div>
         </section>
 
-        <section id="dashboard" class="hidden py-20 bg-slate-50">
-            <div class="container mx-auto px-6">
-                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-8 text-center">My Dashboard</h2>
-                <div id="saved-plans-container" class="bg-white p-8 rounded-xl shadow-lg">
-                    <h3 class="text-2xl font-semibold mb-4">Your Saved Study Plans</h3>
-                    <div id="plans-list" class="space-y-6"></div>
-                </div>
-            </div>
-        </section>
+        </main>
 
-        <section id="how-it-works" class="py-20 bg-slate-100">
-            <div class="container mx-auto px-6">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Your Path to Success in 3 Simple Steps</h2>
-                    <p class="text-slate-600 max-w-2xl mx-auto">We've simplified the journey. Focus on what matters most: learning and improving.</p>
-                </div>
-                <div class="relative">
-                    <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-blue-200 -translate-y-1/2"></div>
-                    <div class="grid md:grid-cols-3 gap-16 relative">
-                        <div class="text-center fade-in-up">
-                             <div class="relative inline-block">
-                                 <div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200">1</div>
-                             </div>
-                             <h3 class="text-xl font-semibold mt-6 mb-2">Generate Your AI Plan</h3>
-                             <p class="text-slate-500">Answer a few questions and get a personalized study plan tailored to your needs and schedule.</p>
-                        </div>
-                        <div class="text-center fade-in-up" style="transition-delay: 200ms;">
-                             <div class="relative inline-block">
-                                 <div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200">2</div>
-                             </div>
-                             <h3 class="text-xl font-semibold mt-6 mb-2">Follow The Daily Schedule</h3>
-                             <p class="text-slate-500">Execute your daily tasks—from reading topics and revising, to practicing questions and writing answers.</p>
-                        </div>
-                        <div class="text-center fade-in-up" style="transition-delay: 400ms;">
-                             <div class="relative inline-block">
-                                 <div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200">3</div>
-                             </div>
-                             <h3 class="text-xl font-semibold mt-6 mb-2">Save, Track & Improve</h3>
-                             <p class="text-slate-500">Save your plan to your dashboard. Monitor your progress and conquer your weaknesses.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <section id="testimonials" class="py-20">
-            <div class="container mx-auto px-6">
-                <div class="text-center mb-12">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">What Our Aspirants Say</h2>
-                    <p class="text-slate-600 max-w-2xl mx-auto">Success stories from those who chose the smarter way.</p>
-                </div>
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up">
-                        <p class="text-slate-600 mb-6">"iasmaintor's study planner is a game-changer. It removed all the guesswork and helped me cover the syllabus in a structured manner. For the first time, I feel in control of my preparation."</p>
-                        <div class="flex items-center">
-                            <img src="https://placehold.co/48x48/e0e7ff/3730a3?text=PS" alt="Priya Sharma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
-                            <div>
-                                <h4 class="font-semibold text-slate-900">Priya Sharma</h4>
-                                <p class="text-slate-500 text-sm">UPSC Aspirant</p>
-                            </div>
-                        </div>
-                    </div>
-                     <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up" style="transition-delay: 200ms;">
-                        <p class="text-slate-600 mb-6">"The instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure. The AI points out flaws I never would have noticed on my own."</p>
-                        <div class="flex items-center">
-                             <img src="https://placehold.co/48x48/d1fae5/047857?text=RS" alt="Rohan Singh" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
-                            <div>
-                                <h4 class="font-semibold text-slate-900">Rohan Singh</h4>
-                                <p class="text-slate-500 text-sm">UPSC Aspirant</p>
-                            </div>
-                        </div>
-                    </div>
-                     <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up" style="transition-delay: 400ms;">
-                        <p class="text-slate-600 mb-6">"Finally, a platform that connects current affairs to the static syllabus seamlessly. This has saved me hours of work every single day. Highly recommended!"</p>
-                        <div class="flex items-center">
-                             <img src="https://placehold.co/48x48/fce7f3/831843?text=AV" alt="Anjali Verma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
-                            <div>
-                                <h4 class="font-semibold text-slate-900">Anjali Verma</h4>
-                                <p class="text-slate-500 text-sm">UPSC Aspirant</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="bg-slate-800 text-white">
-            <div class="container mx-auto px-6 py-20 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your UPSC Preparation?</h2>
-                <p class="text-slate-300 max-w-2xl mx-auto mb-8">Join thousands of aspirants who are preparing smarter. Your journey to LBSNAA starts here.</p>
-                <a href="#" id="final-cta-btn" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-slate-100 transition-transform hover:scale-105 shadow-lg">Start Your Free Trial Now</a>
-            </div>
-        </section>
-    </main>
-    
-    <footer class="bg-slate-900 text-slate-400">
-        <div class="container mx-auto px-6 py-12">
-            <div class="grid md:grid-cols-4 gap-8">
-                <div>
-                    <h3 class="text-xl font-bold text-white mb-4">iasmaintor</h3>
-                    <p class="text-sm">The Smarter Way to Prepare for UPSC.</p>
-                </div>
-                <div>
-                    <h4 class="font-semibold text-white mb-4">Company</h4>
-                    <ul>
-                        <li class="mb-2"><a href="#" class="hover:text-white">About Us</a></li>
-                        <li class="mb-2"><a href="#" class="hover:text-white">Blog</a></li>
-                        <li class="mb-2"><a href="#" class="hover:text-white">Contact</a></li>
-                    </ul>
-                </div>
-                 <div>
-                    <h4 class="font-semibold text-white mb-4">Resources</h4>
-                    <ul>
-                        <li class="mb-2"><a href="#" class="hover:text-white">FAQs</a></li>
-                        <li class="mb-2"><a href="#" class="hover:text-white">Terms of Service</a></li>
-                        <li class="mb-2"><a href="#" class="hover:text-white">Privacy Policy</a></li>
-                    </ul>
-                </div>
-                 <div>
-                    <h4 class="font-semibold text-white mb-4">Follow Us</h4>
-                    <div class="flex space-x-4">
-                        <a href="#" class="hover:text-white">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" /></svg>
-                        </a>
-                        <a href="#" class="hover:text-white">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.71v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" /></svg>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-12 border-t border-slate-700 pt-8 text-center text-sm">
-                <p>&copy; <span id="copyright-year">2025</span> iasmaintor. All rights reserved.</p>
-            </div>
-        </div>
+    <footer class="bg-slate-900 text-slate-400 text-center py-8">
+        <p>&copy; <span id="copyright-year">2025</span> iasmaintor. All rights reserved.</p>
     </footer>
 
-    <div id="auth-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
-            <div class="flex justify-end">
-                 <button id="close-auth-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
-            </div>
-            
-            <div id="auth-error" class="bg-red-100 text-red-700 p-3 rounded-md mb-4 hidden"></div>
-
-            <div id="login-view">
-                <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Welcome Back</h2>
-                <p class="text-center text-slate-500 mb-8">Please enter your details to log in.</p>
-                <form id="login-form">
-                    <div class="mb-4">
-                        <label for="login-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
-                        <input type="email" id="login-email" placeholder="e.g., user@example.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
-                    </div>
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                             <label for="login-password" class="block text-slate-700 text-sm font-semibold">Password</label>
-                             <a href="#" class="text-sm text-blue-600 hover:underline">Forgot Password?</a>
-                        </div>
-                        <input type="password" id="login-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Log In</button>
-                </form>
-                <p class="text-center text-sm text-slate-600 mt-8">
-                    Don't have an account? 
-                    <button id="auth-switch-to-signup" class="font-semibold text-blue-600 hover:underline">Sign Up</button>
-                </p>
-            </div>
-
-            <div id="signup-view" class="hidden">
-                 <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Create Your Account</h2>
-                 <p class="text-center text-slate-500 mb-8">Get started on your UPSC journey.</p>
-                <form id="signup-form">
-                     <div class="mb-4">
-                        <label for="signup-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
-                        <input type="email" id="signup-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div class="mb-6">
-                        <label for="signup-password" class="block text-slate-700 text-sm font-semibold mb-2">Password</label>
-                        <input type="password" id="signup-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required minlength="6">
-                        <p class="text-xs text-slate-500 mt-1">Minimum 6 characters.</p>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Create Account</button>
-                </form>
-                <p class="text-center text-sm text-slate-600 mt-8">
-                    Already have an account?
-                    <button id="auth-switch-to-login" class="font-semibold text-blue-600 hover:underline">Log In</button>
-                </p>
-            </div>
-        </div>
-    </div>
-    
-    <div id="planner-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
+    <div id="planner-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8">
             <div class="p-8">
-                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b">
                     <h2 class="text-2xl font-bold text-slate-800">Create Your Personalized Study Plan</h2>
                     <button id="close-planner-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
                 </div>
                 <div id="planner-content">
                     <form id="planner-questionnaire">
                         <div data-step="1" class="active">
-                            <h3 class="text-xl font-semibold mb-4 text-slate-700">Step 1: About You</h3>
-                            <div class="mb-4">
-                                <label class="block text-slate-700 font-semibold mb-2">What is your current preparation level?</label>
-                                <div class="flex flex-col space-y-2">
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="level" value="beginner" class="mr-3" required> Beginner (Just starting out)</label>
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="level" value="intermediate" class="mr-3"> Intermediate (Covered syllabus once)</label>
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="level" value="veteran" class="mr-3"> Veteran (Multiple attempts, focused on revision)</label>
-                                </div>
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
-                            </div>
+                            <h3 class="text-xl font-semibold mb-4">Step 1: About You</h3>
+                            <label class="block mb-2">Preparation Level:</label>
+                            <select name="level" class="w-full p-2 border rounded" required>
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="veteran">Veteran</option>
+                            </select>
+                            <div class="flex justify-end mt-4"><button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg">Next</button></div>
                         </div>
-
                         <div data-step="2">
-                            <h3 class="text-xl font-semibold mb-4 text-slate-700">Step 2: Your Schedule</h3>
-                             <div class="mb-4">
-                                <label class="block text-slate-700 font-semibold mb-2">How are you preparing?</label>
-                                <div class="flex flex-col space-y-2">
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="commitment" value="full-time" class="mr-3" required> Full-time aspirant</label>
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="commitment" value="working" class="mr-3"> Working professional</label>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="hours" class="block text-slate-700 font-semibold mb-2">How many hours can you study daily?</label>
-                                <input type="number" id="hours" name="hours" min="2" max="14" class="w-full px-4 py-2 border border-slate-300 rounded-lg" required>
-                            </div>
-                             <div class="flex justify-between">
-                                <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
-                                <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                            <h3 class="text-xl font-semibold mb-4">Step 2: Your Schedule</h3>
+                            <label class="block mb-2">Commitment:</label>
+                            <select name="commitment" class="w-full p-2 border rounded" required>
+                                <option value="full-time aspirant">Full-time</option>
+                                <option value="working professional">Working Professional</option>
+                            </select>
+                            <label class="block mt-4 mb-2">Hours per day:</label>
+                            <input type="number" name="hours" class="w-full p-2 border rounded" min="2" max="14" required>
+                            <div class="flex justify-between mt-4">
+                                <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 px-6 py-2 rounded-lg">Back</button>
+                                <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg">Next</button>
                             </div>
                         </div>
-
                         <div data-step="3">
-                            <h3 class="text-xl font-semibold mb-4 text-slate-700">Step 3: Your Subjects</h3>
-                            <div class="mb-4">
-                                <label for="optional" class="block text-slate-700 font-semibold mb-2">What is your Optional Subject? (e.g., PSIR, Sociology, History)</label>
-                                <input type="text" id="optional" name="optional" class="w-full px-4 py-2 border border-slate-300 rounded-lg" required placeholder="Public Administration">
-                            </div>
-                             <div class="flex justify-between">
-                                <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
-                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">Generate Plan</button>
+                            <h3 class="text-xl font-semibold mb-4">Step 3: Your Subjects</h3>
+                            <label class="block mb-2">Optional Subject:</label>
+                            <input type="text" name="optional" class="w-full p-2 border rounded" required placeholder="e.g., PSIR, Sociology">
+                            <div class="flex justify-between mt-4">
+                                <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 px-6 py-2 rounded-lg">Back</button>
+                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg">Generate AI Plan</button>
                             </div>
                         </div>
                     </form>
@@ -434,143 +134,35 @@
             </div>
         </div>
     </div>
-    <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+    
+    <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity"></div>
 
     <script type="module">
-        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, addDoc, collection, onSnapshot, query, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // NOTE: Firebase imports and logic would go here if needed.
+        // This version focuses on the AI planner functionality.
 
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Firebase Initialization ---
-            let app, db, auth;
-            // CRITICAL FIX: Removed placeholder config. The app now relies entirely on the injected config.
-            if (typeof __firebase_config === 'undefined') {
-                console.error("Firebase configuration is missing. App cannot start.");
-                showNotification("Error: App configuration is missing.");
-                return;
-            }
-            const firebaseConfig = JSON.parse(__firebase_config);
-            
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                setLogLevel('debug');
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                showNotification("Error: Could not connect to services.");
-                return;
-            }
-
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            let currentUser = null;
-            let generatedPlanHTML = '';
-            let unsubscribePlans = null;
-
-            // --- UI Element Refs ---
             const DOMElements = {
-                authLinks: document.getElementById('auth-links'),
-                userDashboardLink: document.getElementById('user-dashboard-link'),
-                dashboardSection: document.getElementById('dashboard'),
-                mobileMenu: document.getElementById('mobile-menu'),
-                mobileMenuButton: document.getElementById('mobile-menu-button'),
-                mobileAuthLinks: document.getElementById('mobile-auth-links'),
-                mobileUserActions: document.getElementById('mobile-user-actions'),
-                mobileDashboardLink: document.getElementById('mobile-dashboard-link'),
-                header: document.getElementById('header'),
-                notification: document.getElementById('notification'),
-                authModal: {
-                    modal: document.getElementById('auth-modal'),
-                    loginView: document.getElementById('login-view'),
-                    signupView: document.getElementById('signup-view'),
-                    error: document.getElementById('auth-error'),
-                    loginForm: document.getElementById('login-form'),
-                    signupForm: document.getElementById('signup-form'),
-                },
                 plannerModal: {
                     modal: document.getElementById('planner-modal'),
                     questionnaire: document.getElementById('planner-questionnaire'),
                     planResult: document.getElementById('plan-result'),
+                    closeBtn: document.getElementById('close-planner-modal'),
                 },
-                plansList: document.getElementById('plans-list'),
+                plannerCard: document.getElementById('planner-feature-card'),
                 copyrightYear: document.getElementById('copyright-year'),
+                notification: document.getElementById('notification'),
             };
-            
+
             // --- Utility Functions ---
-            const showNotification = (message, isError = false) => {
+            const showNotification = (message) => {
                 DOMElements.notification.textContent = message;
-                DOMElements.notification.classList.toggle('bg-red-600', isError);
-                DOMElements.notification.classList.toggle('bg-slate-800', !isError);
                 DOMElements.notification.classList.add('opacity-100');
-                setTimeout(() => {
-                    DOMElements.notification.classList.remove('opacity-100');
-                }, 3000);
+                setTimeout(() => DOMElements.notification.classList.remove('opacity-100'), 3000);
             };
 
             const openModal = (modal) => modal.classList.remove('hidden');
             const closeModal = (modal) => modal.classList.add('hidden');
-
-            // --- Core App Logic ---
-
-            // Dynamic Copyright Year
-            DOMElements.copyrightYear.textContent = new Date().getFullYear();
-
-            // Authentication State Management
-            onAuthStateChanged(auth, (user) => {
-                currentUser = user; 
-                updateUIForAuthState(user);
-            });
-
-            const updateUIForAuthState = (user) => {
-                const isLoggedIn = user && !user.isAnonymous;
-
-                DOMElements.authLinks.classList.toggle('hidden', isLoggedIn);
-                DOMElements.userDashboardLink.classList.toggle('hidden', !isLoggedIn);
-                DOMElements.dashboardSection.classList.toggle('hidden', !isLoggedIn);
-                
-                DOMElements.mobileAuthLinks.classList.toggle('hidden', isLoggedIn);
-                DOMElements.mobileUserActions.classList.toggle('hidden', !isLoggedIn);
-                DOMElements.mobileDashboardLink.classList.toggle('hidden', !isLoggedIn);
-                
-                if (isLoggedIn) {
-                    // FIX: If it's the mock user, display mock data instead of calling Firebase
-                    if (user.uid === 'mock-admin-uid') {
-                        displayMockPlans();
-                    } else {
-                        fetchAndDisplayPlans(user.uid);
-                    }
-                } else {
-                    if (unsubscribePlans) unsubscribePlans();
-                    DOMElements.plansList.innerHTML = '<p class="text-slate-500">Please log in to see your saved plans.</p>';
-                    DOMElements.dashboardSection.classList.add('hidden');
-                }
-            };
-            
-            // Modal Handling
-            const openAuthModal = (mode = 'login') => {
-                const { modal, loginView, signupView, error, loginForm, signupForm } = DOMElements.authModal;
-                error.classList.add('hidden');
-                loginForm.reset();
-                signupForm.reset();
-
-                loginView.classList.toggle('hidden', mode !== 'login');
-                signupView.classList.toggle('hidden', mode === 'login');
-                
-                openModal(modal);
-            };
-
-            // Planner Logic
-            const navigatePlannerSteps = (currentStep, direction) => {
-                const currentStepNumber = parseInt(currentStep.dataset.step);
-                const nextStepNumber = direction === 'next' ? currentStepNumber + 1 : currentStepNumber - 1;
-                const nextStep = DOMElements.plannerModal.questionnaire.querySelector(`[data-step="${nextStepNumber}"]`);
-                
-                if (nextStep) {
-                    currentStep.classList.remove('active');
-                    nextStep.classList.add('active');
-                }
-            };
 
             const resetPlannerModal = () => {
                 const { questionnaire, planResult } = DOMElements.plannerModal;
@@ -579,262 +171,90 @@
                 planResult.classList.add('hidden');
                 planResult.innerHTML = '';
                 questionnaire.querySelectorAll('[data-step]').forEach((step, index) => {
-                    step.classList.toggle('active', index === 0);
-                });
-            };
-
-            const generatePlanHTML = (answers) => {
-                const { level, commitment, hours, optional } = answers;
-                const schedule = {
-                    'full-time': { '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision'], '8': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'Answer Writing', 'Revision'], '10': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'CSAT', 'Answer Writing', 'Revision'], '12': ['Newspaper', 'GS 1', 'GS 2', 'GS 3', 'Optional', 'CSAT', 'Answer Writing', 'Revision'] },
-                    'working': { '4': ['Newspaper', 'GS Subject'], '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision']}
-                };
-                let dailySlots = commitment === 'full-time' 
-                    ? (hours >= 12 ? schedule['full-time']['12'] : hours >= 10 ? schedule['full-time']['10'] : hours >= 8 ? schedule['full-time']['8'] : schedule['full-time']['6'])
-                    : (hours >= 6 ? schedule['working']['6'] : schedule['working']['4']);
-
-                let focus = '';
-                if (level === 'beginner') focus = 'Focus on NCERTs & building foundational knowledge. Read one core subject for 2 weeks straight.';
-                if (level === 'intermediate') focus = 'Focus on standard books, answer writing practice, and connecting topics with current affairs.';
-                if (level === 'veteran') focus = 'Focus on intensive revision, mock tests (Prelims & Mains), and strengthening weak areas.';
-                
-                const subjects = ['Polity', 'History', 'Geography', 'Economy', 'Environment', 'S&T', optional];
-                const tableRows = Array.from({ length: 7 }, (_, i) => `
-                    <tr>
-                        <td class="font-semibold p-2 border border-slate-200">Day ${i + 1}</td>
-                        <td class="p-2 border border-slate-200">${subjects[i] || subjects[0]} (GS) & ${optional}</td>
-                        <td class="p-2 border border-slate-200">
-                            <ul class="list-disc list-inside">${dailySlots.map(s => `<li>${s}</li>`).join('')}</ul>
-                        </td>
-                    </tr>`).join('');
-
-                return `
-                    <h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3>
-                    <p class="mb-4 text-slate-600"><strong>Level:</strong> ${level.charAt(0).toUpperCase() + level.slice(1)} | <strong>Commitment:</strong> ${commitment === 'full-time' ? 'Full-time' : 'Working Professional'} | <strong>Optional:</strong> ${optional}</p>
-                    <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">${focus}</p>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left border-collapse">
-                            <thead class="bg-slate-100">
-                                <tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Daily Tasks</th></tr>
-                            </thead>
-                            <tbody>${tableRows}</tbody>
-                        </table>
-                    </div>
-                    <div class="mt-8 flex flex-col sm:flex-row gap-4">
-                        <button data-action="save-plan" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">Save Plan to My Dashboard</button>
-                        <button data-action="modify-plan" class="bg-slate-200 text-slate-800 px-6 py-3 rounded-lg font-semibold flex-1">Start Over</button>
-                    </div>`;
-            };
-            
-            // --- Mock Data Function ---
-            const displayMockPlans = () => {
-                const mockPlanHTML = `
-                    <div class="border-b last:border-b-0 pb-6">
-                        <p class="font-semibold text-slate-600 mb-4">Plan created on: (Sample Date)</p>
-                        <h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3>
-                        <p class="mb-4 text-slate-600"><strong>Level:</strong> Beginner | <strong>Commitment:</strong> Full-time | <strong>Optional:</strong> Sociology</p>
-                        <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">Focus on NCERTs & building foundational knowledge. Read one core subject for 2 weeks straight.</p>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left border-collapse">
-                                <thead class="bg-slate-100">
-                                    <tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Daily Tasks</th></tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="font-semibold p-2 border border-slate-200">Day 1</td>
-                                        <td class="p-2 border border-slate-200">Polity (GS) & Sociology</td>
-                                        <td class="p-2 border border-slate-200">
-                                            <ul class="list-disc list-inside"><li>Newspaper</li><li>GS Subject</li><li>Optional</li><li>Revision</li></ul>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>`;
-                DOMElements.plansList.innerHTML = mockPlanHTML;
-            };
-
-            // Firestore Operations
-            const savePlan = async () => {
-                if (!currentUser || currentUser.isAnonymous) {
-                    showNotification('Please log in or create an account to save your plan.', true);
-                    openAuthModal('signup');
-                    return;
-                }
-                if (currentUser.uid === 'mock-admin-uid') {
-                    showNotification('Saving is disabled in demo mode.', true);
-                    closeModal(DOMElements.plannerModal.modal);
-                    return;
-                }
-                try {
-                    const plansCollection = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'studyPlans');
-                    await addDoc(plansCollection, {
-                        planHTML: generatedPlanHTML,
-                        createdAt: serverTimestamp()
-                    });
-                    showNotification('Plan saved successfully!');
-                    closeModal(DOMElements.plannerModal.modal);
-                } catch (error) {
-                    console.error("Error saving plan: ", error);
-                    showNotification('Could not save plan. Please try again.', true);
-                }
-            };
-            
-            const fetchAndDisplayPlans = (userId) => {
-                if (unsubscribePlans) unsubscribePlans();
-                const plansCollection = collection(db, 'artifacts', appId, 'users', userId, 'studyPlans');
-                const q = query(plansCollection, orderBy('createdAt', 'desc'));
-                
-                unsubscribePlans = onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) {
-                        DOMElements.plansList.innerHTML = `<p class="text-slate-500">You haven't saved any plans yet. Click on 'AI-Powered Study Plan' to create one!</p>`;
-                        return;
-                    }
-                    let plansHTML = '';
-                    snapshot.forEach(doc => {
-                        const planData = doc.data();
-                        const date = planData.createdAt?.toDate().toLocaleDateString() || 'Recently';
-                        plansHTML += `<div class="border-b last:border-b-0 pb-6">
-                            <p class="font-semibold text-slate-600 mb-4">Plan created on: ${date}</p>
-                            ${planData.planHTML.replace(/<div class="mt-8.*?<\/div>/s, '')}
-                        </div>`;
-                    });
-                    DOMElements.plansList.innerHTML = plansHTML;
-                }, (error) => {
-                    console.error("Error fetching plans: ", error);
-                    DOMElements.plansList.innerHTML = `<p class="text-red-500">Could not fetch your plans. Please refresh the page.</p>`;
+                    step.style.display = index === 0 ? 'block' : 'none';
+                    if(index === 0) step.classList.add('active');
+                    else step.classList.remove('active');
                 });
             };
 
             // --- Event Listeners ---
+            DOMElements.copyrightYear.textContent = new Date().getFullYear();
             
-            document.body.addEventListener('click', async (e) => {
-                if (e.target.matches('#login-btn, #mobile-login-btn')) { e.preventDefault(); openAuthModal('login'); }
-                if (e.target.matches('#start-trial-btn, #final-cta-btn')) { e.preventDefault(); openAuthModal('login'); }
-                if (e.target.matches('#close-auth-modal')) { closeModal(DOMElements.authModal.modal); }
-                if (e.target.matches('#auth-switch-to-signup')) { openAuthModal('signup'); }
-                if (e.target.matches('#auth-switch-to-login')) { openAuthModal('login'); }
+            DOMElements.plannerCard.addEventListener('click', () => {
+                resetPlannerModal();
+                openModal(DOMElements.plannerModal.modal);
+            });
 
-                if (e.target.closest('#logout-btn, #mobile-logout-btn')) {
-                    // FIX: Handle logout for both mock user and real user
-                    if (currentUser && currentUser.uid === 'mock-admin-uid') {
-                        currentUser = null;
-                        updateUIForAuthState(null);
-                        showNotification('Logged out from demo.');
-                    } else if (auth) {
-                        try {
-                            await signOut(auth);
-                            showNotification('Logged out.');
-                        } catch (error) {
-                            showNotification('Logout failed.', true);
-                        }
-                    }
-                }
-
-                if (e.target.closest('#planner-feature-card')) { resetPlannerModal(); openModal(DOMElements.plannerModal.modal); }
-                if (e.target.matches('#close-planner-modal')) { closeModal(DOMElements.plannerModal.modal); }
-
+            DOMElements.plannerModal.closeBtn.addEventListener('click', () => closeModal(DOMElements.plannerModal.modal));
+            
+            DOMElements.plannerModal.questionnaire.addEventListener('click', (e) => {
                 const nextBtn = e.target.closest('.next-step-btn');
                 const prevBtn = e.target.closest('.prev-step-btn');
-                if (nextBtn) navigatePlannerSteps(nextBtn.closest('[data-step]'), 'next');
-                if (prevBtn) navigatePlannerSteps(prevBtn.closest('[data-step]'), 'prev');
-            });
+                if (!nextBtn && !prevBtn) return;
 
-            DOMElements.authModal.loginForm.addEventListener('submit', async (e) => {
+                const currentStep = e.target.closest('[data-step]');
+                currentStep.classList.remove('active');
+                currentStep.style.display = 'none';
+
+                const targetStepSelector = nextBtn ? `[data-step="${nextBtn.dataset.next}"]` : `[data-step="${prevBtn.dataset.prev}"]`;
+                const targetStep = DOMElements.plannerModal.questionnaire.querySelector(targetStepSelector);
+                targetStep.classList.add('active');
+                targetStep.style.display = 'block';
+            });
+            
+            DOMElements.plannerModal.questionnaire.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const email = DOMElements.authModal.loginForm.querySelector('#login-email').value;
-                const password = DOMElements.authModal.loginForm.querySelector('#login-password').value;
+                const planResultDiv = DOMElements.plannerModal.planResult;
                 
-                // --- TEMPORARY MOCK LOGIN ---
-                if (email === 'admin@iasmaintor.com' && password === 'admin') {
-                    const mockUser = { uid: 'mock-admin-uid', isAnonymous: false, email: 'admin@iasmaintor.com' };
-                    currentUser = mockUser;
-                    updateUIForAuthState(mockUser);
-                    closeModal(DOMElements.authModal.modal);
-                    showNotification('Logged in as admin (DEMO)');
-                    return; // Stop execution to prevent Firebase call
-                }
+                planResultDiv.innerHTML = '<p class="text-center text-slate-600">🧠 Generating your AI-powered plan...</p>';
+                DOMElements.plannerModal.questionnaire.classList.add('hidden');
+                planResultDiv.classList.remove('hidden');
 
-                /*
-                // --- ORIGINAL FIREBASE LOGIN LOGIC ---
-                try {
-                    await signInWithEmailAndPassword(auth, email, password);
-                    closeModal(DOMElements.authModal.modal);
-                    showNotification('Logged in successfully!');
-                } catch (error) {
-                    if (email === 'admin@iasmaintor.com' && password === 'admin' && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
-                        try {
-                            await createUserWithEmailAndPassword(auth, email, password);
-                            closeModal(DOMElements.authModal.modal);
-                            showNotification('Admin account created & logged in. Welcome!');
-                        } catch (creationError) {
-                            DOMElements.authModal.error.textContent = "Invalid credentials. Please check your email and password.";
-                            DOMElements.authModal.error.classList.remove('hidden');
-                        }
-                    } else {
-                        DOMElements.authModal.error.textContent = "Invalid credentials. Please check your email and password.";
-                        DOMElements.authModal.error.classList.remove('hidden');
-                    }
-                }
-                */
-               // If not mock user, show error for now.
-               DOMElements.authModal.error.textContent = "Invalid credentials. (Demo accepts: admin@iasmaintor.com / admin)";
-               DOMElements.authModal.error.classList.remove('hidden');
-            });
-
-            DOMElements.authModal.signupForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                // For demo, we can just show a message.
-                showNotification("Sign up is disabled in demo mode.", true);
-                
-                /*
-                // --- ORIGINAL FIREBASE SIGNUP LOGIC ---
-                const email = DOMElements.authModal.signupForm.querySelector('#signup-email').value;
-                const password = DOMElements.authModal.signupForm.querySelector('#signup-password').value;
-                try {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                    closeModal(DOMElements.authModal.modal);
-                    showNotification('Account created successfully!');
-                } catch (error) {
-                    DOMElements.authModal.error.textContent = error.message;
-                    DOMElements.authModal.error.classList.remove('hidden');
-                }
-                */
-            });
-
-            DOMElements.plannerModal.questionnaire.addEventListener('submit', (e) => {
-                e.preventDefault();
                 const formData = new FormData(DOMElements.plannerModal.questionnaire);
                 const answers = Object.fromEntries(formData.entries());
-                generatedPlanHTML = generatePlanHTML(answers);
-                
-                DOMElements.plannerModal.planResult.innerHTML = generatedPlanHTML;
-                DOMElements.plannerModal.questionnaire.classList.add('hidden');
-                DOMElements.plannerModal.planResult.classList.remove('hidden');
+
+                try {
+                    const response = await fetch('/api/generate-plan', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(answers),
+                    });
+
+                    if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+                    
+                    const aiPlan = await response.json();
+
+                    const formatAIPlanToHTML = (planData, userInputs) => {
+                        const { focus, schedule } = planData;
+                        const { level, commitment, optional } = userInputs;
+                        const tableRows = schedule.map(day => `
+                            <tr>
+                                <td class="font-semibold p-2 border">${day.day}</td>
+                                <td class="p-2 border">${day.subjectFocus}</td>
+                                <td class="p-2 border"><ul class="list-disc list-inside">${day.dailyTasks.map(t => `<li>${t}</li>`).join('')}</ul></td>
+                            </tr>`).join('');
+                        
+                        return `
+                            <h3 class="text-2xl font-bold mb-4">Your AI-Powered 7-Day Plan</h3>
+                            <p class="mb-4"><strong>Level:</strong> ${level} | <strong>Commitment:</strong> ${commitment} | <strong>Optional:</strong> ${optional}</p>
+                            <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400">${focus}</p>
+                            <div class="overflow-x-auto"><table class="w-full text-sm border-collapse">
+                                <thead class="bg-slate-100"><tr><th class="p-2 border">Day</th><th class="p-2 border">Focus</th><th class="p-2 border">Daily Tasks</th></tr></thead>
+                                <tbody>${tableRows}</tbody>
+                            </table></div>
+                            <div class="mt-8 flex gap-4"><button data-action="modify-plan" class="bg-slate-200 px-6 py-3 rounded-lg w-full">Start Over</button></div>`;
+                    };
+
+                    planResultDiv.innerHTML = formatAIPlanToHTML(aiPlan, answers);
+                } catch (error) {
+                    console.error('Error generating plan:', error);
+                    planResultDiv.innerHTML = '<p class="text-center text-red-600">Sorry, something went wrong. Please try again.</p><div class="mt-4 text-center"><button data-action="modify-plan" class="bg-slate-200 px-6 py-3 rounded-lg">Start Over</button></div>';
+                }
             });
 
             DOMElements.plannerModal.planResult.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
-                if (action === 'save-plan') savePlan();
-                if (action === 'modify-plan') resetPlannerModal();
+                if (e.target.dataset.action === 'modify-plan') resetPlannerModal();
             });
-
-            DOMElements.mobileMenuButton.addEventListener('click', () => {
-                DOMElements.mobileMenu.classList.toggle('hidden');
-            });
-
-            window.addEventListener('scroll', () => {
-                DOMElements.header.classList.toggle('shadow-md', window.scrollY > 50);
-            });
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                    }
-                });
-            }, { threshold: 0.1 });
-            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
         });
     </script>
 </body>
