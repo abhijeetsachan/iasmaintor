@@ -768,4 +768,74 @@
                             closeModal(DOMElements.authModal.modal);
                             showNotification('Admin account created & logged in. Welcome!');
                         } catch (creationError) {
-                            DOMElements
+                            DOMElements.authModal.error.textContent = "Invalid credentials. Please check your email and password.";
+                            DOMElements.authModal.error.classList.remove('hidden');
+                        }
+                    } else {
+                        DOMElements.authModal.error.textContent = "Invalid credentials. Please check your email and password.";
+                        DOMElements.authModal.error.classList.remove('hidden');
+                    }
+                }
+                */
+               // If not mock user, show error for now.
+               DOMElements.authModal.error.textContent = "Invalid credentials. (Demo accepts: admin@iasmaintor.com / admin)";
+               DOMElements.authModal.error.classList.remove('hidden');
+            });
+
+            DOMElements.authModal.signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                // For demo, we can just show a message.
+                showNotification("Sign up is disabled in demo mode.", true);
+                
+                /*
+                // --- ORIGINAL FIREBASE SIGNUP LOGIC ---
+                const email = DOMElements.authModal.signupForm.querySelector('#signup-email').value;
+                const password = DOMElements.authModal.signupForm.querySelector('#signup-password').value;
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    closeModal(DOMElements.authModal.modal);
+                    showNotification('Account created successfully!');
+                } catch (error) {
+                    DOMElements.authModal.error.textContent = error.message;
+                    DOMElements.authModal.error.classList.remove('hidden');
+                }
+                */
+            });
+
+            DOMElements.plannerModal.questionnaire.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(DOMElements.plannerModal.questionnaire);
+                const answers = Object.fromEntries(formData.entries());
+                generatedPlanHTML = generatePlanHTML(answers);
+                
+                DOMElements.plannerModal.planResult.innerHTML = generatedPlanHTML;
+                DOMElements.plannerModal.questionnaire.classList.add('hidden');
+                DOMElements.plannerModal.planResult.classList.remove('hidden');
+            });
+
+            DOMElements.plannerModal.planResult.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                if (action === 'save-plan') savePlan();
+                if (action === 'modify-plan') resetPlannerModal();
+            });
+
+            DOMElements.mobileMenuButton.addEventListener('click', () => {
+                DOMElements.mobileMenu.classList.toggle('hidden');
+            });
+
+            window.addEventListener('scroll', () => {
+                DOMElements.header.classList.toggle('shadow-md', window.scrollY > 50);
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
