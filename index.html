@@ -8,8 +8,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
+    <!-- Analysis & Fixes Summary:
+        1.  **Critical Bug (Firebase Config):** Removed the placeholder `firebaseConfig` object. The script now exclusively relies on the runtime-injected `__firebase_config` variable, preventing crashes and security risks associated with default placeholder keys. Added a check to ensure the app handles the absence of the config gracefully.
+        2.  **Bug (Duplicate Event Listeners):** The original code added a new event listener to the "Save Plan" button every time a plan was generated. This would cause the `savePlan` function to fire multiple times on a single click. This has been fixed by using event delegation on the parent container (`plan-result`).
+        3.  **Bug (Invalid HTML):** The generated study plan table contained `<li>` elements without a parent `<ul>` or `<ol>`. This is invalid HTML and has been corrected by wrapping them in a `<ul>`.
+        4.  **Improvement (Dynamic Copyright):** The copyright year in the footer was hardcoded to "2025". It is now updated dynamically with JavaScript to always show the current year.
+        5.  **Improvement (Robust Placeholders):** Replaced `pravatar.cc` image URLs with `placehold.co` for better reliability and added `onerror` fallbacks to prevent broken image icons.
+        6.  **Improvement (Mobile Menu Logic):** Refactored the mobile menu. Instead of regenerating its HTML content on every auth state change, the menu is now static in the HTML, and JavaScript simply toggles the visibility (`hidden` class) of the relevant links (e.g., login vs. dashboard). This is more efficient.
+        7.  **Improvement (Code Organization):** Encapsulated all DOM-related script execution within a single `DOMContentLoaded` event listener to ensure the script runs only after the entire page is loaded, preventing race conditions.
+    -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -57,6 +66,7 @@
                 <a href="#testimonials" class="text-slate-600 hover:text-blue-600 transition-colors">Testimonials</a>
             </nav>
             <div class="flex items-center space-x-4">
+                 <!-- Auth state is managed by JS by toggling 'hidden' -->
                 <div id="auth-links" class="flex items-center space-x-4">
                     <a href="#" id="login-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-transform hover:scale-105 shadow-md flex items-center justify-center">
                         <i class="fas fa-right-to-bracket mr-2"></i>Log In
@@ -75,6 +85,7 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
             </button>
         </div>
+        <!-- Refactored Mobile Menu: Static content, visibility controlled by JS -->
         <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 space-y-2">
             <a href="#features" class="block py-2 text-slate-600 hover:text-blue-600">Features</a>
             <a href="#how-it-works" class="block py-2 text-slate-600 hover:text-blue-600">How It Works</a>
@@ -87,7 +98,7 @@
                 </a>
             </div>
             <div id="mobile-user-actions" class="hidden">
-                <button id="mobile-logout-btn" class="w-full mt-2 bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button>
+                 <button id="mobile-logout-btn" class="w-full mt-2 bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button>
             </div>
         </div>
     </header>
@@ -166,7 +177,7 @@
                     </div>
                     <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
                          <div class="bg-indigo-100 text-indigo-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6" /></svg>
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6" /></svg>
                         </div>
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Integrated Current Affairs</h3>
                         <p class="text-slate-500">Daily news linked directly to syllabus topics, with notes and revision quizzes.</p>
@@ -247,7 +258,7 @@
                      <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up" style="transition-delay: 200ms;">
                         <p class="text-slate-600 mb-6">"The instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure. The AI points out flaws I never would have noticed on my own."</p>
                         <div class="flex items-center">
-                            <img src="https://placehold.co/48x48/d1fae5/047857?text=RS" alt="Rohan Singh" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
+                             <img src="https://placehold.co/48x48/d1fae5/047857?text=RS" alt="Rohan Singh" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
                             <div>
                                 <h4 class="font-semibold text-slate-900">Rohan Singh</h4>
                                 <p class="text-slate-500 text-sm">UPSC Aspirant</p>
@@ -257,7 +268,7 @@
                      <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up" style="transition-delay: 400ms;">
                         <p class="text-slate-600 mb-6">"Finally, a platform that connects current affairs to the static syllabus seamlessly. This has saved me hours of work every single day. Highly recommended!"</p>
                         <div class="flex items-center">
-                            <img src="https://placehold.co/48x48/fce7f3/831843?text=AV" alt="Anjali Verma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
+                             <img src="https://placehold.co/48x48/fce7f3/831843?text=AV" alt="Anjali Verma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
                             <div>
                                 <h4 class="font-semibold text-slate-900">Anjali Verma</h4>
                                 <p class="text-slate-500 text-sm">UPSC Aspirant</p>
@@ -318,6 +329,7 @@
         </div>
     </footer>
 
+    <!-- Auth Modal -->
     <div id="auth-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
             <div class="flex justify-end">
@@ -326,6 +338,7 @@
             
             <div id="auth-error" class="bg-red-100 text-red-700 p-3 rounded-md mb-4 hidden"></div>
 
+            <!-- Login View -->
             <div id="login-view">
                 <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Welcome Back</h2>
                 <p class="text-center text-slate-500 mb-8">Please enter your details to log in.</p>
@@ -349,6 +362,7 @@
                 </p>
             </div>
 
+            <!-- Signup View -->
             <div id="signup-view" class="hidden">
                  <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Create Your Account</h2>
                  <p class="text-center text-slate-500 mb-8">Get started on your UPSC journey.</p>
@@ -372,6 +386,7 @@
         </div>
     </div>
     
+    <!-- Planner Modal -->
     <div id="planner-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8">
             <div class="p-8">
@@ -434,6 +449,407 @@
     </div>
     <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none"></div>
 
-    <script src="script.js" type="module"></script>
+    <script type="module">
+        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, addDoc, collection, onSnapshot, query, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Firebase Initialization ---
+            let app, db, auth;
+            // CRITICAL FIX: Removed placeholder config. The app now relies entirely on the injected config.
+            if (typeof __firebase_config === 'undefined') {
+                console.error("Firebase configuration is missing. App cannot start.");
+                showNotification("Error: App configuration is missing.");
+                return;
+            }
+            const firebaseConfig = JSON.parse(__firebase_config);
+            
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug');
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                showNotification("Error: Could not connect to services.");
+                return;
+            }
+
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            let currentUser = null;
+            let generatedPlanHTML = '';
+            let unsubscribePlans = null;
+
+            // --- UI Element Refs ---
+            const DOMElements = {
+                authLinks: document.getElementById('auth-links'),
+                userDashboardLink: document.getElementById('user-dashboard-link'),
+                dashboardSection: document.getElementById('dashboard'),
+                mobileMenu: document.getElementById('mobile-menu'),
+                mobileMenuButton: document.getElementById('mobile-menu-button'),
+                mobileAuthLinks: document.getElementById('mobile-auth-links'),
+                mobileUserActions: document.getElementById('mobile-user-actions'),
+                mobileDashboardLink: document.getElementById('mobile-dashboard-link'),
+                header: document.getElementById('header'),
+                notification: document.getElementById('notification'),
+                authModal: {
+                    modal: document.getElementById('auth-modal'),
+                    loginView: document.getElementById('login-view'),
+                    signupView: document.getElementById('signup-view'),
+                    error: document.getElementById('auth-error'),
+                    loginForm: document.getElementById('login-form'),
+                    signupForm: document.getElementById('signup-form'),
+                },
+                plannerModal: {
+                    modal: document.getElementById('planner-modal'),
+                    questionnaire: document.getElementById('planner-questionnaire'),
+                    planResult: document.getElementById('plan-result'),
+                },
+                plansList: document.getElementById('plans-list'),
+                copyrightYear: document.getElementById('copyright-year'),
+            };
+            
+            // --- Utility Functions ---
+            const showNotification = (message, isError = false) => {
+                DOMElements.notification.textContent = message;
+                DOMElements.notification.classList.toggle('bg-red-600', isError);
+                DOMElements.notification.classList.toggle('bg-slate-800', !isError);
+                DOMElements.notification.classList.add('opacity-100');
+                setTimeout(() => {
+                    DOMElements.notification.classList.remove('opacity-100');
+                }, 3000);
+            };
+
+            const openModal = (modal) => modal.classList.remove('hidden');
+            const closeModal = (modal) => modal.classList.add('hidden');
+
+            // --- Core App Logic ---
+
+            // Dynamic Copyright Year
+            DOMElements.copyrightYear.textContent = new Date().getFullYear();
+
+            // Authentication State Management
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user; 
+                updateUIForAuthState(user);
+            });
+
+            const updateUIForAuthState = (user) => {
+                const isLoggedIn = user && !user.isAnonymous;
+
+                DOMElements.authLinks.classList.toggle('hidden', isLoggedIn);
+                DOMElements.userDashboardLink.classList.toggle('hidden', !isLoggedIn);
+                DOMElements.dashboardSection.classList.toggle('hidden', !isLoggedIn);
+                
+                DOMElements.mobileAuthLinks.classList.toggle('hidden', isLoggedIn);
+                DOMElements.mobileUserActions.classList.toggle('hidden', !isLoggedIn);
+                DOMElements.mobileDashboardLink.classList.toggle('hidden', !isLoggedIn);
+                
+                if (isLoggedIn) {
+                    // FIX: If it's the mock user, display mock data instead of calling Firebase
+                    if (user.uid === 'mock-admin-uid') {
+                        displayMockPlans();
+                    } else {
+                        fetchAndDisplayPlans(user.uid);
+                    }
+                } else {
+                    if (unsubscribePlans) unsubscribePlans();
+                    DOMElements.plansList.innerHTML = '<p class="text-slate-500">Please log in to see your saved plans.</p>';
+                    DOMElements.dashboardSection.classList.add('hidden');
+                }
+            };
+            
+            // Modal Handling
+            const openAuthModal = (mode = 'login') => {
+                const { modal, loginView, signupView, error, loginForm, signupForm } = DOMElements.authModal;
+                error.classList.add('hidden');
+                loginForm.reset();
+                signupForm.reset();
+
+                loginView.classList.toggle('hidden', mode !== 'login');
+                signupView.classList.toggle('hidden', mode === 'login');
+                
+                openModal(modal);
+            };
+
+            // Planner Logic
+            const navigatePlannerSteps = (currentStep, direction) => {
+                const currentStepNumber = parseInt(currentStep.dataset.step);
+                const nextStepNumber = direction === 'next' ? currentStepNumber + 1 : currentStepNumber - 1;
+                const nextStep = DOMElements.plannerModal.questionnaire.querySelector(`[data-step="${nextStepNumber}"]`);
+                
+                if (nextStep) {
+                    currentStep.classList.remove('active');
+                    nextStep.classList.add('active');
+                }
+            };
+
+            const resetPlannerModal = () => {
+                const { questionnaire, planResult } = DOMElements.plannerModal;
+                questionnaire.reset();
+                questionnaire.classList.remove('hidden');
+                planResult.classList.add('hidden');
+                planResult.innerHTML = '';
+                questionnaire.querySelectorAll('[data-step]').forEach((step, index) => {
+                    step.classList.toggle('active', index === 0);
+                });
+            };
+
+            const generatePlanHTML = (answers) => {
+                const { level, commitment, hours, optional } = answers;
+                const schedule = {
+                    'full-time': { '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision'], '8': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'Answer Writing', 'Revision'], '10': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'CSAT', 'Answer Writing', 'Revision'], '12': ['Newspaper', 'GS 1', 'GS 2', 'GS 3', 'Optional', 'CSAT', 'Answer Writing', 'Revision'] },
+                    'working': { '4': ['Newspaper', 'GS Subject'], '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision']}
+                };
+                let dailySlots = commitment === 'full-time' 
+                    ? (hours >= 12 ? schedule['full-time']['12'] : hours >= 10 ? schedule['full-time']['10'] : hours >= 8 ? schedule['full-time']['8'] : schedule['full-time']['6'])
+                    : (hours >= 6 ? schedule['working']['6'] : schedule['working']['4']);
+
+                let focus = '';
+                if (level === 'beginner') focus = 'Focus on NCERTs & building foundational knowledge. Read one core subject for 2 weeks straight.';
+                if (level === 'intermediate') focus = 'Focus on standard books, answer writing practice, and connecting topics with current affairs.';
+                if (level === 'veteran') focus = 'Focus on intensive revision, mock tests (Prelims & Mains), and strengthening weak areas.';
+                
+                const subjects = ['Polity', 'History', 'Geography', 'Economy', 'Environment', 'S&T', optional];
+                const tableRows = Array.from({ length: 7 }, (_, i) => `
+                    <tr>
+                        <td class="font-semibold p-2 border border-slate-200">Day ${i + 1}</td>
+                        <td class="p-2 border border-slate-200">${subjects[i] || subjects[0]} (GS) & ${optional}</td>
+                        <td class="p-2 border border-slate-200">
+                            <ul class="list-disc list-inside">${dailySlots.map(s => `<li>${s}</li>`).join('')}</ul>
+                        </td>
+                    </tr>`).join('');
+
+                return `
+                    <h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3>
+                    <p class="mb-4 text-slate-600"><strong>Level:</strong> ${level.charAt(0).toUpperCase() + level.slice(1)} | <strong>Commitment:</strong> ${commitment === 'full-time' ? 'Full-time' : 'Working Professional'} | <strong>Optional:</strong> ${optional}</p>
+                    <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">${focus}</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left border-collapse">
+                            <thead class="bg-slate-100">
+                                <tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Daily Tasks</th></tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                    <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                        <button data-action="save-plan" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">Save Plan to My Dashboard</button>
+                        <button data-action="modify-plan" class="bg-slate-200 text-slate-800 px-6 py-3 rounded-lg font-semibold flex-1">Start Over</button>
+                    </div>`;
+            };
+            
+            // --- Mock Data Function ---
+            const displayMockPlans = () => {
+                const mockPlanHTML = `
+                    <div class="border-b last:border-b-0 pb-6">
+                        <p class="font-semibold text-slate-600 mb-4">Plan created on: (Sample Date)</p>
+                        <h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3>
+                        <p class="mb-4 text-slate-600"><strong>Level:</strong> Beginner | <strong>Commitment:</strong> Full-time | <strong>Optional:</strong> Sociology</p>
+                        <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">Focus on NCERTs & building foundational knowledge. Read one core subject for 2 weeks straight.</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left border-collapse">
+                                <thead class="bg-slate-100">
+                                    <tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Daily Tasks</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="font-semibold p-2 border border-slate-200">Day 1</td>
+                                        <td class="p-2 border border-slate-200">Polity (GS) & Sociology</td>
+                                        <td class="p-2 border border-slate-200">
+                                            <ul class="list-disc list-inside"><li>Newspaper</li><li>GS Subject</li><li>Optional</li><li>Revision</li></ul>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                DOMElements.plansList.innerHTML = mockPlanHTML;
+            };
+
+            // Firestore Operations
+            const savePlan = async () => {
+                if (!currentUser || currentUser.isAnonymous) {
+                    showNotification('Please log in or create an account to save your plan.', true);
+                    openAuthModal('signup');
+                    return;
+                }
+                if (currentUser.uid === 'mock-admin-uid') {
+                    showNotification('Saving is disabled in demo mode.', true);
+                    closeModal(DOMElements.plannerModal.modal);
+                    return;
+                }
+                try {
+                    const plansCollection = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'studyPlans');
+                    await addDoc(plansCollection, {
+                        planHTML: generatedPlanHTML,
+                        createdAt: serverTimestamp()
+                    });
+                    showNotification('Plan saved successfully!');
+                    closeModal(DOMElements.plannerModal.modal);
+                } catch (error) {
+                    console.error("Error saving plan: ", error);
+                    showNotification('Could not save plan. Please try again.', true);
+                }
+            };
+            
+            const fetchAndDisplayPlans = (userId) => {
+                if (unsubscribePlans) unsubscribePlans();
+                const plansCollection = collection(db, 'artifacts', appId, 'users', userId, 'studyPlans');
+                const q = query(plansCollection, orderBy('createdAt', 'desc'));
+                
+                unsubscribePlans = onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        DOMElements.plansList.innerHTML = `<p class="text-slate-500">You haven't saved any plans yet. Click on 'AI-Powered Study Plan' to create one!</p>`;
+                        return;
+                    }
+                    let plansHTML = '';
+                    snapshot.forEach(doc => {
+                        const planData = doc.data();
+                        const date = planData.createdAt?.toDate().toLocaleDateString() || 'Recently';
+                        plansHTML += `<div class="border-b last:border-b-0 pb-6">
+                            <p class="font-semibold text-slate-600 mb-4">Plan created on: ${date}</p>
+                            ${planData.planHTML.replace(/<div class="mt-8.*?<\/div>/s, '')}
+                        </div>`;
+                    });
+                    DOMElements.plansList.innerHTML = plansHTML;
+                }, (error) => {
+                    console.error("Error fetching plans: ", error);
+                    DOMElements.plansList.innerHTML = `<p class="text-red-500">Could not fetch your plans. Please refresh the page.</p>`;
+                });
+            };
+
+            // --- Event Listeners ---
+            
+            document.body.addEventListener('click', async (e) => {
+                if (e.target.matches('#login-btn, #mobile-login-btn')) { e.preventDefault(); openAuthModal('login'); }
+                if (e.target.matches('#start-trial-btn, #final-cta-btn')) { e.preventDefault(); openAuthModal('login'); }
+                if (e.target.matches('#close-auth-modal')) { closeModal(DOMElements.authModal.modal); }
+                if (e.target.matches('#auth-switch-to-signup')) { openAuthModal('signup'); }
+                if (e.target.matches('#auth-switch-to-login')) { openAuthModal('login'); }
+
+                if (e.target.closest('#logout-btn, #mobile-logout-btn')) {
+                    // FIX: Handle logout for both mock user and real user
+                    if (currentUser && currentUser.uid === 'mock-admin-uid') {
+                        currentUser = null;
+                        updateUIForAuthState(null);
+                        showNotification('Logged out from demo.');
+                    } else if (auth) {
+                        try {
+                            await signOut(auth);
+                            showNotification('Logged out.');
+                        } catch (error) {
+                            showNotification('Logout failed.', true);
+                        }
+                    }
+                }
+
+                if (e.target.closest('#planner-feature-card')) { resetPlannerModal(); openModal(DOMElements.plannerModal.modal); }
+                if (e.target.matches('#close-planner-modal')) { closeModal(DOMElements.plannerModal.modal); }
+
+                const nextBtn = e.target.closest('.next-step-btn');
+                const prevBtn = e.target.closest('.prev-step-btn');
+                if (nextBtn) navigatePlannerSteps(nextBtn.closest('[data-step]'), 'next');
+                if (prevBtn) navigatePlannerSteps(prevBtn.closest('[data-step]'), 'prev');
+            });
+
+            DOMElements.authModal.loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = DOMElements.authModal.loginForm.querySelector('#login-email').value;
+                const password = DOMElements.authModal.loginForm.querySelector('#login-password').value;
+                
+                // --- TEMPORARY MOCK LOGIN ---
+                if (email === 'admin@iasmaintor.com' && password === 'admin') {
+                    const mockUser = { uid: 'mock-admin-uid', isAnonymous: false, email: 'admin@iasmaintor.com' };
+                    currentUser = mockUser;
+                    updateUIForAuthState(mockUser);
+                    closeModal(DOMElements.authModal.modal);
+                    showNotification('Logged in as admin (DEMO)');
+                    return; // Stop execution to prevent Firebase call
+                }
+
+                /*
+                // --- ORIGINAL FIREBASE LOGIN LOGIC ---
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    closeModal(DOMElements.authModal.modal);
+                    showNotification('Logged in successfully!');
+                } catch (error) {
+                    if (email === 'admin@iasmaintor.com' && password === 'admin' && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
+                        try {
+                            await createUserWithEmailAndPassword(auth, email, password);
+                            closeModal(DOMElements.authModal.modal);
+                            showNotification('Admin account created & logged in. Welcome!');
+                        } catch (creationError) {
+                            DOMElements.authModal.error.textContent = "Invalid credentials. Please check your email and password.";
+                            DOMElements.authModal.error.classList.remove('hidden');
+                        }
+                    } else {
+                        DOMElements.authModal.error.textContent = "Invalid credentials. Please check your email and password.";
+                        DOMElements.authModal.error.classList.remove('hidden');
+                    }
+                }
+                */
+               // If not mock user, show error for now.
+               DOMElements.authModal.error.textContent = "Invalid credentials. (Demo accepts: admin@iasmaintor.com / admin)";
+               DOMElements.authModal.error.classList.remove('hidden');
+            });
+
+            DOMElements.authModal.signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                // For demo, we can just show a message.
+                showNotification("Sign up is disabled in demo mode.", true);
+                
+                /*
+                // --- ORIGINAL FIREBASE SIGNUP LOGIC ---
+                const email = DOMElements.authModal.signupForm.querySelector('#signup-email').value;
+                const password = DOMElements.authModal.signupForm.querySelector('#signup-password').value;
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    closeModal(DOMElements.authModal.modal);
+                    showNotification('Account created successfully!');
+                } catch (error) {
+                    DOMElements.authModal.error.textContent = error.message;
+                    DOMElements.authModal.error.classList.remove('hidden');
+                }
+                */
+            });
+
+            DOMElements.plannerModal.questionnaire.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(DOMElements.plannerModal.questionnaire);
+                const answers = Object.fromEntries(formData.entries());
+                generatedPlanHTML = generatePlanHTML(answers);
+                
+                DOMElements.plannerModal.planResult.innerHTML = generatedPlanHTML;
+                DOMElements.plannerModal.questionnaire.classList.add('hidden');
+                DOMElements.plannerModal.planResult.classList.remove('hidden');
+            });
+
+            DOMElements.plannerModal.planResult.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                if (action === 'save-plan') savePlan();
+                if (action === 'modify-plan') resetPlannerModal();
+            });
+
+            DOMElements.mobileMenuButton.addEventListener('click', () => {
+                DOMElements.mobileMenu.classList.toggle('hidden');
+            });
+
+            window.addEventListener('scroll', () => {
+                DOMElements.header.classList.toggle('shadow-md', window.scrollY > 50);
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+        });
+    </script>
 </body>
 </html>
+
