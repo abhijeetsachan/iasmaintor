@@ -1,0 +1,20 @@
+{
+  "name": "iasmaintor-project",
+  "version": "1.0.0",
+  "description": "AI-powered UPSC study planner.",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "upsc",
+    "ai",
+    "planner"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.14.1"
+  }
+}
