@@ -262,9 +262,15 @@
         <section id="dashboard" class="hidden py-20 bg-slate-50">
             <div class="container mx-auto px-6">
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-8 text-center">My Dashboard</h2>
-                <div id="saved-plans-container" class="bg-white p-8 rounded-xl shadow-lg">
-                    <h3 class="text-2xl font-semibold mb-4">Your Saved Study Plans</h3>
-                    <div id="plans-list" class="space-y-6"></div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div id="saved-plans-container" class="bg-white p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-semibold mb-4">Your Saved Study Plans</h3>
+                        <div id="plans-list" class="space-y-6"></div>
+                    </div>
+                    <div id="saved-quizzes-container" class="bg-white p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-semibold mb-4">Your Saved Quizzes</h3>
+                        <div id="quizzes-list" class="space-y-4"></div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -736,6 +742,9 @@
             let unsubscribePlans = null;
             let quizQuestions = [];
             let userAnswers = [];
+            let currentQuizResultHTML = '';
+            let currentQuizParams = {};
+
             
             // --- UI Element Refs ---
             const DOMElements = {
@@ -776,6 +785,7 @@
                     progressText: document.getElementById('quiz-progress-text'),
                 },
                 plansList: document.getElementById('plans-list'),
+                quizzesList: document.getElementById('quizzes-list'),
                 copyrightYear: document.getElementById('copyright-year'),
             };
             
@@ -815,9 +825,11 @@
                 
                 if (isLoggedIn) {
                     fetchAndDisplayPlans(user.uid);
+                    fetchAndDisplayQuizzes(user.uid);
                 } else {
                     if (unsubscribePlans) unsubscribePlans();
                     DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see your saved plans.</p>`;
+                    DOMElements.quizzesList.innerHTML = `<p class="text-slate-500">Please log in to see your saved quizzes.</p>`;
                 }
             };
             
@@ -870,12 +882,13 @@
                 activeView.innerHTML = '';
                 quizQuestions = [];
                 userAnswers = [];
+                currentQuizResultHTML = '';
+                currentQuizParams = {};
                 form.querySelectorAll('[data-step]').forEach((step, index) => {
                     step.classList.toggle('active', index === 0);
                 });
 
-                modal.querySelector('#quiz-progress-bar').classList.remove('hidden');
-                modal.querySelector('#quiz-progress-text').classList.remove('hidden');
+                modal.querySelector('#quiz-progress-bar').parentElement.classList.remove('hidden');
                 
                 updateQuizzieForm();
                 updateQuizProgressBar(1, 4);
@@ -963,41 +976,57 @@ For each question, provide a question, four options in an array, the correct ans
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    if (!response.ok) {
+                     if (!response.ok) {
+                        console.error("API request failed:", response.status, response.statusText);
+                        const errorBody = await response.text();
+                        console.error("Error body:", errorBody);
                         throw new Error(`API request failed with status ${response.status}`);
                     }
-                    const result = await response.json();
-                    const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (jsonText) {
-                         try {
-                            // Clean potential markdown fences from the AI response
-                            const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/```$/, '').trim();
-                            const parsedJson = JSON.parse(cleanedJsonText);
-                            const questions = parsedJson.questions || [];
-                            
-                            if (questions.length > count) {
-                                questions.length = count;
-                            } else if (questions.length < count) {
-                                 console.warn(`API returned ${questions.length} questions, but ${count} were requested.`);
-                            }
-                            
-                            // Validate questions to ensure they have the required fields
-                            const validQuestions = questions.filter(q => q && q.question && q.options && Array.isArray(q.options) && q.answer && q.explanation);
-                            if (validQuestions.length !== questions.length) {
-                                console.warn("Some generated questions were invalid and have been filtered out.");
-                            }
 
-                            return validQuestions.map(q => ({...q, subject: gs_subject || csat_subject, answerIndex: q.options.indexOf(q.answer)}));
-                        } catch (parseError) {
-                             console.error("Failed to parse JSON response from AI:", parseError);
-                             console.error("Invalid JSON string received:", jsonText);
-                             throw new Error("Failed to parse AI response.");
-                        }
+                    const result = await response.json();
+                    console.log("Full API Response:", result); // Log the full response for debugging
+
+                    if (!result.candidates || result.candidates.length === 0) {
+                        console.error("No candidates returned from API. Finish Reason:", result.promptFeedback?.blockReason);
+                        throw new Error("No content generated by the AI. This might be due to a safety block.");
                     }
-                    return [];
+                    
+                    const candidate = result.candidates[0];
+                    const jsonText = candidate.content?.parts?.[0]?.text;
+
+                    if (!jsonText) {
+                        console.error("No JSON text found in the API response part. Finish Reason:", candidate.finishReason);
+                        console.error("Candidate details:", candidate);
+                        throw new Error("AI response was empty or malformed.");
+                    }
+
+                    try {
+                        const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+                        const parsedJson = JSON.parse(cleanedJsonText);
+                        const questions = parsedJson.questions || [];
+                        
+                        if (questions.length === 0) {
+                             console.warn("AI generated a valid JSON but with an empty questions array.");
+                        }
+
+                        if (questions.length > count) {
+                            questions.length = count;
+                        }
+                        
+                        const validQuestions = questions.filter(q => q && q.question && q.options && Array.isArray(q.options) && q.answer && q.explanation);
+                        if (validQuestions.length !== questions.length) {
+                            console.warn("Some generated questions were invalid and have been filtered out.");
+                        }
+
+                        return validQuestions.map(q => ({...q, subject: gs_subject || csat_subject, answerIndex: q.options.indexOf(q.answer)}));
+                    } catch (parseError) {
+                         console.error("Failed to parse JSON response from AI:", parseError);
+                         console.error("Invalid JSON string received:", jsonText);
+                         throw new Error("Failed to parse AI response.");
+                    }
                 } catch (error) {
-                    console.error("Error generating quiz:", error);
-                    showNotification("Failed to generate quiz. Please try again.", true);
+                    console.error("Error in generateQuizQuestions:", error);
+                    showNotification(error.message || "Failed to generate quiz. Please try again.", true);
                     return [];
                 }
             };
@@ -1059,7 +1088,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
 
                 function renderQuestion() {
                     if (quizQuestions.length === 0) {
-                        activeView.innerHTML = `<div class="p-4 text-center">No questions available for this combination.</div>`;
+                        activeView.innerHTML = `<div class="p-4 text-center">No questions available for this combination. Please try again.</div> <div class="mt-6 flex justify-end"><button data-action="retake-quiz" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Start Over</button></div>`;
                         footer.classList.add('hidden');
                         return;
                     }
@@ -1112,8 +1141,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
             const calculateAndShowResults = async () => {
                 const { activeView, modal } = DOMElements.quizzieModal;
                 document.getElementById('quiz-footer').classList.add('hidden');
-                modal.querySelector('#quiz-progress-bar').classList.add('hidden');
-                modal.querySelector('#quiz-progress-text').classList.add('hidden');
+                modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
                 
                 let score = 0;
                 let correctCount = 0;
@@ -1199,15 +1227,17 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                     `;
                 }).join('');
 
-                resultHTML += `<div class="mt-8 flex justify-end"><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
+                resultHTML += `<div class="mt-8 flex justify-between items-center"><button data-action="save-quiz" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">Save Quiz Result</button><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
 
                 activeView.innerHTML = resultHTML;
+                currentQuizResultHTML = activeView.innerHTML; // Store for saving
 
                 // Generate and display AI feedback
                 const aiFeedbackContainer = activeView.querySelector('#ai-feedback-content');
                 try {
                     const feedback = await generateAIFeedback(correctCount, incorrectCount, unansweredCount, quizQuestions.length, wrongQuestions);
                     aiFeedbackContainer.innerHTML = `<p>${feedback}</p>`;
+                    currentQuizResultHTML = activeView.innerHTML; // Update with feedback
                 } catch (error) {
                     console.error("Failed to get AI feedback:", error);
                     aiFeedbackContainer.innerHTML = `<p>Could not generate AI feedback at this time. Please review the explanations below.</p>`;
@@ -1217,16 +1247,16 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
             const handleQuizSubmit = async (e) => {
                 e.preventDefault();
                 const { form, result, activeView, modal } = DOMElements.quizzieModal;
-                modal.querySelector('#quiz-progress-bar').classList.add('hidden');
-                modal.querySelector('#quiz-progress-text').classList.add('hidden');
+                modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
                 const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
+                currentQuizParams = Object.fromEntries(formData.entries());
+
 
                 form.classList.add('hidden');
                 result.classList.remove('hidden');
                 result.innerHTML = `<div class="p-4 bg-blue-50 rounded-lg text-center"><div class="font-semibold flex items-center justify-center"><span>Generating Questions with AI</span><span class="pulsing-dots ml-1"><span>.</span><span>.</span><span>.</span></span></div></div>`;
                 
-                quizQuestions = await generateQuizQuestions(data);
+                quizQuestions = await generateQuizQuestions(currentQuizParams);
                 userAnswers = new Array(quizQuestions.length);
                 result.classList.add('hidden');
                 activeView.classList.remove('hidden');
@@ -1237,7 +1267,6 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 }
                 displayQuiz();
             };
-
 
             // --- Event Listeners ---
             document.body.addEventListener('click', async (e) => {
@@ -1256,6 +1285,15 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 if (target.closest('#logout-btn, #mobile-logout-btn')) {
                     try { await firebaseAuth.signOut(auth); showNotification('Logged out.'); }
                     catch (error) { showNotification('Logout failed.', true); }
+                }
+                
+                if (target.closest('[data-action="save-quiz"]')) {
+                    saveQuizResult();
+                }
+
+                if (target.closest('[data-action="delete-quiz"]')) {
+                    const quizId = target.closest('[data-quiz-id]').dataset.quizId;
+                    deleteQuiz(quizId);
                 }
                 
                 if (target.closest('#current-affairs-card')) {
