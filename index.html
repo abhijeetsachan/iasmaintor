@@ -741,51 +741,6 @@
             let quizQuestions = [];
             let userAnswers = [];
             
-            // --- EXPANDED QUESTION BANK ---
-            const questionBank = {
-              "gs_question_patterns": {
-                "history": [
-                  { "type": "multiple_statement_correct", "question": "With reference to ancient India, consider the following statements:\n1. The concept of Stupa is Buddhist in origin.\n2. Stupa was generally a repository of relics.\n3. Stupa was a votive and commemorative structure in Buddhist tradition.\nHow many of the statements given above are correct?", "options": ["Only one", "Only two", "All three", "None"], "answer": "Only two", "explanation": "Statements 2 and 3 are correct. The concept of stupas is pre-Buddhist, but it was perfected under Buddhism." },
-                  { "type": "chronological_order", "question": "Consider the following events in the history of India:\n1. Rise of Pratiharas under King Bhoja\n2. Establishment of Pallava power under Mahendravarman I\n3. Establishment of Chola power by Parantaka I\n4. Pala dynasty founded by Gopala\nWhat is the correct chronological order of the above events?", "options": ["2-4-1-3", "3-1-4-2", "2-1-4-3", "3-4-1-2"], "answer": "2-4-1-3", "explanation": "Pallavas (Mahendravarman I) were around 600 AD. Palas (Gopala) around 750 AD. Pratiharas (Bhoja) around 836 AD. Cholas (Parantaka I) around 907 AD." },
-                  { "type": "match_the_following", "question": "Consider the following pairs:\nLiterary work      Author\n1. Devichandragupta : Bilhana\n2. Hammira-Mahakavya : Nayachandra Suri\n3. Milinda-panha     : Nagarjuna\n4. Nitivakyamrita    : Somadeva Suri\nHow many of the above pairs are correctly matched?", "options": ["Only one", "Only two", "Only three", "All four"], "answer": "Only two", "explanation": "Devichandragupta was written by Vishakhadatta, and Milinda-panha is attributed to Nagasena, not Nagarjuna. The other two pairs are correct." },
-                  { "type": "conceptual_definition", "question": "The term 'Sreni' in ancient India referred to:", "options": ["A type of coin", "An organization of merchants", "A village administrator", "A judicial officer"], "answer": "An organization of merchants", "explanation": "Srenis were guilds or corporations of traders, merchants, and artisans in ancient India. They were powerful economic and sometimes administrative bodies."}
-                ],
-                "polity": [
-                  { "type": "statement_assertion_reason", "question": "Consider the following statements:\nStatement-I: In India, prisons are managed by State Governments with their own rules and regulations.\nStatement-II: In India, prisons are governed by the Prisons Act, 1894 which expressly kept the subject of prisons in the control of Provincial Governments.\nWhich one of the following is correct in respect of the above statements?", "options": ["Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I", "Statement-I is correct but Statement-II is incorrect", "Statement-I is incorrect but Statement-II is correct"], "answer": "Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "explanation": "The Prisons Act, 1894, placed prisons under provincial (now state) control, which is why state governments manage them today, as stated in the Constitution." },
-                  { "type": "how_many_correct", "question": "With reference to the Indian Parliament, consider the following statements:\n1. A bill pending in the Lok Sabha lapses on its dissolution.\n2. A bill passed by the Lok Sabha and pending in the Rajya Sabha lapses on the dissolution of the Lok Sabha.\n3. A bill in regard to which the President of India has notified his/her intention to summon the Houses to a joint sitting does not lapse on the dissolution of the Lok Sabha.\nHow many of the above statements are correct?", "options": ["Only one", "Only two", "All three", "None"], "answer": "All three", "explanation": "All three statements accurately describe the rules regarding the lapsing of bills upon the dissolution of the Lok Sabha as per parliamentary procedure." },
-                  { "type": "multiple_application_correct", "question": "Which of the following are envisaged by the Right against Exploitation in the Constitution of India?\n1. Prohibition of traffic in human beings and forced labour\n2. Abolition of untouchability\n3. Protection of the interests of minorities\n4. Prohibition of employment of children in factories and mines\nSelect the correct answer using the code given below:", "options": ["1 and 4 only", "2, 3 and 4", "1 and 2 only", "1, 2, 3 and 4"], "answer": "1 and 4 only", "explanation": "The Right against Exploitation comprises Articles 23 (Prohibition of traffic in human beings and forced labour) and 24 (Prohibition of employment of children in factories, etc.). Abolition of untouchability is under the Right to Equality (Art 17), and protection of minorities is under Cultural and Educational Rights (Art 29 & 30)." }
-                ],
-                "economy": [
-                  { "type": "conceptual_definition", "question": "In the context of finance, the term 'beta' refers to:", "options": ["the process of simultaneous buying and selling of an asset from different platforms", "an investment strategy of a portfolio manager to balance risk versus reward", "a type of systemic risk that arises where perfect hedging is not possible", "a numeric value that measures the fluctuations of a stock to changes in the overall stock market"], "answer": "a numeric value that measures the fluctuations of a stock to changes in the overall stock market", "explanation": "Beta is a measure of a stock's volatility in relation to the overall market. A beta greater than 1 indicates the stock is more volatile than the market, while a beta less than 1 means it is less volatile." },
-                  { "type": "multiple_application_correct", "question": "Consider the following markets:\n1. Government Bond Market\n2. Call Money Market\n3. Treasury Bill Market\n4. Stock Market\nHow many of the above are included in capital markets?", "options": ["Only one", "Only two", "Only three", "All four"], "answer": "Only two", "explanation": "The Government Bond Market and the Stock Market are parts of the capital market, which deals with long-term funds. The Call Money and Treasury Bill markets are part of the money market, dealing with short-term funds." },
-                  { "type": "conceptual_definition", "question": "Which one of the following best describes the term 'helicopter money'?", "options": ["A policy of quantitative easing by the central bank", "An unconventional monetary policy tool involving printing large sums of money and distributing it to the public", "Foreign aid provided to a country after a natural disaster", "A tax rebate given to low-income households"], "answer": "An unconventional monetary policy tool involving printing large sums of money and distributing it to the public", "explanation": "Helicopter money is a last-resort monetary stimulus strategy to spur inflation and economic output by putting money directly into the hands of the public, as if dropping it from a helicopter." }
-                ],
-                "geography": [
-                  { "type": "statement_assertion_reason", "question": "Consider the following statements:\nStatement-I: The soil in tropical rain forests is rich in nutrients.\nStatement-II: The high temperature and moisture of tropical rain forests cause dead organic matter in the soil to decompose quickly.\nWhich one of the following is correct in respect of the above statements?", "options": ["Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I", "Statement-I is correct but Statement-II is incorrect", "Statement-I is incorrect but Statement-II is correct"], "answer": "Statement-I is incorrect but Statement-II is correct", "explanation": "Statement II is correct, but rapid decomposition and heavy rainfall lead to leaching, making the topsoil of tropical rainforests nutrient-poor, not rich. Thus, Statement I is incorrect." },
-                  { "type": "how_many_correct", "question": "Consider the following rivers:\n1. Brahmani\n2. Nagavali\n3. Subarnarekha\n4. Vamsadhara\nWhich of the above rise from the Eastern Ghats?", "options": ["1 and 2", "2 and 4", "3 and 4", "1 and 3"], "answer": "2 and 4", "explanation": "The Brahmani and Subarnarekha rivers originate from the Chota Nagpur Plateau. The Nagavali and Vamsadhara rivers originate in the Eastern Ghats."}
-                ],
-                "environment": [
-                    { "type": "conceptual_definition", "question": "What is 'blue carbon'?", "options": ["Carbon captured by the world's oceans and coastal ecosystems", "Carbon stored in forest biomass", "Carbon emitted by burning fossil fuels", "Carbon sequestered in agricultural soils"], "answer": "Carbon captured by the world's oceans and coastal ecosystems", "explanation": "Blue carbon refers to the carbon dioxide removed from the atmosphere by marine ecosystems like mangroves, salt marshes, and seagrass meadows."}
-                ],
-                "science-tech": [
-                    { "type": "multiple_application_correct", "question": "Consider the following activities:\n1. Spraying pesticides on a crop field\n2. Inspecting the craters of active volcanoes\n3. Collecting breath samples from spouting whales for DNA analysis\nAt the present level of technology, which of the above activities can be successfully carried out by using drones?", "options": ["1 and 2 only", "2 and 3 only", "1 and 3 only", "1, 2 and 3"], "answer": "1, 2 and 3", "explanation": "Drones are now widely used for all three purposes: precision agriculture (spraying), aerial surveillance in hazardous environments (volcanoes), and scientific research (collecting samples from whales)." }
-                ]
-              },
-              "csat_question_patterns": {
-                "quant": [
-                  { "type": "problem_solving", "question": "A person travels from X to Y at a speed of 40 km/h and returns by increasing his speed by 50%. What is his average speed for both the trips?", "options": ["48 km/h", "50 km/h", "52 km/h", "55 km/h"], "answer": "48 km/h", "explanation": "Return speed is 40 * 1.5 = 60 km/h. Average speed = (2 * 40 * 60) / (40 + 60) = 4800 / 100 = 48 km/h." },
-                  { "type": "problem_solving", "question": "A student has to get 40% marks to pass an examination. He got 40 marks and failed by 40 marks. The maximum marks for the examination are:", "options": ["200", "300", "400", "500"], "answer": "200", "explanation": "Passing marks = 40 (scored) + 40 (failed by) = 80. Since 80 marks are 40% of the total, the maximum marks are (80 / 40) * 100 = 200."}
-                ],
-                "reasoning": [
-                  { "type": "logical_deduction", "question": "Statements:\n1. All cats are dogs.\n2. All dogs are elephants.\nConclusions:\nI. All cats are elephants.\nII. Some elephants are cats.", "options": ["Only conclusion I follows", "Only conclusion II follows", "Both I and II follow", "Neither I nor II follows"], "answer": "Both I and II follow", "explanation": "This is a case of direct logical deduction. If A->B and B->C, then A->C. Also, if all A are C, then some C must be A." },
-                  { "type": "data_sufficiency", "question": "What is the value of X? \nStatement 1: X is a prime number. \nStatement 2: X^2 - 4 = 0.", "options": ["Statement 1 alone is sufficient", "Statement 2 alone is sufficient", "Both statements together are sufficient", "Statements are not sufficient"], "answer": "Statement 2 alone is sufficient", "explanation": "Statement 2 gives X^2 = 4, so X = 2 or -2. Statement 1 says X is prime, so X can be 2, 3, 5, etc. Statement 2 alone gives a definitive value (or values) for X. Thus, it is sufficient to determine X's value from a limited set."}
-                ],
-                "comprehension": [
-                  { "type": "passage_inference", "question": "Read the following passage and answer the item that follows. 'The quest for a just society has been a perennial theme in human history. It has led to revolutions, reforms, and the creation of vast legal and ethical frameworks. Yet, the definition of 'just' remains elusive, varying across cultures and epochs. A society that provides equal opportunity may be considered just by some, while others might argue that a just society is one that ensures equal outcomes.'\nWhat is the most logical and rational inference that can be made from the passage?", "options": ["There is no universal concept of a just society.", "Equal opportunity is the only path to a just society.", "Equal outcomes are impossible to achieve.", "Revolutions are the best way to create a just society."], "answer": "There is no universal concept of a just society.", "explanation": "The passage explicitly states that the definition of 'just' is 'elusive, varying across cultures and epochs', which directly supports this inference." }
-                ]
-              }
-            };
-            
             // --- UI Element Refs ---
             const DOMElements = {
                 authLinks: document.getElementById('auth-links'),
@@ -952,35 +907,84 @@
                 progressIndicator.style.width = `${percentage}%`;
                 progressText.textContent = `Step ${current} of ${total}`;
             };
+            
+            const generateQuizQuestions = async (params) => {
+                const { main_subject, test_type, gs_subject, csat_subject, num_questions, difficulty, question_type } = params;
+                const count = test_type === 'flt' ? 5 : parseInt(num_questions);
 
-             const generateQuizQuestions = (params) => {
-                 const { main_subject, test_type, gs_subject, csat_subject, num_questions } = params;
-                 let sourcePool = [];
-                 const questionPatterns = main_subject === 'gs' ? questionBank.gs_question_patterns : questionBank.csat_question_patterns;
+                const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam. For each question, provide a question, four options, the correct answer, and a concise explanation. You must return the response in a valid JSON format according to the provided schema.`;
 
-                 if (!questionPatterns) { return []; }
+                let userQuery = `Generate ${count} questions. Difficulty: ${difficulty}. `;
+                if (test_type === 'flt') {
+                    userQuery += `This is a Full Length Test for ${main_subject === 'gs' ? 'General Studies' : 'CSAT'}. The questions should cover a mix of subjects relevant to this paper.`;
+                } else {
+                    const subject = main_subject === 'gs' ? gs_subject : csat_subject;
+                    userQuery += `This is a sectional test for the subject: ${subject}. `;
+                    if (main_subject === 'gs') {
+                        userQuery += `The nature of questions should be: ${question_type}.`;
+                    }
+                }
+                
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
-                 if (test_type === 'flt') {
-                     Object.keys(questionPatterns).forEach(subject => {
-                         sourcePool.push(...(questionPatterns[subject] || []).map(q => ({...q, subject})));
-                     });
-                 } else {
-                     const sectionalSubject = main_subject === 'gs' ? gs_subject : csat_subject;
-                     sourcePool = (questionPatterns[sectionalSubject] || []).map(q => ({...q, subject: sectionalSubject}));
-                 }
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "questions": {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            "question": { "type": "STRING" },
+                                            "options": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                            "answer": { "type": "STRING" },
+                                            "explanation": { "type": "STRING" }
+                                        },
+                                        required: ["question", "options", "answer", "explanation"]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
 
-                 const count = test_type === 'flt' ? 5 : parseInt(num_questions); // Capping FLT for demo, otherwise use 100 for GS, 80 for CSAT
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+                    const result = await response.json();
+                    const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (jsonText) {
+                        const parsedJson = JSON.parse(jsonText);
+                        const questions = parsedJson.questions || [];
+                        // Ensure the correct number of questions is returned, matching the user's request
+                        if (questions.length > count) {
+                            questions.length = count;
+                        } else if (questions.length < count) {
+                             // If API returns fewer, we can't create more, but we can notify the user or just use what we have.
+                             console.warn(`API returned ${questions.length} questions, but ${count} were requested.`);
+                        }
 
-                 const generated = [];
-                 if (sourcePool.length > 0) {
-                     for (let i = 0; i < count; i++) {
-                         // Pick a random question from the pool. This allows duplicates if the pool is smaller than the count.
-                         generated.push(sourcePool[Math.floor(Math.random() * sourcePool.length)]);
-                     }
-                 }
-                 
-                 return generated.map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
-             };
+                        return questions.map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
+                    }
+                    return [];
+                } catch (error) {
+                    console.error("Error generating quiz:", error);
+                    showNotification("Failed to generate quiz. Please try again.", true);
+                    return [];
+                }
+            };
 
             const displayQuiz = () => {
                 const { activeView } = DOMElements.quizzieModal;
@@ -1067,7 +1071,7 @@
                     } else {
                         incorrectCount++;
                         score -= 0.66;
-                        wrongTopics[q.subject] = (wrongTopics[q.subject] || 0) + 1;
+                        wrongTopics[q.subject || 'general'] = (wrongTopics[q.subject || 'general'] || 0) + 1;
                     }
                 });
                 
@@ -1143,7 +1147,7 @@
                 activeView.innerHTML = resultHTML;
             };
 
-            const handleQuizSubmit = (e) => {
+            const handleQuizSubmit = async (e) => {
                 e.preventDefault();
                 const { form, result, activeView, modal } = DOMElements.quizzieModal;
                 modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
@@ -1152,16 +1156,18 @@
 
                 form.classList.add('hidden');
                 result.classList.remove('hidden');
-                result.innerHTML = `<div class="p-4 bg-blue-50 rounded-lg text-center"><div class="font-semibold flex items-center justify-center"><span>Generating Questions</span><span class="pulsing-dots ml-1"><span>.</span><span>.</span><span>.</span></span></div></div>`;
+                result.innerHTML = `<div class="p-4 bg-blue-50 rounded-lg text-center"><div class="font-semibold flex items-center justify-center"><span>Generating Questions with AI</span><span class="pulsing-dots ml-1"><span>.</span><span>.</span><span>.</span></span></div></div>`;
                 
-                setTimeout(() => {
-                    quizQuestions = generateQuizQuestions(data);
-                    userAnswers = new Array(quizQuestions.length);
-                    result.classList.add('hidden');
-                    activeView.classList.remove('hidden');
+                quizQuestions = await generateQuizQuestions(data);
+                userAnswers = new Array(quizQuestions.length);
+                result.classList.add('hidden');
+                activeView.classList.remove('hidden');
+                if (quizQuestions.length > 0) {
                     document.getElementById('quiz-footer').classList.remove('hidden');
-                    displayQuiz();
-                }, 500);
+                } else {
+                    activeView.innerHTML = `<div class="text-center"><p>Could not generate questions. Please try different options or try again later.</p> <button data-action="retake-quiz" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Start Over</button></div>`;
+                }
+                displayQuiz();
             };
 
 
