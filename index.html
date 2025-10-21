@@ -515,10 +515,10 @@
     </div>
 
     <!-- Quizzie Modal -->
-    <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8">
+    <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8 max-h-[90vh] overflow-y-auto">
             <div class="p-8">
-                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <div class="flex justify-between items-center mb-6 border-b pb-4 sticky top-0 bg-white z-10 -mt-8 -mx-8 pt-8 px-8">
                     <h2 class="text-2xl font-bold text-slate-800">AI Based Quiz Module</h2>
                     <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
                 </div>
@@ -1158,4 +1158,5 @@
     </script>
 </body>
 </html>
+
 
