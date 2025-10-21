@@ -835,14 +835,46 @@
                 }
             };
             
-            const generatePlanHTML = (answers) => {
-                const { level, commitment, hours, optional } = answers;
-                const schedule = { 'full-time': { '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision'], '8': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'Answer Writing', 'Revision'], '10': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'CSAT', 'Answer Writing', 'Revision'], '12': ['Newspaper', 'GS 1', 'GS 2', 'GS 3', 'Optional', 'CSAT', 'Answer Writing', 'Revision'] }, 'working': { '4': ['Newspaper', 'GS Subject'], '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision']} };
-                let dailySlots = commitment === 'full-time' ? (hours >= 12 ? schedule['full-time']['12'] : hours >= 10 ? schedule['full-time']['10'] : hours >= 8 ? schedule['full-time']['8'] : schedule['full-time']['6']) : (hours >= 6 ? schedule['working']['6'] : schedule['working']['4']);
-                let focus = level === 'beginner' ? 'Focus on NCERTs & building foundational knowledge.' : level === 'intermediate' ? 'Focus on standard books and answer writing.' : 'Focus on intensive revision and mock tests.';
-                const subjects = ['Polity', 'History', 'Geography', 'Economy', 'Environment', 'S&T', optional];
-                const tableRows = Array.from({ length: 7 }, (_, i) => `<tr><td class="font-semibold p-2 border border-slate-200">Day ${i + 1}</td><td class="p-2 border border-slate-200">${subjects[i] || subjects[0]} (GS) & ${optional}</td><td class="p-2 border border-slate-200"><ul class="list-disc list-inside">${dailySlots.map(s => `<li>${s}</li>`).join('')}</ul></td></tr>`).join('');
-                return `<h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3><p class="mb-4 text-slate-600"><strong>Level:</strong> ${level.charAt(0).toUpperCase() + level.slice(1)} | <strong>Commitment:</strong> ${commitment.replace('-', ' ')} | <strong>Optional:</strong> ${optional}</p><p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">${focus}</p><div class="overflow-x-auto"><table class="w-full text-sm text-left border-collapse"><thead><tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Tasks</th></tr></thead><tbody>${tableRows}</tbody></table></div><div class="mt-8 flex flex-col sm:flex-row gap-4"><button data-action="save-plan" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">Save Plan to My Dashboard</button><button data-action="modify-plan" class="bg-slate-200 text-slate-800 px-6 py-3 rounded-lg font-semibold flex-1">Start Over</button></div>`;
+            const generateAIStudyPlan = async (answers) => {
+                 const { level, commitment, hours, optional } = answers;
+                
+                const systemPrompt = `You are an expert mentor for the Indian Civil Services (UPSC) examination. Your task is to generate a personalized, structured, and actionable 7-day study plan for an aspirant. The plan must be in the format of an HTML table. The table should have three columns: "Day", "Focus", and "Tasks". The "Tasks" column should contain an unordered list (\`<ul>\`).`;
+
+                const userQuery = `Generate a 7-day study plan for a UPSC aspirant with the following profile:
+- Preparation Level: ${level}
+- Commitment: ${commitment}
+- Daily Study Hours: ${hours}
+- Optional Subject: ${optional}
+
+The plan should be practical and cover a mix of General Studies subjects and the optional subject, including time for current affairs and revision. Create the output as a single HTML \`<table>\` with a \`<thead>\` and \`<tbody>\`. Do not include any other HTML tags like \`<html>\` or \`<body>\`.`;
+                
+                const apiKey = "AIzaSyAHB9BDQD7xOP1VDTavcqr30IEwlZkIM64";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+                    const result = await response.json();
+                    const htmlContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (htmlContent) {
+                        return htmlContent;
+                    }
+                    throw new Error("Empty response from AI.");
+                } catch (error) {
+                    console.error("Error generating AI study plan:", error);
+                    return "<p class='text-red-500'>Sorry, we couldn't generate a plan at this time. Please try again later.</p>";
+                }
             };
 
             const savePlan = async () => {
@@ -924,55 +956,54 @@
             };
             
             const generateQuizQuestions = async (params) => {
-                const { main_subject, test_type, gs_subject, csat_subject, num_questions, difficulty, question_type } = params;
-                const count = test_type === 'flt' ? 5 : parseInt(num_questions);
+                try {
+                    const { main_subject, test_type, gs_subject, csat_subject, num_questions, difficulty, question_type } = params;
+                    const count = test_type === 'flt' ? 5 : parseInt(num_questions);
 
-                const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
+                    const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
 - If the user selects 'basic' difficulty, generate straightforward, knowledge-based questions that test fundamental concepts.
 - If the user selects 'advanced' difficulty, generate tricky, application-based, or multi-statement questions (e.g., "How many of the above statements are correct?") that require deeper analysis and are designed to be challenging.
 For each question, provide a question, four options in an array, the correct answer (which must be one of the provided options), and a detailed and thorough explanation that elaborates on why the correct answer is right and why the other options are incorrect. You must return the response in a valid JSON format according to the provided schema.`;
 
-                let userQuery = `Generate ${count} questions. Difficulty: ${difficulty}. `;
-                if (test_type === 'flt') {
-                    userQuery += `This is a Full Length Test for ${main_subject === 'gs' ? 'General Studies' : 'CSAT'}. The questions should cover a mix of subjects relevant to this paper.`;
-                } else {
-                    const subject = main_subject === 'gs' ? gs_subject : csat_subject;
-                    userQuery += `This is a sectional test for the subject: ${subject}. `;
-                    if (main_subject === 'gs') {
-                        userQuery += `The nature of questions should be: ${question_type}.`;
+                    let userQuery = `Generate ${count} questions. Difficulty: ${difficulty}. `;
+                    if (test_type === 'flt') {
+                        userQuery += `This is a Full Length Test for ${main_subject === 'gs' ? 'General Studies' : 'CSAT'}. The questions should cover a mix of subjects relevant to this paper.`;
+                    } else {
+                        const subject = main_subject === 'gs' ? gs_subject : csat_subject;
+                        userQuery += `This is a sectional test for the subject: ${subject}. `;
+                        if (main_subject === 'gs') {
+                            userQuery += `The nature of questions should be: ${question_type}.`;
+                        }
                     }
-                }
-                
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                    
+                    const apiKey = "AIzaSyAHB9BDQD7xOP1VDTavcqr30IEwlZkIM64"; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                "questions": {
-                                    type: "ARRAY",
-                                    items: {
-                                        type: "OBJECT",
-                                        properties: {
-                                            "question": { "type": "STRING" },
-                                            "options": { "type": "ARRAY", "items": { "type": "STRING" } },
-                                            "answer": { "type": "STRING" },
-                                            "explanation": { "type": "STRING" }
-                                        },
-                                        required: ["question", "options", "answer", "explanation"]
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    "questions": {
+                                        type: "ARRAY",
+                                        items: {
+                                            type: "OBJECT",
+                                            properties: {
+                                                "question": { "type": "STRING" },
+                                                "options": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                                "answer": { "type": "STRING" },
+                                                "explanation": { "type": "STRING" }
+                                            },
+                                            required: ["question", "options", "answer", "explanation"]
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                };
-
-                try {
+                    };
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1037,37 +1068,8 @@ For each question, provide a question, four options in an array, the correct ans
                          throw new Error("Failed to parse AI response.");
                     }
                 } catch (error) {
-                    console.error("Error in generateQuizQuestions, falling back to static questions:", error);
-                    showNotification("AI service unavailable. Using fallback questions.", true);
-                    
-                    const fallbackQuestions = {
-                        "gs": {
-                            "history": [{ question: "Which of the following was a major port of the Indus Valley Civilization?", options: ["Pataliputra", "Lothal", "Ujjain", "Taxila"], answer: "Lothal", explanation: "Lothal, located in modern-day Gujarat, was one of the most prominent cities of the ancient Indus Valley civilization and had a large dockyard, making it a major port." }],
-                            "polity": [{ question: "The power to promulgate ordinances is vested in which of the following?", options: ["The Prime Minister", "The President", "The Chief Justice of India", "The Parliament"], answer: "The President", explanation: "Article 123 of the Indian Constitution grants the President of India the power to promulgate Ordinances during the recess of Parliament. These ordinances have the same force and effect as an Act of Parliament." }],
-                            "geography": [{ question: "Which one of the following is the longest river of the Peninsular India?", options: ["Narmada", "Godavari", "Krishna", "Mahanadi"], answer: "Godavari", explanation: "The Godavari is India's second longest river after the Ganga and the longest in Peninsular India. Its source is in Trimbakeshwar, Maharashtra." }]
-                        },
-                        "csat": {
-                            "reasoning": [{ question: "If 'CAT' is coded as 'DBU', how is 'DOG' coded?", options: ["EPH", "FPI", "EPG", "FPH"], answer: "EPH", explanation: "Each letter in the word is replaced by the next letter in the alphabet. C becomes D, A becomes B, T becomes U. Similarly, D becomes E, O becomes P, and G becomes H." }],
-                            "quant": [{ question: "A man buys an article for Rs. 27.50 and sells it for Rs. 28.60. Find his gain percent.", options: ["3%", "4%", "5%", "6%"], answer: "4%", explanation: "Gain = Rs. (28.60 - 27.50) = Rs. 1.10. Gain % = (1.10 / 27.50) * 100 = 4%." }]
-                        }
-                    };
-
-                    let pool = [];
-                    if (main_subject === 'gs') {
-                        pool = fallbackQuestions.gs[gs_subject] || Object.values(fallbackQuestions.gs).flat();
-                    } else if (main_subject === 'csat') {
-                        pool = fallbackQuestions.csat[csat_subject] || Object.values(fallbackQuestions.csat).flat();
-                    }
-                    
-                    if (pool.length === 0) pool = [...Object.values(fallbackQuestions.gs).flat(), ...Object.values(fallbackQuestions.csat).flat()];
-                    
-                    let selected = [];
-                    // Ensure the number of questions matches the user's request, even if it means duplicating.
-                    for (let i = 0; i < count; i++) {
-                        selected.push(pool[i % pool.length]);
-                    }
-                    
-                    return selected.map(q => ({...q, subject: gs_subject || csat_subject, answerIndex: q.options.indexOf(q.answer)}));
+                    console.error("Error in generateQuizQuestions:", error);
+                    throw error;
                 }
             };
 
@@ -1089,7 +1091,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
 3. Suggest specific, actionable areas for improvement. For example, 'It seems you're struggling with chronology in Ancient History. Revisiting a timeline chart could be helpful.' or 'The errors in Polity suggest a need to brush up on Fundamental Rights.'
 4. Maintain a supportive and motivational tone.`;
 
-                const apiKey = "";
+                const apiKey = "AIzaSyAHB9BDQD7xOP1VDTavcqr30IEwlZkIM64";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
                 const payload = {
@@ -1300,26 +1302,47 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 result.classList.remove('hidden');
                 result.innerHTML = `<div class="p-4 bg-blue-50 rounded-lg text-center"><div class="font-semibold flex items-center justify-center"><span>Generating Questions with AI</span><span class="pulsing-dots ml-1"><span>.</span><span>.</span><span>.</span></span></div></div>`;
                 
-                quizQuestions = await generateQuizQuestions(currentQuizParams);
-                userAnswers = new Array(quizQuestions.length);
-                result.classList.add('hidden');
-                activeView.classList.remove('hidden');
+                try {
+                    quizQuestions = await generateQuizQuestions(currentQuizParams);
+                    userAnswers = new Array(quizQuestions.length);
+                    result.classList.add('hidden');
+                    activeView.classList.remove('hidden');
 
-                if (quizQuestions.length > 0) {
-                    document.getElementById('quiz-footer').classList.remove('hidden');
-                    displayQuiz();
-                } else {
-                    activeView.innerHTML = `<div class="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                                <h4 class="font-bold text-yellow-800">No Questions Generated</h4>
-                                                <p class="text-yellow-700 mt-2">The AI could not generate questions for this specific combination. Please try different options.</p>
+                    if (quizQuestions.length > 0) {
+                        document.getElementById('quiz-footer').classList.remove('hidden');
+                        displayQuiz();
+                    } else {
+                        // This case handles when the AI returns a valid, but empty, list of questions.
+                        activeView.innerHTML = `<div class="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                                    <h4 class="font-bold text-yellow-800">No Questions Generated</h4>
+                                                    <p class="text-yellow-700 mt-2">The AI could not generate questions for this specific combination. Please try different options.</p>
+                                                    <button data-action="retake-quiz" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Start Over</button>
+                                                </div>`;
+                    }
+                } catch (error) {
+                    result.classList.add('hidden');
+                    activeView.classList.remove('hidden');
+                    activeView.innerHTML = `<div class="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                                                <h4 class="font-bold text-red-800">Quiz Generation Failed</h4>
+                                                <p class="text-red-700 mt-2">${error.message}</p>
+                                                <p class="text-sm text-slate-500 mt-4">This can happen due to network issues, invalid API configuration, or if the AI's safety filters are triggered. Please check the console for more details and try again.</p>
                                                 <button data-action="retake-quiz" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Start Over</button>
                                             </div>`;
                 }
             };
 
 
-            const saveQuizResult = async () => {
-                if (!currentUser) { showNotification('Please log in to save.', true); return; }
+            const saveQuizResult = async (button) => {
+                if (!currentUser) { 
+                    showNotification('Please log in to save.', true);
+                    return; 
+                }
+                if (button.disabled) {
+                    button.textContent = 'Already Saved!';
+                    setTimeout(() => { button.textContent = 'Save Quiz Result' }, 2000);
+                    return;
+                }
+
                 const { addDoc, collection, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
                 try {
                     await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'savedQuizzes'), {
@@ -1328,6 +1351,9 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                         createdAt: serverTimestamp()
                     });
                     showNotification('Quiz result saved successfully!');
+                    button.disabled = true;
+                    button.classList.add('opacity-50', 'cursor-not-allowed');
+                    button.textContent = 'Saved!';
                 } catch (error) {
                     console.error("Error saving quiz:", error);
                     showNotification('Could not save quiz result.', true);
@@ -1395,7 +1421,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 }
                 
                 if (target.closest('[data-action="save-quiz"]')) {
-                    saveQuizResult();
+                    saveQuizResult(target.closest('[data-action="save-quiz"]'));
                 }
 
                 if (target.closest('[data-action="delete-quiz"]')) {
@@ -1407,7 +1433,16 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                     showNotification("We're currently working on this.");
                 }
 
-                if (target.closest('#planner-feature-card')) { /* reset and open planner */ }
+                if (target.closest('#planner-feature-card')) { 
+                    DOMElements.plannerModal.questionnaire.reset();
+                    DOMElements.plannerModal.questionnaire.classList.remove('hidden');
+                    DOMElements.plannerModal.planResult.classList.add('hidden');
+                    DOMElements.plannerModal.planResult.innerHTML = '';
+                    DOMElements.plannerModal.questionnaire.querySelectorAll('[data-step]').forEach((step, index) => {
+                        step.classList.toggle('active', index === 0);
+                    });
+                    openModal(DOMElements.plannerModal.modal); 
+                }
                 if (targetId === 'close-planner-modal') closeModal(DOMElements.plannerModal.modal);
 
                 if (target.closest('#quizzie-feature-card')) { 
@@ -1494,19 +1529,37 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 }
             });
             
-            DOMElements.plannerModal.questionnaire.addEventListener('submit', (e) => {
+            DOMElements.plannerModal.questionnaire.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
-                generatedPlanHTML = generatePlanHTML(Object.fromEntries(formData.entries()));
-                DOMElements.plannerModal.planResult.innerHTML = generatedPlanHTML;
-                e.target.classList.add('hidden');
-                DOMElements.plannerModal.planResult.classList.remove('hidden');
+                const answers = Object.fromEntries(formData.entries());
+                
+                const { planResult, questionnaire } = DOMElements.plannerModal;
+                
+                questionnaire.classList.add('hidden');
+                planResult.classList.remove('hidden');
+                planResult.innerHTML = `<div class="p-4 bg-blue-50 rounded-lg text-center"><div class="font-semibold flex items-center justify-center"><span>Generating Your AI-Powered Plan</span><span class="pulsing-dots ml-1"><span>.</span><span>.</span><span>.</span></span></div></div>`;
+
+                const aiPlanHTML = await generateAIStudyPlan(answers);
+
+                generatedPlanHTML = `<h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3><p class="mb-4 text-slate-600"><strong>Level:</strong> ${answers.level.charAt(0).toUpperCase() + answers.level.slice(1)} | <strong>Commitment:</strong> ${answers.commitment.replace('-', ' ')} | <strong>Optional:</strong> ${answers.optional}</p><div class="overflow-x-auto">${aiPlanHTML}</div>`;
+                
+                planResult.innerHTML = `${generatedPlanHTML}<div class="mt-8 flex flex-col sm:flex-row gap-4"><button data-action="save-plan" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">Save Plan to My Dashboard</button><button data-action="modify-plan" class="bg-slate-200 text-slate-800 px-6 py-3 rounded-lg font-semibold flex-1">Start Over</button></div>`;
             });
+
 
             DOMElements.plannerModal.planResult.addEventListener('click', (e) => {
                 const action = e.target.closest('[data-action]')?.dataset.action;
                 if (action === 'save-plan') savePlan();
-                if (action === 'modify-plan') { /* Reset planner logic */ }
+                if (action === 'modify-plan') { 
+                    DOMElements.plannerModal.questionnaire.reset();
+                    DOMElements.plannerModal.questionnaire.classList.remove('hidden');
+                    DOMElements.plannerModal.planResult.classList.add('hidden');
+                    DOMElements.plannerModal.planResult.innerHTML = '';
+                     DOMElements.plannerModal.questionnaire.querySelectorAll('[data-step]').forEach((step, index) => {
+                        step.classList.toggle('active', index === 0);
+                    });
+                }
             });
 
             DOMElements.quizzieModal.form.addEventListener('change', updateQuizzieForm);
