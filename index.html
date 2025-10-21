@@ -128,7 +128,7 @@
 <body class="text-slate-800">
 
     <header id="header" class="bg-slate-50/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-4 flex justify-between items-center">
             <a href="#" class="logo-container text-2xl font-bold text-slate-900">iasm<span class="ai-gradient">AI</span>ntor</a>
             <nav class="hidden md:flex items-center space-x-8">
                 <a href="#features" class="text-slate-600 hover:text-blue-600 transition-colors">Features</a>
@@ -156,7 +156,7 @@
             </button>
         </div>
         <!-- Refactored Mobile Menu: Static content, visibility controlled by JS -->
-        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 space-y-2">
+        <div id="mobile-menu" class="hidden md:hidden px-4 sm:px-6 md:px-8 lg:px-12 pb-4 space-y-2">
             <a href="#features" class="block py-2 text-slate-600 hover:text-blue-600">Features</a>
             <a href="#how-it-works" class="block py-2 text-slate-600 hover:text-blue-600">How It Works</a>
             <a href="#testimonials" class="block py-2 text-slate-600 hover:text-blue-600">Testimonials</a>
@@ -175,7 +175,7 @@
 
     <main>
         <section class="pt-32 pb-20 bg-slate-100">
-            <div class="container mx-auto px-6">
+            <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="grid md:grid-cols-2 gap-12 items-center">
                     <div class="text-center md:text-left">
                         <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 leading-tight mb-4">
@@ -227,7 +227,7 @@
         </section>
 
         <section id="features" class="py-20">
-            <div class="container mx-auto px-6 text-center">
+            <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 text-center">
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">The Ultimate Toolkit for Success in UPSC CSE</h2>
                 <p class="text-slate-600 max-w-3xl mx-auto mb-12">Stop juggling countless resources. We bring everything you need into one intelligent platform, designed to optimize your preparation.</p>
                 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -266,7 +266,7 @@
         </section>
 
         <section id="dashboard" class="hidden py-20 bg-slate-50">
-            <div class="container mx-auto px-6">
+            <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-8 text-center">My Dashboard</h2>
                 <div class="grid md:grid-cols-2 gap-8">
                     <div id="saved-plans-container" class="bg-white p-8 rounded-xl shadow-lg">
@@ -282,7 +282,7 @@
         </section>
 
         <section id="how-it-works" class="py-20 bg-slate-100">
-            <div class="container mx-auto px-6">
+            <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Your Path to Success in 3 Simple Steps</h2>
                     <p class="text-slate-600 max-w-2xl mx-auto">We've simplified the journey. Focus on what matters most: learning and improving.</p>
@@ -317,7 +317,7 @@
         </section>
         
         <section id="testimonials" class="py-20">
-            <div class="container mx-auto px-6">
+            <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">What Our Aspirants Say</h2>
                     <p class="text-slate-600 max-w-2xl mx-auto">Success stories from those who chose the smarter way.</p>
@@ -358,7 +358,7 @@
         </section>
 
         <section class="bg-slate-800 text-white">
-            <div class="container mx-auto px-6 py-20 text-center">
+            <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-20 text-center">
                 <h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your UPSC Preparation?</h2>
                 <p class="text-slate-300 max-w-2xl mx-auto mb-8">Join thousands of aspirants who are preparing smarter. Your journey to LBSNAA starts here.</p>
                 <a href="#" id="final-cta-btn" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-slate-100 transition-transform hover:scale-105 shadow-lg">Start Your Free Trial Now</a>
@@ -367,7 +367,7 @@
     </main>
     
     <footer class="bg-slate-900 text-slate-400">
-        <div class="container mx-auto px-6 py-12">
+        <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-12">
             <div class="grid md:grid-cols-4 gap-8">
                 <div>
                     <h3 class="text-xl font-bold text-white mb-4">iasmaintor</h3>
@@ -1157,7 +1157,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                     activeView.innerHTML = `
                         <div class="quiz-question active">
                             <div class="mb-4 text-sm text-slate-500 font-semibold">Question ${currentQuestionIndex + 1} of ${quizQuestions.length}</div>
-                            <p class="mb-6 text-slate-800 text-lg whitespace-pre-wrap text-left">${q.question}</p>
+                            <p class="mb-6 text-slate-800 text-lg whitespace-pre-wrap text-left">${q.question.replace(/\n/g, '<br>')}</p>
                             <div class="space-y-3 radio-card-group">${optionsHTML}</div>
                         </div>
                     `;
@@ -1270,10 +1270,10 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
 
                     return `
                         <div class="mb-6 border-b pb-6">
-                            <p class="font-semibold mb-3 text-slate-800 whitespace-pre-wrap">Q ${index + 1}: ${q.question}</p>
+                            <p class="font-semibold mb-3 text-slate-800 whitespace-pre-wrap">Q ${index + 1}: ${q.question.replace(/\n/g, '<br>')}</p>
                             <div class="space-y-2">${optionsReview}</div>
                             <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm whitespace-pre-wrap">
-                                <p><strong>Explanation:</strong> ${q.explanation}</p>
+                                <p><strong>Explanation:</strong> ${q.explanation.replace(/\n/g, '<br>')}</p>
                             </div>
                         </div>
                     `;
@@ -1592,3 +1592,4 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
     </script>
 </body>
 </html>
+
