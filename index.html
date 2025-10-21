@@ -651,23 +651,19 @@
                         <h3 class="text-xl font-semibold text-slate-700">Difficulty Level</h3>
                         <div class="radio-card-group">
                            <label class="block text-slate-700 font-semibold mb-2">Choose Difficulty</label>
-                           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                <label>
-                                   <input type="radio" name="difficulty" value="easy" required>
+                                   <input type="radio" name="difficulty" value="basic" checked required>
                                    <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
-                                        <div class="font-bold text-lg">Easy</div>
+                                        <div class="font-bold text-lg">Basic</div>
+                                        <div class="text-sm text-slate-500">Fundamental concepts</div>
                                    </div>
                                </label>
                                <label>
-                                   <input type="radio" name="difficulty" value="medium" checked>
+                                   <input type="radio" name="difficulty" value="advanced">
                                    <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
-                                        <div class="font-bold text-lg">Medium</div>
-                                   </div>
-                               </label>
-                               <label>
-                                   <input type="radio" name="difficulty" value="tough">
-                                   <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
-                                        <div class="font-bold text-lg">Tough</div>
+                                        <div class="font-bold text-lg">Advanced</div>
+                                        <div class="text-sm text-slate-500">Tricky & analytical</div>
                                    </div>
                                </label>
                            </div>
@@ -916,7 +912,10 @@
                 const { main_subject, test_type, gs_subject, csat_subject, num_questions, difficulty, question_type } = params;
                 const count = test_type === 'flt' ? 5 : parseInt(num_questions);
 
-                const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam. For each question, provide a question, four options, the correct answer, and a detailed and thorough explanation that elaborates on why the correct answer is right and why the other options are incorrect. You must return the response in a valid JSON format according to the provided schema.`;
+                const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
+- If the user selects 'basic' difficulty, generate straightforward, knowledge-based questions that test fundamental concepts.
+- If the user selects 'advanced' difficulty, generate tricky, application-based, or multi-statement questions (e.g., "How many of the above statements are correct?") that require deeper analysis and are designed to be challenging.
+For each question, provide a question, four options, the correct answer, and a detailed and thorough explanation that elaborates on why the correct answer is right and why the other options are incorrect. You must return the response in a valid JSON format according to the provided schema.`;
 
                 let userQuery = `Generate ${count} questions. Difficulty: ${difficulty}. `;
                 if (test_type === 'flt') {
@@ -1362,6 +1361,3 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
     </script>
 </body>
 </html>
-
-
-
