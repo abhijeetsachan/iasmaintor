@@ -299,14 +299,10 @@
         <section id="dashboard" class="hidden py-20 bg-slate-50">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-8 text-center">My Dashboard</h2>
-                <div class="grid md:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 gap-8">
                     <div id="saved-plans-container" class="bg-white p-8 rounded-xl shadow-lg">
                         <h3 class="text-2xl font-semibold mb-4">Your Saved Study Plans</h3>
                         <div id="plans-list" class="space-y-6"></div>
-                    </div>
-                    <div id="saved-quizzes-container" class="bg-white p-8 rounded-xl shadow-lg">
-                        <h3 class="text-2xl font-semibold mb-4">Your Saved Quizzes</h3>
-                        <div id="quizzes-list" class="space-y-4"></div>
                     </div>
                 </div>
             </div>
@@ -385,6 +381,32 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <section id="who-we-are" class="py-20 bg-slate-100">
+            <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Who We Are</h2>
+                <p class="text-slate-600 max-w-3xl mx-auto mb-12">
+                    We’re a small team of dreamers behind iasmAIntor — an AI-powered tool built to make your UPSC prep smarter, simpler, and a little more creative. Our journey started with one shared goal: to make UPSC preparation less overwhelming and more effective for every aspirant.
+                </p>
+                <div class="grid md:grid-cols-3 gap-8 text-left">
+                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
+                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Ashish</h3>
+                         <p class="text-slate-500">has appeared in the UPSC Mains four times and knows the exam inside out.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
+                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Abhijeet</h3>
+                         <p class="text-slate-500">a tech graduate from Delhi University, brings his expertise from working at a leading EdTech company, where he manages tech and innovation.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
+                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Rajdeep</h3>
+                         <p class="text-slate-500">a St. Stephen’s graduate and fellow UPSC aspirant, works as a Content Strategist in the EdTech space, ensuring what you learn is not just accurate but engaging too.</p>
+                    </div>
+                </div>
+                <p class="text-slate-600 max-w-3xl mx-auto mt-12">
+                    Together, we’ve built iasmAIntor to bring the best of experience, technology, and strategy to your UPSC journey.
+                </p>
             </div>
         </section>
 
@@ -847,12 +869,8 @@
             let currentUserProfile = null; // To cache user profile data
             let generatedPlanHTML = '';
             let unsubscribePlans = null;
-            let unsubscribeQuizzes = null;
             let quizQuestions = [];
             let userAnswers = [];
-            let currentQuizResultHTML = '';
-            let currentQuizParams = {};
-
             
             // --- UI Element Refs ---
             const DOMElements = {
@@ -902,7 +920,6 @@
                     progressContainer: document.getElementById('quiz-progress-container'),
                 },
                 plansList: document.getElementById('plans-list'),
-                quizzesList: document.getElementById('quizzes-list'),
                 copyrightYear: document.getElementById('copyright-year'),
             };
             
@@ -966,13 +983,10 @@
                     DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
 
                     fetchAndDisplayPlans(user.uid);
-                    fetchAndDisplayQuizzes(user.uid);
                 } else {
                     currentUserProfile = null;
                     if (unsubscribePlans) unsubscribePlans();
-                    if (unsubscribeQuizzes) unsubscribeQuizzes();
                     DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see your saved plans.</p>`;
-                    DOMElements.quizzesList.innerHTML = `<p class="text-slate-500">Please log in to see your saved quizzes.</p>`;
                 }
             };
             
@@ -1027,15 +1041,31 @@ The plan should be practical and cover a mix of General Studies subjects and the
             
             const fetchAndDisplayPlans = async (userId) => {
                 if (unsubscribePlans) unsubscribePlans();
-                const { collection, query, orderBy, onSnapshot } = firestore; // Use stored module
+
+                DOMElements.plansList.innerHTML = `
+                    <div class="flex justify-center items-center p-8">
+                        <div class="ai-loader">
+                            <svg class="w-16 h-16" viewBox="0 0 100 100">
+                                <circle class="outer-ring" cx="50" cy="50" r="45" fill="none" stroke="#dbeafe" stroke-width="10"></circle>
+                                <circle class="inner-dot" cx="50" cy="50" r="10" fill="#3b82f6"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                `;
+
+                const { collection, query, orderBy, onSnapshot } = firestore;
                 const q = query(collection(db, 'artifacts', appId, 'users', userId, 'studyPlans'), orderBy('createdAt', 'desc'));
+                
                 unsubscribePlans = onSnapshot(q, (snapshot) => {
-                    DOMElements.plansList.innerHTML = snapshot.empty ? `<p class="text-slate-500">You haven't saved any plans yet.</p>` :
-                        snapshot.docs.map(doc => {
+                    if (snapshot.empty) {
+                        DOMElements.plansList.innerHTML = `<p class="text-slate-500">You haven't saved any plans yet.</p>`;
+                    } else {
+                        DOMElements.plansList.innerHTML = snapshot.docs.map(doc => {
                             const { createdAt, planHTML } = doc.data();
                             const date = createdAt?.toDate().toLocaleDateString() || 'Recently';
                             return `<div class="border-b last:border-b-0 pb-6"><p class="font-semibold text-slate-600 mb-4">Plan created on: ${date}</p>${planHTML.replace(/<div class="mt-8.*?<\/div>/s, '')}</div>`;
                         }).join('');
+                    }
                 }, (error) => {
                     console.error("Error fetching plans:", error);
                     DOMElements.plansList.innerHTML = `<p class="text-red-500">Could not fetch plans.</p>`;
@@ -1054,8 +1084,6 @@ The plan should be practical and cover a mix of General Studies subjects and the
                 activeView.innerHTML = '';
                 quizQuestions = [];
                 userAnswers = [];
-                currentQuizResultHTML = '';
-                currentQuizParams = {};
                 form.querySelectorAll('[data-step]').forEach((step, index) => {
                     step.classList.toggle('active', index === 0);
                 });
@@ -1101,6 +1129,10 @@ The plan should be practical and cover a mix of General Studies subjects and the
                     const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
 - If the user selects 'basic' difficulty, generate straightforward, knowledge-based questions that test fundamental concepts.
 - If the user selects 'advanced' difficulty, generate tricky, application-based, or multi-statement questions (e.g., "How many of the above statements are correct?") that require deeper analysis and are designed to be challenging.
+
+IMPORTANT FORMATTING: For multi-statement questions, format the question string with newline characters (\\n) to separate the introductory sentence, each numbered statement, and the final question part. For example:
+"Consider the following statements regarding the philosophical tenets of early Jainism and Buddhism:\\n1. Both religions rejected the authority of the Vedas and the efficacy of Vedic rituals.\\n2. Both maintained that the world is impermanent (Anitya) and devoid of a permanent self (Nairatmya or Anatta).\\n3. Jainism lays great emphasis on 'Anekantavada', while Buddhism proposes 'Kshanika Vada'.\\nHow many of the above statements are correct?"
+
 For each question, provide a question, four options in an array, the correct answer (which must be one of the provided options), and a detailed and thorough explanation that elaborates on why the correct answer is right and why the other options are incorrect. You must return the response in a valid JSON format according to the provided schema.`;
 
                     let userQuery = `Generate ${count} questions. Difficulty: ${difficulty}. `;
@@ -1284,7 +1316,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                     activeView.innerHTML = `
                         <div class="quiz-question active">
                             <div class="mb-4 text-sm text-slate-500 font-semibold">Question ${currentQuestionIndex + 1} of ${quizQuestions.length}</div>
-                            <p class="mb-6 text-slate-800 text-lg whitespace-pre-wrap text-left">${q.question.replace(/\n/g, '<br>')}</p>
+                            <p class="mb-6 text-slate-800 text-lg whitespace-pre-wrap text-left">${q.question}</p>
                             <div class="space-y-3 radio-card-group">${optionsHTML}</div>
                         </div>
                     `;
@@ -1397,26 +1429,24 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
 
                     return `
                         <div class="mb-6 border-b pb-6">
-                            <p class="font-semibold mb-3 text-slate-800 whitespace-pre-wrap">Q ${index + 1}: ${q.question.replace(/\n/g, '<br>')}</p>
+                            <p class="font-semibold mb-3 text-slate-800 whitespace-pre-wrap">Q ${index + 1}: ${q.question}</p>
                             <div class="space-y-2">${optionsReview}</div>
                             <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm whitespace-pre-wrap">
-                                <p><strong>Explanation:</strong> ${q.explanation.replace(/\n/g, '<br>')}</p>
+                                <p><strong>Explanation:</strong> ${q.explanation}</p>
                             </div>
                         </div>
                     `;
                 }).join('');
 
-                resultHTML += `<div class="mt-8 flex justify-between items-center"><button data-action="save-quiz" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">Save Quiz Result</button><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
+                resultHTML += `<div class="mt-8 flex justify-end items-center"><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
 
                 activeView.innerHTML = resultHTML;
-                currentQuizResultHTML = activeView.innerHTML; // Store for saving
 
                 // Generate and display AI feedback
                 const aiFeedbackContainer = activeView.querySelector('#ai-feedback-content');
                 try {
                     const feedback = await generateAIFeedback(correctCount, incorrectCount, unansweredCount, quizQuestions.length, wrongQuestions);
                     aiFeedbackContainer.innerHTML = `<p>${feedback}</p>`;
-                    currentQuizResultHTML = activeView.innerHTML; // Update with feedback
                 } catch (error) {
                     console.error("Failed to get AI feedback:", error);
                     aiFeedbackContainer.innerHTML = `<p>Could not generate AI feedback at this time. Please review the explanations below.</p>`;
@@ -1427,15 +1457,13 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 e.preventDefault();
                 const { form, result, activeView, modal } = DOMElements.quizzieModal;
                 modal.querySelector('#quiz-progress-container').classList.add('hidden');
-                const formData = new FormData(form);
-                currentQuizParams = Object.fromEntries(formData.entries());
-
+                
                 form.classList.add('hidden');
                 result.classList.remove('hidden');
                 result.innerHTML = `<div class="p-4 bg-blue-50 rounded-lg text-center"><div class="font-semibold flex items-center justify-center"><span>Generating Questions with AI</span><span class="pulsing-dots ml-1"><span>.</span><span>.</span><span>.</span></span></div></div>`;
                 
                 try {
-                    quizQuestions = await generateQuizQuestions(currentQuizParams);
+                    quizQuestions = await generateQuizQuestions(Object.fromEntries(new FormData(form).entries()));
                     userAnswers = new Array(quizQuestions.length);
                     result.classList.add('hidden');
                     activeView.classList.remove('hidden');
@@ -1463,76 +1491,6 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 }
             };
 
-
-            const saveQuizResult = async (button) => {
-                if (!currentUser) { 
-                    showNotification('Please log in to save.', true);
-                    return; 
-                }
-                if (button.disabled) {
-                    button.textContent = 'Already Saved!';
-                    setTimeout(() => { button.textContent = 'Save Quiz Result' }, 2000);
-                    return;
-                }
-
-                const { addDoc, collection, serverTimestamp } = firestore; // Use stored module
-                try {
-                    await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'savedQuizzes'), {
-                        quizHTML: currentQuizResultHTML,
-                        params: currentQuizParams,
-                        createdAt: serverTimestamp()
-                    });
-                    showNotification('Quiz result saved successfully!');
-                    button.disabled = true;
-                    button.classList.add('opacity-50', 'cursor-not-allowed');
-                    button.textContent = 'Saved!';
-                } catch (error) {
-                    console.error("Error saving quiz:", error);
-                    showNotification('Could not save quiz result.', true);
-                }
-            };
-
-            const fetchAndDisplayQuizzes = async (userId) => {
-                if (unsubscribeQuizzes) unsubscribeQuizzes();
-                const { collection, query, orderBy, onSnapshot } = firestore; // Use stored module
-                const q = query(collection(db, 'artifacts', appId, 'users', userId, 'savedQuizzes'), orderBy('createdAt', 'desc'));
-                unsubscribeQuizzes = onSnapshot(q, (snapshot) => {
-                    DOMElements.quizzesList.innerHTML = snapshot.empty 
-                        ? `<p class="text-slate-500">You haven't saved any quizzes yet.</p>` 
-                        : snapshot.docs.map(doc => {
-                            const { createdAt, params } = doc.data();
-                            const date = createdAt?.toDate().toLocaleDateString() || 'Recently';
-                            const subject = params.gs_subject || params.csat_subject || 'Mixed';
-                            const title = `${subject.charAt(0).toUpperCase() + subject.slice(1)} Quiz`;
-                            
-                            return `<div data-quiz-id="${doc.id}" class="p-4 border rounded-lg bg-slate-50 flex justify-between items-center">
-                                        <div>
-                                            <p class="font-semibold text-slate-800">${title}</p>
-                                            <p class="text-sm text-slate-500">Taken on: ${date}</p>
-                                        </div>
-                                        <button data-action="delete-quiz" class="text-red-400 hover:text-red-600 transition-colors">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>`;
-                        }).join('');
-                }, (error) => {
-                    console.error("Error fetching quizzes:", error);
-                    DOMElements.quizzesList.innerHTML = `<p class="text-red-500">Could not fetch quizzes.</p>`;
-                });
-            };
-
-            const deleteQuiz = async (quizId) => {
-                if (!currentUser) { return; }
-                const { doc, deleteDoc } = firestore; // Use stored module
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'savedQuizzes', quizId));
-                    showNotification('Quiz deleted successfully.');
-                } catch (error) {
-                    console.error("Error deleting quiz:", error);
-                    showNotification('Could not delete quiz.', true);
-                }
-            };
-
             // --- Event Listeners ---
             document.body.addEventListener('click', async (e) => {
                 const target = e.target;
@@ -1556,15 +1514,6 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 if (target.closest('#dropdown-logout-btn, #mobile-logout-btn')) {
                     try { await firebaseAuth.signOut(auth); showNotification('Logged out.'); }
                     catch (error) { showNotification('Logout failed.', true); }
-                }
-                
-                if (target.closest('[data-action="save-quiz"]')) {
-                    saveQuizResult(target.closest('[data-action="save-quiz"]'));
-                }
-
-                if (target.closest('[data-action="delete-quiz"]')) {
-                    const quizId = target.closest('[data-quiz-id]').dataset.quizId;
-                    deleteQuiz(quizId);
                 }
                 
                 if (target.closest('#current-affairs-card')) {
