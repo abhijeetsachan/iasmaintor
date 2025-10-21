@@ -906,19 +906,26 @@
                 DOMElements.mobileUserActions.classList.toggle('hidden', !isLoggedIn);
                 
                 if (isLoggedIn) {
-                    // Fetch user profile from Firestore
                     const { doc, getDoc } = firestore;
                     const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
                     const userDoc = await getDoc(userDocRef);
 
+                    let displayName = '';
                     if (userDoc.exists()) {
                         currentUserProfile = userDoc.data();
-                        const firstName = currentUserProfile.firstName || '';
-                        DOMElements.userGreeting.textContent = `Hi, ${firstName}`;
-                    } else {
-                        // Handle cases where profile doesn't exist (e.g., older accounts)
-                        DOMElements.userGreeting.textContent = 'Hi, Aspirant';
+                        displayName = currentUserProfile.firstName || '';
                     }
+
+                    if (!displayName && user.email) {
+                        const emailName = user.email.split('@')[0];
+                        displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                    }
+                    
+                    if(!displayName){
+                        displayName = 'Aspirant'; // Fallback if no name and no email
+                    }
+
+                    DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
 
                     fetchAndDisplayPlans(user.uid);
                     fetchAndDisplayQuizzes(user.uid);
