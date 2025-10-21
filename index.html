@@ -142,13 +142,21 @@
                         <i class="fas fa-right-to-bracket mr-2"></i>Log In
                     </a>
                 </div>
-                <div id="user-dashboard-link" class="hidden items-center space-x-4">
-                    <a href="#dashboard" class="font-semibold text-blue-600 hover:text-blue-700 transition-colors">My Dashboard</a>
-                    <button id="logout-btn" class="text-slate-500 hover:text-red-500 transition-colors" title="Logout">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                <!-- User Dropdown Menu -->
+                <div id="user-menu" class="hidden relative">
+                    <button id="user-menu-button" class="flex items-center space-x-2">
+                        <span id="user-avatar" class="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold"></span>
+                        <span id="user-greeting" class="font-semibold text-slate-700 hidden sm:block"></span>
+                        <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                        <a href="#dashboard" id="dropdown-dashboard-link" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Dashboard</a>
+                        <a href="#" id="my-account-btn" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Account</a>
+                        <div class="border-t border-slate-200 my-1"></div>
+                        <button id="dropdown-logout-btn" class="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-slate-100">Logout</button>
+                    </div>
                 </div>
             </div>
             <button id="mobile-menu-button" class="md:hidden text-slate-800">
@@ -160,15 +168,16 @@
             <a href="#features" class="block py-2 text-slate-600 hover:text-blue-600">Features</a>
             <a href="#how-it-works" class="block py-2 text-slate-600 hover:text-blue-600">How It Works</a>
             <a href="#testimonials" class="block py-2 text-slate-600 hover:text-blue-600">Testimonials</a>
-            <a id="mobile-dashboard-link" href="#dashboard" class="hidden py-2 text-blue-600 font-semibold">My Dashboard</a>
-            <hr/>
+            <hr class="border-slate-200 my-2">
             <div id="mobile-auth-links">
                 <a href="#" id="mobile-login-btn" class="block bg-blue-600 text-white text-center px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center">
                    <i class="fas fa-right-to-bracket mr-2"></i>Log In
                 </a>
             </div>
-            <div id="mobile-user-actions" class="hidden">
-                 <button id="mobile-logout-btn" class="w-full mt-2 bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button>
+            <div id="mobile-user-actions" class="hidden space-y-2">
+                 <a href="#dashboard" class="block py-2 text-blue-600 font-semibold">My Dashboard</a>
+                 <a href="#" id="mobile-my-account-btn" class="block py-2 text-slate-600 hover:text-blue-600">My Account</a>
+                 <button id="mobile-logout-btn" class="w-full bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button>
             </div>
         </div>
     </header>
@@ -445,6 +454,16 @@
                  <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Create Your Account</h2>
                  <p class="text-center text-slate-500 mb-8">Get started on your UPSC journey.</p>
                 <form id="signup-form">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="signup-first-name" class="block text-slate-700 text-sm font-semibold mb-2">First Name</label>
+                            <input type="text" id="signup-first-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="signup-last-name" class="block text-slate-700 text-sm font-semibold mb-2">Last Name</label>
+                            <input type="text" id="signup-last-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                    </div>
                      <div class="mb-4">
                         <label for="signup-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
                         <input type="email" id="signup-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -701,6 +720,34 @@
         </div>
     </div>
 
+    <!-- My Account Modal -->
+    <div id="account-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+            <div class="flex justify-between items-start mb-4">
+                 <h2 class="text-2xl font-bold text-slate-800">My Account</h2>
+                 <button id="close-account-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
+            </div>
+            <div id="account-error" class="bg-red-100 text-red-700 p-3 rounded-md mb-4 hidden"></div>
+            <form id="account-form">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="account-first-name" class="block text-slate-700 text-sm font-semibold mb-2">First Name</label>
+                        <input type="text" id="account-first-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="account-last-name" class="block text-slate-700 text-sm font-semibold mb-2">Last Name</label>
+                        <input type="text" id="account-last-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label for="account-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
+                    <input type="email" id="account-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 cursor-not-allowed" readonly>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
     <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none"></div>
 
     <script type="module">
@@ -751,6 +798,7 @@
             const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
             
             let currentUser = null;
+            let currentUserProfile = null; // To cache user profile data
             let generatedPlanHTML = '';
             let unsubscribePlans = null;
             let unsubscribeQuizzes = null;
@@ -763,13 +811,15 @@
             // --- UI Element Refs ---
             const DOMElements = {
                 authLinks: document.getElementById('auth-links'),
-                userDashboardLink: document.getElementById('user-dashboard-link'),
+                userMenu: document.getElementById('user-menu'),
+                userGreeting: document.getElementById('user-greeting'),
+                userAvatar: document.getElementById('user-avatar'),
+                userDropdown: document.getElementById('user-dropdown'),
                 dashboardSection: document.getElementById('dashboard'),
                 mobileMenuButton: document.getElementById('mobile-menu-button'),
                 mobileMenu: document.getElementById('mobile-menu'),
                 mobileAuthLinks: document.getElementById('mobile-auth-links'),
                 mobileUserActions: document.getElementById('mobile-user-actions'),
-                mobileDashboardLink: document.getElementById('mobile-dashboard-link'),
                 header: document.getElementById('header'),
                 notification: document.getElementById('notification'),
                 authModal: {
@@ -779,6 +829,11 @@
                     signupForm: document.getElementById('signup-form'),
                     forgotPasswordView: document.getElementById('forgot-password-view'),
                     forgotPasswordForm: document.getElementById('forgot-password-form'),
+                },
+                accountModal: {
+                    modal: document.getElementById('account-modal'),
+                    form: document.getElementById('account-form'),
+                    error: document.getElementById('account-error'),
                 },
                 plannerModal: {
                     modal: document.getElementById('planner-modal'),
@@ -829,19 +884,36 @@
             // --- Core App Logic ---
             DOMElements.copyrightYear.textContent = new Date().getFullYear();
 
-            const updateUIForAuthState = (user) => {
+            const updateUIForAuthState = async (user) => {
                 const isLoggedIn = !!user;
                 DOMElements.authLinks.classList.toggle('hidden', isLoggedIn);
-                DOMElements.userDashboardLink.classList.toggle('hidden', !isLoggedIn);
+                DOMElements.userMenu.classList.toggle('hidden', !isLoggedIn);
                 DOMElements.dashboardSection.classList.toggle('hidden', !isLoggedIn);
                 DOMElements.mobileAuthLinks.classList.toggle('hidden', isLoggedIn);
                 DOMElements.mobileUserActions.classList.toggle('hidden', !isLoggedIn);
-                DOMElements.mobileDashboardLink.classList.toggle('hidden', !isLoggedIn);
                 
                 if (isLoggedIn) {
+                    // Fetch user profile from Firestore
+                    const { doc, getDoc } = firestore;
+                    const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        currentUserProfile = userDoc.data();
+                        const firstName = currentUserProfile.firstName || '';
+                        const lastName = currentUserProfile.lastName || '';
+                        DOMElements.userGreeting.textContent = `Hi, ${firstName}`;
+                        DOMElements.userAvatar.textContent = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+                    } else {
+                        // Handle cases where profile doesn't exist (e.g., older accounts)
+                        DOMElements.userGreeting.textContent = 'Hi, Aspirant';
+                        DOMElements.userAvatar.textContent = 'A';
+                    }
+
                     fetchAndDisplayPlans(user.uid);
                     fetchAndDisplayQuizzes(user.uid);
                 } else {
+                    currentUserProfile = null;
                     if (unsubscribePlans) unsubscribePlans();
                     if (unsubscribeQuizzes) unsubscribeQuizzes();
                     DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see your saved plans.</p>`;
@@ -1411,8 +1483,14 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                 const target = e.target;
                 const targetId = target.id;
                 
+                // Close user dropdown if clicking outside
+                if (!target.closest('#user-menu')) {
+                    DOMElements.userDropdown.classList.add('hidden');
+                }
+                
                 if (['login-btn', 'mobile-login-btn', 'start-trial-btn', 'final-cta-btn'].includes(targetId)) { e.preventDefault(); openAuthModal('login'); }
                 if (targetId === 'close-auth-modal') closeModal(DOMElements.authModal.modal);
+                if (targetId === 'close-account-modal') closeModal(DOMElements.accountModal.modal);
                 if (targetId === 'auth-switch-to-signup') openAuthModal('signup');
                 if (targetId === 'auth-switch-to-login' || targetId === 'auth-switch-to-login-from-reset') openAuthModal('login');
                 if (targetId === 'forgot-password-btn') {
@@ -1420,7 +1498,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                     DOMElements.authModal.forgotPasswordView.classList.remove('hidden');
                 }
 
-                if (target.closest('#logout-btn, #mobile-logout-btn')) {
+                if (target.closest('#dropdown-logout-btn, #mobile-logout-btn')) {
                     try { await firebaseAuth.signOut(auth); showNotification('Logged out.'); }
                     catch (error) { showNotification('Logout failed.', true); }
                 }
@@ -1490,6 +1568,24 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                         updateQuizProgressBar(nextStepNumber, 4);
                     }
                 }
+
+                if (target.closest('#my-account-btn, #mobile-my-account-btn')) {
+                    e.preventDefault();
+                    if(currentUserProfile) {
+                        const { form, error } = DOMElements.accountModal;
+                        error.classList.add('hidden');
+                        form.elements['account-first-name'].value = currentUserProfile.firstName || '';
+                        form.elements['account-last-name'].value = currentUserProfile.lastName || '';
+                        form.elements['account-email'].value = currentUser.email;
+                        openModal(DOMElements.accountModal.modal);
+                    } else {
+                        showNotification("Please log in to view your account.", true);
+                    }
+                }
+                
+                if (target.closest('#user-menu-button')) {
+                    DOMElements.userDropdown.classList.toggle('hidden');
+                }
             });
 
             DOMElements.authModal.loginForm.addEventListener('submit', async (e) => {
@@ -1523,14 +1619,62 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
 
             DOMElements.authModal.signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const firstName = e.target.elements['signup-first-name'].value;
+                const lastName = e.target.elements['signup-last-name'].value;
                 const email = e.target.elements['signup-email'].value;
                 const password = e.target.elements['signup-password'].value;
                 const errorEl = DOMElements.authModal.error;
                 try {
-                    await firebaseAuth.createUserWithEmailAndPassword(auth, email, password);
+                    const userCredential = await firebaseAuth.createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // Now, save user profile to Firestore
+                    const { doc, setDoc, serverTimestamp } = firestore;
+                    await setDoc(doc(db, 'artifacts', appId, 'users', user.uid), {
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email,
+                        createdAt: serverTimestamp()
+                    });
+                    
                     closeModal(DOMElements.authModal.modal);
                     showNotification('Account created successfully!');
-                } catch (error) { errorEl.textContent = error.message; errorEl.classList.remove('hidden'); }
+                } catch (error) { 
+                    errorEl.textContent = error.message; 
+                    errorEl.classList.remove('hidden'); 
+                }
+            });
+
+            DOMElements.accountModal.form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUser) return;
+                
+                const firstName = e.target.elements['account-first-name'].value;
+                const lastName = e.target.elements['account-last-name'].value;
+                const errorEl = DOMElements.accountModal.error;
+
+                const { doc, updateDoc } = firestore;
+                const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
+
+                try {
+                    await updateDoc(userDocRef, {
+                        firstName: firstName,
+                        lastName: lastName
+                    });
+                    showNotification('Account updated successfully!');
+                    
+                    // Update local profile cache and UI
+                    currentUserProfile.firstName = firstName;
+                    currentUserProfile.lastName = lastName;
+                    DOMElements.userGreeting.textContent = `Hi, ${firstName}`;
+                    DOMElements.userAvatar.textContent = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+
+                    closeModal(DOMElements.accountModal.modal);
+                } catch (error) {
+                    console.error("Error updating account:", error);
+                    errorEl.textContent = "Could not update your account. Please try again.";
+                    errorEl.classList.remove('hidden');
+                }
             });
 
             DOMElements.authModal.forgotPasswordForm.addEventListener('submit', async (e) => {
