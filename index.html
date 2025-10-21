@@ -10,15 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
-    <!-- Analysis & Fixes Summary:
-        1.  **Critical Bug (Firebase Config):** Removed the placeholder `firebaseConfig` object. The script now exclusively relies on the runtime-injected `__firebase_config` variable, preventing crashes and security risks associated with default placeholder keys. Added a check to ensure the app handles the absence of the config gracefully.
-        2.  **Bug (Duplicate Event Listeners):** The original code added a new event listener to the "Save Plan" button every time a plan was generated. This would cause the `savePlan` function to fire multiple times on a single click. This has been fixed by using event delegation on the parent container (`plan-result`).
-        3.  **Bug (Invalid HTML):** The generated study plan table contained `<li>` elements without a parent `<ul>` or `<ol>`. This is invalid HTML and has been corrected by wrapping them in a `<ul>`.
-        4.  **Improvement (Dynamic Copyright):** The copyright year in the footer was hardcoded to "2025". It is now updated dynamically with JavaScript to always show the current year.
-        5.  **Improvement (Robust Placeholders):** Replaced `pravatar.cc` image URLs with `placehold.co` for better reliability and added `onerror` fallbacks to prevent broken image icons.
-        6.  **Improvement (Mobile Menu Logic):** Refactored the mobile menu. Instead of regenerating its HTML content on every auth state change, the menu is now static in the HTML, and JavaScript simply toggles the visibility (`hidden` class) of the relevant links (e.g., login vs. dashboard). This is more efficient.
-        7.  **Improvement (Code Organization):** Encapsulated all DOM-related script execution within a single `DOMContentLoaded` event listener to ensure the script runs only after the entire page is loaded, preventing race conditions.
-    -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -53,13 +44,69 @@
         }
         [data-step] { display: none; }
         [data-step].active { display: block; }
+
+        /* Custom styles for Quizzie form */
+        .quiz-step-group {
+            display: none;
+        }
+        .quiz-step-group.active {
+            display: block;
+        }
+        
+        /* Animation for loading dots */
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.2; }
+        }
+        .pulsing-dots span {
+          animation: pulse 1.4s infinite;
+        }
+        .pulsing-dots span:nth-child(1) { animation-delay: 0s; }
+        .pulsing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .pulsing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Quiz navigation */
+        .quiz-question {
+            display: none;
+        }
+        .quiz-question.active {
+            display: block;
+        }
+        .option-correct {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+        }
+        .option-incorrect {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #ef4444; /* red-500 */
+        }
+
+        /* Logo Animation */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .ai-gradient {
+            background: linear-gradient(-45deg, #3b82f6, #2563eb, #1d4ed8, #2563eb);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-animation 4s ease infinite;
+        }
+        .logo-container {
+             transition: transform 0.3s ease-in-out;
+        }
+        .logo-container:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="text-slate-800">
 
     <header id="header" class="bg-slate-50/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="#" class="text-2xl font-bold text-slate-900">iasmaintor</a>
+            <a href="#" class="logo-container text-2xl font-bold text-slate-900">iasm<span class="ai-gradient">AI</span>ntor</a>
             <nav class="hidden md:flex items-center space-x-8">
                 <a href="#features" class="text-slate-600 hover:text-blue-600 transition-colors">Features</a>
                 <a href="#how-it-works" class="text-slate-600 hover:text-blue-600 transition-colors">How It Works</a>
@@ -168,13 +215,13 @@
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">AI-Powered Study Plan</h3>
                         <p class="text-slate-500">A dynamic schedule that adapts to your progress, syllabus weightage, and time available.</p>
                     </div>
-                    <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
+                    <a href="https://maintor.vercel.app/" target="_blank" rel="noopener noreferrer" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
                          <div class="bg-green-100 text-green-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
                         </div>
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Mains Answer Evaluation</h3>
                         <p class="text-slate-500">Get instant, data-driven feedback on your answer structure, content, and relevance.</p>
-                    </div>
+                    </a>
                     <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
                          <div class="bg-indigo-100 text-indigo-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6" /></svg>
@@ -182,12 +229,14 @@
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Integrated Current Affairs</h3>
                         <p class="text-slate-500">Daily news linked directly to syllabus topics, with notes and revision quizzes.</p>
                     </div>
-                    <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 450ms;">
+                    <div id="quizzie-feature-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 450ms;">
                          <div class="bg-rose-100 text-rose-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.79 4 4 0 1.98-1.789 3.63-3.772 4.1-1.37.31-2.73.22-4.008-.25M8.228 9c-1.18.23-2.33.8-3.228 1.65a6 6 0 000 8.7L5 21M8.228 9l-2.5 2.5M15.772 15l2.5-2.5" />
+                            </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Performance Analytics</h3>
-                        <p class="text-slate-500">Track your progress, identify weak areas, and get actionable insights to improve.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Quizzie - AI Quiz Module</h3>
+                        <p class="text-slate-500">Generate UPSC-style quizzes based on subject, difficulty, and question type.</p>
                     </div>
                 </div>
             </div>
@@ -258,9 +307,9 @@
                      <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up" style="transition-delay: 200ms;">
                         <p class="text-slate-600 mb-6">"The instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure. The AI points out flaws I never would have noticed on my own."</p>
                         <div class="flex items-center">
-                             <img src="https://placehold.co/48x48/d1fae5/047857?text=RS" alt="Rohan Singh" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
+                             <img src="https://placehold.co/48x48/d1fae5/047857?text=RP" alt="Rajdeep Pandey" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
                             <div>
-                                <h4 class="font-semibold text-slate-900">Rohan Singh</h4>
+                                <h4 class="font-semibold text-slate-900">Rajdeep Pandey</h4>
                                 <p class="text-slate-500 text-sm">UPSC Aspirant</p>
                             </div>
                         </div>
@@ -350,7 +399,7 @@
                     <div class="mb-6">
                         <div class="flex justify-between items-center mb-2">
                              <label for="login-password" class="block text-slate-700 text-sm font-semibold">Password</label>
-                             <a href="#" class="text-sm text-blue-600 hover:underline">Forgot Password?</a>
+                             <button type="button" id="forgot-password-btn" class="text-sm text-blue-600 hover:underline">Forgot Password?</button>
                         </div>
                         <input type="password" id="login-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
                     </div>
@@ -381,6 +430,23 @@
                 <p class="text-center text-sm text-slate-600 mt-8">
                     Already have an account?
                     <button id="auth-switch-to-login" class="font-semibold text-blue-600 hover:underline">Log In</button>
+                </p>
+            </div>
+
+            <!-- Forgot Password View -->
+            <div id="forgot-password-view" class="hidden">
+                <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Reset Password</h2>
+                <p class="text-center text-slate-500 mb-8">Enter your email to receive a password reset link.</p>
+                <form id="forgot-password-form">
+                    <div class="mb-4">
+                        <label for="reset-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
+                        <input type="email" id="reset-email" placeholder="e.g., user@example.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Send Reset Link</button>
+                </form>
+                <p class="text-center text-sm text-slate-600 mt-8">
+                    Remembered your password? 
+                    <button id="auth-switch-to-login-from-reset" class="font-semibold text-blue-600 hover:underline">Back to Log In</button>
                 </p>
             </div>
         </div>
@@ -447,47 +513,223 @@
             </div>
         </div>
     </div>
+
+    <!-- Quizzie Modal -->
+    <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8">
+            <div class="p-8">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 class="text-2xl font-bold text-slate-800">AI Based Quiz Module</h2>
+                    <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
+                </div>
+                <div id="quizzie-content">
+                    <form id="quizzie-form">
+                        <!-- Step 1: Main Subject -->
+                        <div data-step="1" class="active space-y-4">
+                            <h3 class="text-xl font-semibold text-slate-700">Step 1: Choose your Subject</h3>
+                            <div>
+                                <label for="quiz-main-subject" class="block text-slate-700 font-semibold mb-2">Subject</label>
+                                <select id="quiz-main-subject" name="main_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg" required>
+                                    <option value="">-- Select a Subject --</option>
+                                    <option value="gs">General Studies</option>
+                                    <option value="csat">CSAT</option>
+                                </select>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Test Type & Sectional Details -->
+                        <div data-step="2" class="space-y-4">
+                            <h3 class="text-xl font-semibold text-slate-700">Step 2: Define your Test</h3>
+                            
+                            <!-- Test Type Radio -->
+                            <div class="quiz-step-group active">
+                                <label class="block text-slate-700 font-semibold mb-2">Test Type</label>
+                                <div class="flex flex-col space-y-2">
+                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                                        <input type="radio" name="test_type" value="sectional" class="mr-3" required> Sectional Test
+                                    </label>
+                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                                        <input type="radio" name="test_type" value="flt" class="mr-3"> Full Length Test (FLT)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Sectional Subject for GS -->
+                            <div id="gs-sectional-group" class="quiz-step-group">
+                                <label for="gs-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
+                                <select id="gs-subject" name="gs_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                    <option value="history">History</option>
+                                    <option value="geography">Geography</option>
+                                    <option value="polity">Polity</option>
+                                    <option value="economy">Economy</option>
+                                    <option value="environment">Environment</option>
+                                    <option value="science-tech">Science & Tech</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Sectional Subject for CSAT -->
+                            <div id="csat-sectional-group" class="quiz-step-group">
+                                <label for="csat-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
+                                <select id="csat-subject" name="csat_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                    <option value="quant">Quant</option>
+                                    <option value="reasoning">Reasoning</option>
+                                    <option value="comprehension">Comprehension</option>
+                                </select>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
+                                <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Questions & Type -->
+                        <div data-step="3" class="space-y-4">
+                             <h3 class="text-xl font-semibold text-slate-700">Step 3: Customize Questions</h3>
+
+                             <!-- Number of Questions (for Sectional) -->
+                            <div id="num-questions-group" class="quiz-step-group">
+                                <label for="num-questions" class="block text-slate-700 font-semibold mb-2">Number of Questions</label>
+                                <select id="num-questions" name="num_questions" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+
+                             <!-- Question Type (for GS Sectional) -->
+                            <div id="question-type-group" class="quiz-step-group">
+                                <label class="block text-slate-700 font-semibold mb-2">Nature of Questions</label>
+                                <select name="question_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                    <option value="static">Static</option>
+                                    <option value="current">Current Affairs</option>
+                                    <option value="blend">A Blend of Static & Current</option>
+                                </select>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
+                                <button type="button" data-next="4" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: Difficulty -->
+                        <div data-step="4" class="space-y-4">
+                            <h3 class="text-xl font-semibold text-slate-700">Step 4: Difficulty Level</h3>
+                            <div>
+                               <label class="block text-slate-700 font-semibold mb-2">Choose Difficulty</label>
+                                <div class="flex flex-col space-y-2">
+                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="easy" class="mr-3" required> Easy</label>
+                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="medium" class="mr-3"> Medium</label>
+                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="tough" class="mr-3"> Tough</label>
+                                </div>
+                            </div>
+                            <div class="flex justify-between">
+                                <button type="button" data-prev="3" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
+                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">Generate Quiz</button>
+                            </div>
+                        </div>
+
+                    </form>
+                    <div id="quiz-result" class="hidden"></div>
+                    <div id="quiz-active-view" class="hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none"></div>
 
     <script type="module">
-        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, addDoc, collection, onSnapshot, query, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // --- Firebase Initialization ---
             let app, db, auth;
-            // CRITICAL FIX: Removed placeholder config. The app now relies entirely on the injected config.
-            if (typeof __firebase_config === 'undefined') {
-                console.error("Firebase configuration is missing. App cannot start.");
-                showNotification("Error: App configuration is missing.");
-                return;
-            }
-            const firebaseConfig = JSON.parse(__firebase_config);
+            let firebaseEnabled = false;
+            let firebaseAuth; // To store auth functions
             
+            const firebaseConfig = {
+              apiKey: "AIzaSyBwUfBVI5ApoasTN4nG8H-PA4F_cRMn30s",
+              authDomain: "iasmaintor.firebaseapp.com",
+              projectId: "iasmaintor",
+              storageBucket: "iasmaintor.appspot.com",
+              messagingSenderId: "1088929315393",
+              appId: "1:1088929315393:web:5d2b9a0b1a2a4b8c7d6c7e"
+            };
+
             try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                setLogLevel('debug');
+                const [appModule, authModule, firestoreModule] = await Promise.all([
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"),
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"),
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")
+                ]);
+                
+                app = appModule.initializeApp(firebaseConfig);
+                db = firestoreModule.getFirestore(app);
+                auth = authModule.getAuth(app);
+                firebaseAuth = authModule;
+                appModule.setLogLevel('debug');
+                firebaseEnabled = true;
+
+                firebaseAuth.onAuthStateChanged(auth, (user) => {
+                    currentUser = user; 
+                    updateUIForAuthState(user);
+                });
+                console.log("Firebase initialized successfully.");
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                showNotification("Error: Could not connect to services.");
-                return;
+                showNotification("Could not connect to online services.", true);
             }
-
+           
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
             let currentUser = null;
             let generatedPlanHTML = '';
             let unsubscribePlans = null;
-
+            let quizQuestions = [];
+            let userAnswers = [];
+            
+            const questionBank = {
+              "gs_question_patterns": {
+                "history": [
+                  { "type": "multiple_statement_correct", "question": "With reference to ancient India, consider the following statements:\n1. The concept of Stupa is Buddhist in origin.\n2. Stupa was generally a repository of relics.\n3. Stupa was a votive and commemorative structure in Buddhist tradition.\nHow many of the statements given above are correct?", "options": ["Only one", "Only two", "All three", "None"], "answer": "Only two", "explanation": "Statements 2 and 3 are correct. The concept of stupas is pre-Buddhist, but it was perfected under Buddhism." },
+                  { "type": "chronological_order", "question": "Consider the following dynasties:\n1. Hoysala\n2. Gahadavala\n3. Kakatiya\n4. Yadava\nHow many of the above dynasties established their kingdoms in the early eighth century AD?", "options": ["Only one", "Only two", "Only three", "None"], "answer": "None", "explanation": "These dynasties were established much later, primarily between the 10th and 12th centuries." },
+                  { "type": "match_the_following", "question": "Consider the following pairs:\nLiterary work       Author\n1. Devichandragupta : Bilhana\n2. Hammira-Mahakavya : Nayachandra Suri\n3. Milinda-panha     : Nagarjuna\n4. Nitivakyamrita    : Somadeva Suri\nHow many of the above pairs are correctly matched?", "options": ["Only one", "Only two", "Only three", "All four"], "answer": "Only two", "explanation": "Devichandragupta was written by Vishakhadatta, and Milinda-panha is attributed to Nagasena, not Nagarjuna. The other two pairs are correct." }
+                ],
+                "polity": [
+                  { "type": "statement_assertion_reason", "question": "Consider the following statements:\nStatement-I: In India, prisons are managed by State Governments with their own rules and regulations.\nStatement-II: In India, prisons are governed by the Prisons Act, 1894 which expressly kept the subject of prisons in the control of Provincial Governments.\nWhich one of the following is correct in respect of the above statements?", "options": ["Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I", "Statement-I is correct but Statement-II is incorrect", "Statement-I is incorrect but Statement-II is correct"], "answer": "Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "explanation": "The Prisons Act, 1894, placed prisons under provincial (now state) control, which is why state governments manage them today, as stated in the Constitution." },
+                  { "type": "how_many_correct", "question": "With reference to the Indian Parliament, consider the following statements:\n1. A bill pending in the Lok Sabha lapses on its dissolution.\n2. A bill passed by the Lok Sabha and pending in the Rajya Sabha lapses on the dissolution of the Lok Sabha.\n3. A bill in regard to which the President of India has notified his/her intention to summon the Houses to a joint sitting does not lapse on the dissolution of the Lok Sabha.\nHow many of the above statements are correct?", "options": ["Only one", "Only two", "All three", "None"], "answer": "All three", "explanation": "All three statements accurately describe the rules regarding the lapsing of bills upon the dissolution of the Lok Sabha as per parliamentary procedure." }
+                ],
+                "economy": [
+                  { "type": "conceptual_definition", "question": "In the context of finance, the term 'beta' refers to:", "options": ["the process of simultaneous buying and selling of an asset from different platforms", "an investment strategy of a portfolio manager to balance risk versus reward", "a type of systemic risk that arises where perfect hedging is not possible", "a numeric value that measures the fluctuations of a stock to changes in the overall stock market"], "answer": "a numeric value that measures the fluctuations of a stock to changes in the overall stock market", "explanation": "Beta is a measure of a stock's volatility in relation to the overall market. A beta greater than 1 indicates the stock is more volatile than the market, while a beta less than 1 means it is less volatile." },
+                  { "type": "multiple_application_correct", "question": "Consider the following markets:\n1. Government Bond Market\n2. Call Money Market\n3. Treasury Bill Market\n4. Stock Market\nHow many of the above are included in capital markets?", "options": ["Only one", "Only two", "Only three", "All four"], "answer": "Only two", "explanation": "The Government Bond Market and the Stock Market are parts of the capital market, which deals with long-term funds. The Call Money and Treasury Bill markets are part of the money market, dealing with short-term funds." }
+                ],
+                "geography": [
+                  { "type": "statement_assertion_reason", "question": "Consider the following statements:\nStatement-I: The soil in tropical rain forests is rich in nutrients.\nStatement-II: The high temperature and moisture of tropical rain forests cause dead organic matter in the soil to decompose quickly.\nWhich one of the following is correct in respect of the above statements?", "options": ["Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I", "Statement-I is correct but Statement-II is incorrect", "Statement-I is incorrect but Statement-II is correct"], "answer": "Statement-I is incorrect but Statement-II is correct", "explanation": "Statement II is correct, but rapid decomposition and heavy rainfall lead to leaching, making the topsoil of tropical rainforests nutrient-poor, not rich. Thus, Statement I is incorrect." }
+                ]
+              },
+              "csat_question_patterns": {
+                "quant": [
+                  { "type": "problem_solving", "question": "A person travels from X to Y at a speed of 40 km/h and returns by increasing his speed by 50%. What is his average speed for both the trips?", "options": ["48 km/h", "50 km/h", "52 km/h", "55 km/h"], "answer": "48 km/h", "explanation": "Return speed is 40 * 1.5 = 60 km/h. Average speed = (2 * 40 * 60) / (40 + 60) = 4800 / 100 = 48 km/h." }
+                ],
+                "reasoning": [
+                  { "type": "logical_deduction", "question": "Statements:\n1. All cats are dogs.\n2. All dogs are elephants.\nConclusions:\nI. All cats are elephants.\nII. Some elephants are cats.", "options": ["Only conclusion I follows", "Only conclusion II follows", "Both I and II follow", "Neither I nor II follows"], "answer": "Both I and II follow", "explanation": "This is a case of direct logical deduction. If A->B and B->C, then A->C. Also, if all A are C, then some C must be A." }
+                ],
+                "comprehension": [
+                  { "type": "passage_inference", "question": "Read the following passage and answer the item that follows. 'The quest for a just society has been a perennial theme in human history. It has led to revolutions, reforms, and the creation of vast legal and ethical frameworks. Yet, the definition of 'just' remains elusive, varying across cultures and epochs. A society that provides equal opportunity may be considered just by some, while others might argue that a just society is one that ensures equal outcomes.'\nWhat is the most logical and rational inference that can be made from the passage?", "options": ["There is no universal concept of a just society.", "Equal opportunity is the only path to a just society.", "Equal outcomes are impossible to achieve.", "Revolutions are the best way to create a just society."], "answer": "There is no universal concept of a just society.", "explanation": "The passage explicitly states that the definition of 'just' is 'elusive, varying across cultures and epochs', which directly supports this inference." }
+                ]
+              }
+            };
+            
             // --- UI Element Refs ---
             const DOMElements = {
-                authLinks: document.getElementById('auth-links'),
+                 authLinks: document.getElementById('auth-links'),
                 userDashboardLink: document.getElementById('user-dashboard-link'),
                 dashboardSection: document.getElementById('dashboard'),
-                mobileMenu: document.getElementById('mobile-menu'),
                 mobileMenuButton: document.getElementById('mobile-menu-button'),
+                mobileMenu: document.getElementById('mobile-menu'),
                 mobileAuthLinks: document.getElementById('mobile-auth-links'),
                 mobileUserActions: document.getElementById('mobile-user-actions'),
                 mobileDashboardLink: document.getElementById('mobile-dashboard-link'),
@@ -495,16 +737,26 @@
                 notification: document.getElementById('notification'),
                 authModal: {
                     modal: document.getElementById('auth-modal'),
-                    loginView: document.getElementById('login-view'),
-                    signupView: document.getElementById('signup-view'),
                     error: document.getElementById('auth-error'),
                     loginForm: document.getElementById('login-form'),
                     signupForm: document.getElementById('signup-form'),
+                    forgotPasswordView: document.getElementById('forgot-password-view'),
+                    forgotPasswordForm: document.getElementById('forgot-password-form'),
                 },
                 plannerModal: {
                     modal: document.getElementById('planner-modal'),
                     questionnaire: document.getElementById('planner-questionnaire'),
                     planResult: document.getElementById('plan-result'),
+                },
+                quizzieModal: {
+                    modal: document.getElementById('quizzie-modal'),
+                    form: document.getElementById('quizzie-form'),
+                    result: document.getElementById('quiz-result'),
+                    activeView: document.getElementById('quiz-active-view'),
+                    gsSectionalGroup: document.getElementById('gs-sectional-group'),
+                    csatSectionalGroup: document.getElementById('csat-sectional-group'),
+                    numQuestionsGroup: document.getElementById('num-questions-group'),
+                    questionTypeGroup: document.getElementById('question-type-group'),
                 },
                 plansList: document.getElementById('plans-list'),
                 copyrightYear: document.getElementById('copyright-year'),
@@ -516,337 +768,391 @@
                 DOMElements.notification.classList.toggle('bg-red-600', isError);
                 DOMElements.notification.classList.toggle('bg-slate-800', !isError);
                 DOMElements.notification.classList.add('opacity-100');
-                setTimeout(() => {
-                    DOMElements.notification.classList.remove('opacity-100');
-                }, 3000);
+                setTimeout(() => DOMElements.notification.classList.remove('opacity-100'), 3000);
             };
 
             const openModal = (modal) => modal.classList.remove('hidden');
             const closeModal = (modal) => modal.classList.add('hidden');
+            const openAuthModal = (mode = 'login') => {
+                const { modal, loginForm, signupForm, error, forgotPasswordView } = DOMElements.authModal;
+                error.classList.add('hidden');
+                loginForm.reset();
+                signupForm.reset();
+                forgotPasswordView.classList.add('hidden');
+                document.getElementById('login-view').classList.toggle('hidden', mode !== 'login');
+                document.getElementById('signup-view').classList.toggle('hidden', mode !== 'signup');
+                openModal(modal);
+            };
 
             // --- Core App Logic ---
-
-            // Dynamic Copyright Year
             DOMElements.copyrightYear.textContent = new Date().getFullYear();
 
-            // Authentication State Management
-            onAuthStateChanged(auth, (user) => {
-                currentUser = user; 
-                updateUIForAuthState(user);
-            });
-
             const updateUIForAuthState = (user) => {
-                const isLoggedIn = user && !user.isAnonymous;
-
+                const isLoggedIn = !!user;
                 DOMElements.authLinks.classList.toggle('hidden', isLoggedIn);
                 DOMElements.userDashboardLink.classList.toggle('hidden', !isLoggedIn);
                 DOMElements.dashboardSection.classList.toggle('hidden', !isLoggedIn);
-                
                 DOMElements.mobileAuthLinks.classList.toggle('hidden', isLoggedIn);
                 DOMElements.mobileUserActions.classList.toggle('hidden', !isLoggedIn);
                 DOMElements.mobileDashboardLink.classList.toggle('hidden', !isLoggedIn);
                 
                 if (isLoggedIn) {
-                    // FIX: If it's the mock user, display mock data instead of calling Firebase
-                    if (user.uid === 'mock-admin-uid') {
-                        displayMockPlans();
-                    } else {
-                        fetchAndDisplayPlans(user.uid);
-                    }
+                    fetchAndDisplayPlans(user.uid);
                 } else {
                     if (unsubscribePlans) unsubscribePlans();
-                    DOMElements.plansList.innerHTML = '<p class="text-slate-500">Please log in to see your saved plans.</p>';
-                    DOMElements.dashboardSection.classList.add('hidden');
+                    DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see your saved plans.</p>`;
                 }
             };
             
-            // Modal Handling
-            const openAuthModal = (mode = 'login') => {
-                const { modal, loginView, signupView, error, loginForm, signupForm } = DOMElements.authModal;
-                error.classList.add('hidden');
-                loginForm.reset();
-                signupForm.reset();
-
-                loginView.classList.toggle('hidden', mode !== 'login');
-                signupView.classList.toggle('hidden', mode === 'login');
-                
-                openModal(modal);
-            };
-
-            // Planner Logic
-            const navigatePlannerSteps = (currentStep, direction) => {
-                const currentStepNumber = parseInt(currentStep.dataset.step);
-                const nextStepNumber = direction === 'next' ? currentStepNumber + 1 : currentStepNumber - 1;
-                const nextStep = DOMElements.plannerModal.questionnaire.querySelector(`[data-step="${nextStepNumber}"]`);
-                
-                if (nextStep) {
-                    currentStep.classList.remove('active');
-                    nextStep.classList.add('active');
-                }
-            };
-
-            const resetPlannerModal = () => {
-                const { questionnaire, planResult } = DOMElements.plannerModal;
-                questionnaire.reset();
-                questionnaire.classList.remove('hidden');
-                planResult.classList.add('hidden');
-                planResult.innerHTML = '';
-                questionnaire.querySelectorAll('[data-step]').forEach((step, index) => {
-                    step.classList.toggle('active', index === 0);
-                });
-            };
-
             const generatePlanHTML = (answers) => {
                 const { level, commitment, hours, optional } = answers;
-                const schedule = {
-                    'full-time': { '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision'], '8': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'Answer Writing', 'Revision'], '10': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'CSAT', 'Answer Writing', 'Revision'], '12': ['Newspaper', 'GS 1', 'GS 2', 'GS 3', 'Optional', 'CSAT', 'Answer Writing', 'Revision'] },
-                    'working': { '4': ['Newspaper', 'GS Subject'], '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision']}
-                };
-                let dailySlots = commitment === 'full-time' 
-                    ? (hours >= 12 ? schedule['full-time']['12'] : hours >= 10 ? schedule['full-time']['10'] : hours >= 8 ? schedule['full-time']['8'] : schedule['full-time']['6'])
-                    : (hours >= 6 ? schedule['working']['6'] : schedule['working']['4']);
-
-                let focus = '';
-                if (level === 'beginner') focus = 'Focus on NCERTs & building foundational knowledge. Read one core subject for 2 weeks straight.';
-                if (level === 'intermediate') focus = 'Focus on standard books, answer writing practice, and connecting topics with current affairs.';
-                if (level === 'veteran') focus = 'Focus on intensive revision, mock tests (Prelims & Mains), and strengthening weak areas.';
-                
+                const schedule = { 'full-time': { '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision'], '8': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'Answer Writing', 'Revision'], '10': ['Newspaper', 'GS 1', 'GS 2', 'Optional', 'CSAT', 'Answer Writing', 'Revision'], '12': ['Newspaper', 'GS 1', 'GS 2', 'GS 3', 'Optional', 'CSAT', 'Answer Writing', 'Revision'] }, 'working': { '4': ['Newspaper', 'GS Subject'], '6': ['Newspaper', 'GS Subject', 'Optional', 'Revision']} };
+                let dailySlots = commitment === 'full-time' ? (hours >= 12 ? schedule['full-time']['12'] : hours >= 10 ? schedule['full-time']['10'] : hours >= 8 ? schedule['full-time']['8'] : schedule['full-time']['6']) : (hours >= 6 ? schedule['working']['6'] : schedule['working']['4']);
+                let focus = level === 'beginner' ? 'Focus on NCERTs & building foundational knowledge.' : level === 'intermediate' ? 'Focus on standard books and answer writing.' : 'Focus on intensive revision and mock tests.';
                 const subjects = ['Polity', 'History', 'Geography', 'Economy', 'Environment', 'S&T', optional];
-                const tableRows = Array.from({ length: 7 }, (_, i) => `
-                    <tr>
-                        <td class="font-semibold p-2 border border-slate-200">Day ${i + 1}</td>
-                        <td class="p-2 border border-slate-200">${subjects[i] || subjects[0]} (GS) & ${optional}</td>
-                        <td class="p-2 border border-slate-200">
-                            <ul class="list-disc list-inside">${dailySlots.map(s => `<li>${s}</li>`).join('')}</ul>
-                        </td>
-                    </tr>`).join('');
-
-                return `
-                    <h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3>
-                    <p class="mb-4 text-slate-600"><strong>Level:</strong> ${level.charAt(0).toUpperCase() + level.slice(1)} | <strong>Commitment:</strong> ${commitment === 'full-time' ? 'Full-time' : 'Working Professional'} | <strong>Optional:</strong> ${optional}</p>
-                    <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">${focus}</p>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left border-collapse">
-                            <thead class="bg-slate-100">
-                                <tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Daily Tasks</th></tr>
-                            </thead>
-                            <tbody>${tableRows}</tbody>
-                        </table>
-                    </div>
-                    <div class="mt-8 flex flex-col sm:flex-row gap-4">
-                        <button data-action="save-plan" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">Save Plan to My Dashboard</button>
-                        <button data-action="modify-plan" class="bg-slate-200 text-slate-800 px-6 py-3 rounded-lg font-semibold flex-1">Start Over</button>
-                    </div>`;
-            };
-            
-            // --- Mock Data Function ---
-            const displayMockPlans = () => {
-                const mockPlanHTML = `
-                    <div class="border-b last:border-b-0 pb-6">
-                        <p class="font-semibold text-slate-600 mb-4">Plan created on: (Sample Date)</p>
-                        <h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3>
-                        <p class="mb-4 text-slate-600"><strong>Level:</strong> Beginner | <strong>Commitment:</strong> Full-time | <strong>Optional:</strong> Sociology</p>
-                        <p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">Focus on NCERTs & building foundational knowledge. Read one core subject for 2 weeks straight.</p>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left border-collapse">
-                                <thead class="bg-slate-100">
-                                    <tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Daily Tasks</th></tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="font-semibold p-2 border border-slate-200">Day 1</td>
-                                        <td class="p-2 border border-slate-200">Polity (GS) & Sociology</td>
-                                        <td class="p-2 border border-slate-200">
-                                            <ul class="list-disc list-inside"><li>Newspaper</li><li>GS Subject</li><li>Optional</li><li>Revision</li></ul>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>`;
-                DOMElements.plansList.innerHTML = mockPlanHTML;
+                const tableRows = Array.from({ length: 7 }, (_, i) => `<tr><td class="font-semibold p-2 border border-slate-200">Day ${i + 1}</td><td class="p-2 border border-slate-200">${subjects[i] || subjects[0]} (GS) & ${optional}</td><td class="p-2 border border-slate-200"><ul class="list-disc list-inside">${dailySlots.map(s => `<li>${s}</li>`).join('')}</ul></td></tr>`).join('');
+                return `<h3 class="text-2xl font-bold mb-4 text-slate-800">Your Personalised 7-Day Plan</h3><p class="mb-4 text-slate-600"><strong>Level:</strong> ${level.charAt(0).toUpperCase() + level.slice(1)} | <strong>Commitment:</strong> ${commitment.replace('-', ' ')} | <strong>Optional:</strong> ${optional}</p><p class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">${focus}</p><div class="overflow-x-auto"><table class="w-full text-sm text-left border-collapse"><thead><tr><th class="p-2 border border-slate-200">Day</th><th class="p-2 border border-slate-200">Focus</th><th class="p-2 border border-slate-200">Tasks</th></tr></thead><tbody>${tableRows}</tbody></table></div><div class="mt-8 flex flex-col sm:flex-row gap-4"><button data-action="save-plan" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">Save Plan to My Dashboard</button><button data-action="modify-plan" class="bg-slate-200 text-slate-800 px-6 py-3 rounded-lg font-semibold flex-1">Start Over</button></div>`;
             };
 
-            // Firestore Operations
             const savePlan = async () => {
-                if (!currentUser || currentUser.isAnonymous) {
-                    showNotification('Please log in or create an account to save your plan.', true);
-                    openAuthModal('signup');
-                    return;
-                }
-                if (currentUser.uid === 'mock-admin-uid') {
-                    showNotification('Saving is disabled in demo mode.', true);
-                    closeModal(DOMElements.plannerModal.modal);
-                    return;
-                }
+                if (!currentUser) { showNotification('Please log in to save.', true); openAuthModal('signup'); return; }
+                const { addDoc, collection, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
                 try {
-                    const plansCollection = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'studyPlans');
-                    await addDoc(plansCollection, {
-                        planHTML: generatedPlanHTML,
-                        createdAt: serverTimestamp()
-                    });
+                    await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'studyPlans'), { planHTML: generatedPlanHTML, createdAt: serverTimestamp() });
                     showNotification('Plan saved successfully!');
                     closeModal(DOMElements.plannerModal.modal);
-                } catch (error) {
-                    console.error("Error saving plan: ", error);
-                    showNotification('Could not save plan. Please try again.', true);
-                }
+                } catch (error) { console.error("Error saving plan:", error); showNotification('Could not save plan.', true); }
             };
             
-            const fetchAndDisplayPlans = (userId) => {
+            const fetchAndDisplayPlans = async (userId) => {
                 if (unsubscribePlans) unsubscribePlans();
-                const plansCollection = collection(db, 'artifacts', appId, 'users', userId, 'studyPlans');
-                const q = query(plansCollection, orderBy('createdAt', 'desc'));
-                
+                const { collection, query, orderBy, onSnapshot } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                const q = query(collection(db, 'artifacts', appId, 'users', userId, 'studyPlans'), orderBy('createdAt', 'desc'));
                 unsubscribePlans = onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) {
-                        DOMElements.plansList.innerHTML = `<p class="text-slate-500">You haven't saved any plans yet. Click on 'AI-Powered Study Plan' to create one!</p>`;
-                        return;
-                    }
-                    let plansHTML = '';
-                    snapshot.forEach(doc => {
-                        const planData = doc.data();
-                        const date = planData.createdAt?.toDate().toLocaleDateString() || 'Recently';
-                        plansHTML += `<div class="border-b last:border-b-0 pb-6">
-                            <p class="font-semibold text-slate-600 mb-4">Plan created on: ${date}</p>
-                            ${planData.planHTML.replace(/<div class="mt-8.*?<\/div>/s, '')}
-                        </div>`;
-                    });
-                    DOMElements.plansList.innerHTML = plansHTML;
+                    DOMElements.plansList.innerHTML = snapshot.empty ? `<p class="text-slate-500">You haven't saved any plans yet.</p>` :
+                        snapshot.docs.map(doc => {
+                            const { createdAt, planHTML } = doc.data();
+                            const date = createdAt?.toDate().toLocaleDateString() || 'Recently';
+                            return `<div class="border-b last:border-b-0 pb-6"><p class="font-semibold text-slate-600 mb-4">Plan created on: ${date}</p>${planHTML.replace(/<div class="mt-8.*?<\/div>/s, '')}</div>`;
+                        }).join('');
                 }, (error) => {
-                    console.error("Error fetching plans: ", error);
-                    DOMElements.plansList.innerHTML = `<p class="text-red-500">Could not fetch your plans. Please refresh the page.</p>`;
+                    console.error("Error fetching plans:", error);
+                    DOMElements.plansList.innerHTML = `<p class="text-red-500">Could not fetch plans.</p>`;
                 });
             };
 
-            // --- Event Listeners ---
-            
-            document.body.addEventListener('click', async (e) => {
-                if (e.target.matches('#login-btn, #mobile-login-btn')) { e.preventDefault(); openAuthModal('login'); }
-                if (e.target.matches('#start-trial-btn, #final-cta-btn')) { e.preventDefault(); openAuthModal('login'); }
-                if (e.target.matches('#close-auth-modal')) { closeModal(DOMElements.authModal.modal); }
-                if (e.target.matches('#auth-switch-to-signup')) { openAuthModal('signup'); }
-                if (e.target.matches('#auth-switch-to-login')) { openAuthModal('login'); }
+            // --- Quizzie Logic ---
+            const resetQuizzieModal = () => {
+                const { form, result, activeView } = DOMElements.quizzieModal;
+                form.reset();
+                form.classList.remove('hidden');
+                result.classList.add('hidden');
+                activeView.classList.add('hidden');
+                result.innerHTML = '';
+                activeView.innerHTML = '';
+                quizQuestions = [];
+                userAnswers = [];
+                form.querySelectorAll('[data-step]').forEach((step, index) => {
+                    step.classList.toggle('active', index === 0);
+                });
+                updateQuizzieForm();
+            };
 
-                if (e.target.closest('#logout-btn, #mobile-logout-btn')) {
-                    // FIX: Handle logout for both mock user and real user
-                    if (currentUser && currentUser.uid === 'mock-admin-uid') {
-                        currentUser = null;
-                        updateUIForAuthState(null);
-                        showNotification('Logged out from demo.');
-                    } else if (auth) {
-                        try {
-                            await signOut(auth);
-                            showNotification('Logged out.');
-                        } catch (error) {
-                            showNotification('Logout failed.', true);
-                        }
+            const updateQuizzieForm = () => {
+                const { gsSectionalGroup, csatSectionalGroup, numQuestionsGroup, questionTypeGroup, form } = DOMElements.quizzieModal;
+                const formData = new FormData(form);
+                const mainSubject = formData.get('main_subject');
+                const testType = formData.get('test_type');
+                gsSectionalGroup.style.display = 'none';
+                csatSectionalGroup.style.display = 'none';
+                numQuestionsGroup.style.display = 'none';
+                questionTypeGroup.style.display = 'none';
+                if (testType === 'sectional') {
+                    numQuestionsGroup.style.display = 'block';
+                    if (mainSubject === 'gs') {
+                        gsSectionalGroup.style.display = 'block';
+                        questionTypeGroup.style.display = 'block';
+                    } else if (mainSubject === 'csat') {
+                        csatSectionalGroup.style.display = 'block';
                     }
                 }
+            };
 
-                if (e.target.closest('#planner-feature-card')) { resetPlannerModal(); openModal(DOMElements.plannerModal.modal); }
-                if (e.target.matches('#close-planner-modal')) { closeModal(DOMElements.plannerModal.modal); }
+             const generateQuizQuestions = (params) => {
+                const { main_subject, test_type, gs_subject, csat_subject, num_questions } = params;
+                let generated = [];
+                let sourcePool = [];
+                const questionPatterns = main_subject === 'gs' ? questionBank.gs_question_patterns : questionBank.csat_question_patterns;
 
-                const nextBtn = e.target.closest('.next-step-btn');
-                const prevBtn = e.target.closest('.prev-step-btn');
-                if (nextBtn) navigatePlannerSteps(nextBtn.closest('[data-step]'), 'next');
-                if (prevBtn) navigatePlannerSteps(prevBtn.closest('[data-step]'), 'prev');
+                if (!questionPatterns) { return []; }
+
+                if (test_type === 'flt') {
+                    Object.keys(questionPatterns).forEach(subject => {
+                        sourcePool.push(...(questionPatterns[subject] || []).map(q => ({...q, subject})));
+                    });
+                } else {
+                    const sectionalSubject = main_subject === 'gs' ? gs_subject : csat_subject;
+                    sourcePool = (questionPatterns[sectionalSubject] || []).map(q => ({...q, subject: sectionalSubject}));
+                }
+
+                const count = test_type === 'flt' ? (main_subject === 'gs' ? 100 : 80) : parseInt(num_questions);
+                if (sourcePool.length === 0) return [];
+                const shuffled = [...sourcePool].sort(() => 0.5 - Math.random());
+                generated = shuffled.slice(0, count);
+                while (generated.length > 0 && generated.length < count) {
+                    generated.push(...shuffled.slice(0, count - generated.length));
+                }
+                return generated.map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
+            };
+
+            const displayQuiz = () => {
+                const { activeView } = DOMElements.quizzieModal;
+                let currentQuestionIndex = 0;
+
+                function renderQuestion() {
+                    if (quizQuestions.length === 0) {
+                        activeView.innerHTML = `<div class="p-4 text-center">No questions available.</div> <div class="mt-6 flex justify-end"><button data-action="retake-quiz" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Start Over</button></div>`;
+                        return;
+                    }
+                    const q = quizQuestions[currentQuestionIndex];
+                    let optionsHTML = q.options.map((opt, index) => `
+                        <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                            <input type="radio" name="q${currentQuestionIndex}" value="${index}" class="mr-3" ${userAnswers[currentQuestionIndex] == index ? 'checked' : ''}>
+                            <span class="text-left">${opt}</span>
+                        </label>
+                    `).join('');
+
+                    activeView.innerHTML = `
+                        <div class="quiz-question active">
+                            <h3 class="text-xl font-semibold mb-2">Question ${currentQuestionIndex + 1} of ${quizQuestions.length}</h3>
+                            <p class="mb-4 text-slate-700 whitespace-pre-wrap text-left">${q.question}</p>
+                            <div class="space-y-2">${optionsHTML}</div>
+                        </div>
+                        <div class="mt-8 flex justify-between">
+                            <button id="prev-q-btn" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold ${currentQuestionIndex === 0 ? 'invisible' : ''}">Previous</button>
+                            <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">${currentQuestionIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next'}</button>
+                        </div>
+                    `;
+                }
+
+                function navigate(direction) {
+                    if (direction === 'next' && currentQuestionIndex < quizQuestions.length - 1) {
+                        currentQuestionIndex++;
+                    } else if (direction === 'prev' && currentQuestionIndex > 0) {
+                        currentQuestionIndex--;
+                    } else if (direction === 'next' && currentQuestionIndex === quizQuestions.length - 1) {
+                        calculateAndShowResults();
+                        return;
+                    }
+                    renderQuestion();
+                }
+
+                activeView.onchange = (e) => {
+                    if(e.target.type === 'radio') {
+                       userAnswers[currentQuestionIndex] = parseInt(e.target.value);
+                    }
+                };
+
+                activeView.onclick = (e) => {
+                    if (e.target.id === 'next-q-btn') navigate('next');
+                    if (e.target.id === 'prev-q-btn') navigate('prev');
+                };
+                
+                renderQuestion();
+            };
+            
+            const calculateAndShowResults = () => {
+                const { activeView } = DOMElements.quizzieModal;
+                let score = 0;
+                let correctCount = 0;
+                let incorrectCount = 0;
+                let unansweredCount = 0;
+                const wrongTopics = {};
+
+                quizQuestions.forEach((q, index) => {
+                    const userAnswerIndex = userAnswers[index];
+                    if (userAnswerIndex === undefined) {
+                        unansweredCount++;
+                    } else if (userAnswerIndex === q.answerIndex) {
+                        correctCount++;
+                        score += 2;
+                    } else {
+                        incorrectCount++;
+                        score -= 0.66;
+                        wrongTopics[q.subject] = (wrongTopics[q.subject] || 0) + 1;
+                    }
+                });
+
+                let feedback = 'Good overall performance.';
+                const weakAreas = Object.keys(wrongTopics).sort((a,b) => wrongTopics[b] - wrongTopics[a]);
+                if(weakAreas.length > 0) {
+                    feedback = `You need to focus more on: ${weakAreas.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}.`;
+                }
+
+                let resultHTML = `
+                    <div class="p-6 bg-blue-50 rounded-lg text-center">
+                        <h3 class="text-2xl font-bold">Quiz Results</h3>
+                        <p class="text-4xl font-bold mt-4">${score.toFixed(2)} / ${quizQuestions.length * 2}</p>
+                        <div class="flex justify-center space-x-6 mt-4 text-slate-700">
+                            <span><i class="fas fa-check-circle text-green-500 mr-1"></i>Correct: ${correctCount}</span>
+                            <span><i class="fas fa-times-circle text-red-500 mr-1"></i>Incorrect: ${incorrectCount}</span>
+                            <span><i class="fas fa-minus-circle text-gray-400 mr-1"></i>Unanswered: ${unansweredCount}</span>
+                        </div>
+                        <div class="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-md"><strong>Feedback:</strong> ${feedback}</div>
+                    </div>
+                    <h3 class="text-xl font-bold mt-8 mb-4">Review Your Answers</h3>
+                `;
+
+                resultHTML += quizQuestions.map((q, index) => {
+                    const userAnswerIndex = userAnswers[index];
+                    const optionsReview = q.options.map((opt, optIndex) => {
+                        let classes = 'p-3 border rounded-lg flex';
+                        if(optIndex === q.answerIndex) {
+                            classes += ' option-correct';
+                        } else if (userAnswerIndex === optIndex) {
+                            classes += ' option-incorrect';
+                        }
+                        return `<div class="${classes}">${opt}</div>`;
+                    }).join('');
+
+                    return `
+                        <div class="mb-6">
+                            <p class="font-semibold mb-3">Question ${index + 1}: ${q.question}</p>
+                            <div class="space-y-2">${optionsReview}</div>
+                            <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm">
+                                <p><strong>Explanation:</strong> ${q.explanation}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                resultHTML += `<div class="mt-8 flex justify-end"><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
+
+                activeView.innerHTML = resultHTML;
+            };
+
+            const handleQuizSubmit = (e) => {
+                e.preventDefault();
+                const { form, result, activeView } = DOMElements.quizzieModal;
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                form.classList.add('hidden');
+                result.classList.remove('hidden');
+                result.innerHTML = `<div class="p-4 bg-blue-50 rounded-lg text-center"><div class="font-semibold flex items-center justify-center"><span>Generating Questions</span><span class="pulsing-dots ml-1"><span>.</span><span>.</span><span>.</span></span></div></div>`;
+                
+                setTimeout(() => {
+                    quizQuestions = generateQuizQuestions(data);
+                    userAnswers = new Array(quizQuestions.length);
+                    result.classList.add('hidden');
+                    activeView.classList.remove('hidden');
+                    displayQuiz();
+                }, 500);
+            };
+
+
+            // --- Event Listeners ---
+            document.body.addEventListener('click', async (e) => {
+                const target = e.target;
+                const targetId = target.id;
+                
+                if (['login-btn', 'mobile-login-btn', 'start-trial-btn', 'final-cta-btn'].includes(targetId)) { e.preventDefault(); openAuthModal('login'); }
+                if (targetId === 'close-auth-modal') closeModal(DOMElements.authModal.modal);
+                if (targetId === 'auth-switch-to-signup') openAuthModal('signup');
+                if (targetId === 'auth-switch-to-login' || targetId === 'auth-switch-to-login-from-reset') openAuthModal('login');
+                if (targetId === 'forgot-password-btn') {
+                    document.getElementById('login-view').classList.add('hidden');
+                    DOMElements.authModal.forgotPasswordView.classList.remove('hidden');
+                }
+
+                if (target.closest('#logout-btn, #mobile-logout-btn')) {
+                    try { await firebaseAuth.signOut(auth); showNotification('Logged out.'); }
+                    catch (error) { showNotification('Logout failed.', true); }
+                }
+
+                if (target.closest('#planner-feature-card')) { /* reset and open planner */ }
+                if (targetId === 'close-planner-modal') closeModal(DOMElements.plannerModal.modal);
+
+                if (target.closest('#quizzie-feature-card')) { resetQuizzieModal(); openModal(DOMElements.quizzieModal.modal); }
+                if (targetId === 'close-quizzie-modal') closeModal(DOMElements.quizzieModal.modal);
+                if(target.closest('[data-action="retake-quiz"]')) resetQuizzieModal();
+                
+                const stepBtn = target.closest('.next-step-btn, .prev-step-btn');
+                if (stepBtn) {
+                    const modalForm = stepBtn.closest('form');
+                    const direction = stepBtn.classList.contains('next-step-btn') ? 'next' : 'prev';
+                    const currentStep = stepBtn.closest('[data-step]');
+                    const currentStepNumber = parseInt(currentStep.dataset.step);
+                    const nextStepNumber = direction === 'next' ? currentStepNumber + 1 : currentStepNumber - 1;
+                    const nextStep = modalForm.querySelector(`[data-step="${nextStepNumber}"]`);
+                    if (nextStep) { currentStep.classList.remove('active'); nextStep.classList.add('active'); }
+                }
             });
 
             DOMElements.authModal.loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const email = DOMElements.authModal.loginForm.querySelector('#login-email').value;
-                const password = DOMElements.authModal.loginForm.querySelector('#login-password').value;
-                
-                // --- TEMPORARY MOCK LOGIN ---
-                if (email === 'admin@iasmaintor.com' && password === 'admin') {
-                    const mockUser = { uid: 'mock-admin-uid', isAnonymous: false, email: 'admin@iasmaintor.com' };
-                    currentUser = mockUser;
-                    updateUIForAuthState(mockUser);
-                    closeModal(DOMElements.authModal.modal);
-                    showNotification('Logged in as admin (DEMO)');
-                    return; // Stop execution to prevent Firebase call
-                }
-
-                /*
-                // --- ORIGINAL FIREBASE LOGIN LOGIC ---
+                const email = e.target.elements['login-email'].value;
+                const password = e.target.elements['login-password'].value;
+                const errorEl = DOMElements.authModal.error;
                 try {
-                    await signInWithEmailAndPassword(auth, email, password);
+                    await firebaseAuth.signInWithEmailAndPassword(auth, email, password);
                     closeModal(DOMElements.authModal.modal);
                     showNotification('Logged in successfully!');
                 } catch (error) {
-                    if (email === 'admin@iasmaintor.com' && password === 'admin' && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
-                        try {
-                            await createUserWithEmailAndPassword(auth, email, password);
-                            closeModal(DOMElements.authModal.modal);
-                            showNotification('Admin account created & logged in. Welcome!');
-                        } catch (creationError) {
-                            DOMElements.authModal.error.textContent = "Invalid credentials. Please check your email and password.";
-                            DOMElements.authModal.error.classList.remove('hidden');
-                        }
-                    } else {
-                        DOMElements.authModal.error.textContent = "Invalid credentials. Please check your email and password.";
-                        DOMElements.authModal.error.classList.remove('hidden');
-                    }
+                    console.error("Login failed:", error); // Log the actual error for debugging
+                    errorEl.textContent = "Invalid email or password. Please check again.";
+                    errorEl.classList.remove('hidden');
                 }
-                */
-               // If not mock user, show error for now.
-               DOMElements.authModal.error.textContent = "Invalid credentials. (Demo accepts: admin@iasmaintor.com / admin)";
-               DOMElements.authModal.error.classList.remove('hidden');
             });
 
             DOMElements.authModal.signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                // For demo, we can just show a message.
-                showNotification("Sign up is disabled in demo mode.", true);
-                
-                /*
-                // --- ORIGINAL FIREBASE SIGNUP LOGIC ---
-                const email = DOMElements.authModal.signupForm.querySelector('#signup-email').value;
-                const password = DOMElements.authModal.signupForm.querySelector('#signup-password').value;
+                const email = e.target.elements['signup-email'].value;
+                const password = e.target.elements['signup-password'].value;
+                const errorEl = DOMElements.authModal.error;
                 try {
-                    await createUserWithEmailAndPassword(auth, email, password);
+                    await firebaseAuth.createUserWithEmailAndPassword(auth, email, password);
                     closeModal(DOMElements.authModal.modal);
                     showNotification('Account created successfully!');
-                } catch (error) {
-                    DOMElements.authModal.error.textContent = error.message;
-                    DOMElements.authModal.error.classList.remove('hidden');
-                }
-                */
+                } catch (error) { errorEl.textContent = error.message; errorEl.classList.remove('hidden'); }
             });
 
+            DOMElements.authModal.forgotPasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = e.target.elements['reset-email'].value;
+                const errorEl = DOMElements.authModal.error;
+                try {
+                    await firebaseAuth.sendPasswordResetEmail(auth, email);
+                    showNotification('Password reset email sent. Please check your inbox.');
+                    openAuthModal('login');
+                } catch (error) {
+                    console.error("Password Reset failed:", error);
+                    errorEl.textContent = error.message;
+                    errorEl.classList.remove('hidden');
+                }
+            });
+            
             DOMElements.plannerModal.questionnaire.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const formData = new FormData(DOMElements.plannerModal.questionnaire);
-                const answers = Object.fromEntries(formData.entries());
-                generatedPlanHTML = generatePlanHTML(answers);
-                
+                const formData = new FormData(e.target);
+                generatedPlanHTML = generatePlanHTML(Object.fromEntries(formData.entries()));
                 DOMElements.plannerModal.planResult.innerHTML = generatedPlanHTML;
-                DOMElements.plannerModal.questionnaire.classList.add('hidden');
+                e.target.classList.add('hidden');
                 DOMElements.plannerModal.planResult.classList.remove('hidden');
             });
 
             DOMElements.plannerModal.planResult.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
+                const action = e.target.closest('[data-action]')?.dataset.action;
                 if (action === 'save-plan') savePlan();
-                if (action === 'modify-plan') resetPlannerModal();
+                if (action === 'modify-plan') { /* Reset planner logic */ }
             });
 
-            DOMElements.mobileMenuButton.addEventListener('click', () => {
-                DOMElements.mobileMenu.classList.toggle('hidden');
-            });
-
-            window.addEventListener('scroll', () => {
-                DOMElements.header.classList.toggle('shadow-md', window.scrollY > 50);
-            });
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                    }
-                });
-            }, { threshold: 0.1 });
+            DOMElements.quizzieModal.form.addEventListener('change', updateQuizzieForm);
+            DOMElements.quizzieModal.form.addEventListener('submit', handleQuizSubmit);
+            
+            DOMElements.mobileMenuButton.addEventListener('click', () => DOMElements.mobileMenu.classList.toggle('hidden'));
+            window.addEventListener('scroll', () => DOMElements.header.classList.toggle('shadow-md', window.scrollY > 50));
+            const observer = new IntersectionObserver((entries) => entries.forEach(e => e.isIntersecting && e.target.classList.add('visible')), { threshold: 0.1 });
             document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
         });
     </script>
