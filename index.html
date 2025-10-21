@@ -970,7 +970,9 @@ For each question, provide a question, four options in an array, the correct ans
                     const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (jsonText) {
                          try {
-                            const parsedJson = JSON.parse(jsonText);
+                            // Clean potential markdown fences from the AI response
+                            const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+                            const parsedJson = JSON.parse(cleanedJsonText);
                             const questions = parsedJson.questions || [];
                             
                             if (questions.length > count) {
@@ -978,8 +980,14 @@ For each question, provide a question, four options in an array, the correct ans
                             } else if (questions.length < count) {
                                  console.warn(`API returned ${questions.length} questions, but ${count} were requested.`);
                             }
+                            
+                            // Validate questions to ensure they have the required fields
+                            const validQuestions = questions.filter(q => q && q.question && q.options && Array.isArray(q.options) && q.answer && q.explanation);
+                            if (validQuestions.length !== questions.length) {
+                                console.warn("Some generated questions were invalid and have been filtered out.");
+                            }
 
-                            return questions.map(q => ({...q, subject: gs_subject || csat_subject, answerIndex: q.options.indexOf(q.answer)}));
+                            return validQuestions.map(q => ({...q, subject: gs_subject || csat_subject, answerIndex: q.options.indexOf(q.answer)}));
                         } catch (parseError) {
                              console.error("Failed to parse JSON response from AI:", parseError);
                              console.error("Invalid JSON string received:", jsonText);
