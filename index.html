@@ -73,12 +73,12 @@
             display: block;
         }
         .option-correct {
-            background-color: #dcfce7; /* green-100 */
-            border-color: #22c55e; /* green-500 */
+            background-color: #dcfce7 !important; /* green-100 */
+            border-color: #22c55e !important; /* green-500 */
         }
         .option-incorrect {
-            background-color: #fee2e2; /* red-100 */
-            border-color: #ef4444; /* red-500 */
+            background-color: #fee2e2 !important; /* red-100 */
+            border-color: #ef4444 !important; /* red-500 */
         }
 
         #quizzie-content {
@@ -545,7 +545,7 @@
                 </div>
                 <div id="quiz-progress-text" class="text-center text-sm text-slate-500 mt-1">Step 1 of 4</div>
             </div>
-            <div id="quizzie-content" class="p-8 overflow-y-auto">
+            <div id="quizzie-content" class="p-8 overflow-y-auto flex-grow">
                 <form id="quizzie-form">
                     <!-- Step 1: Main Subject -->
                     <div data-step="1" class="active space-y-6">
@@ -659,7 +659,7 @@
                                    </div>
                                </label>
                                <label>
-                                   <input type="radio" name="difficulty" value="medium">
+                                   <input type="radio" name="difficulty" value="medium" checked>
                                    <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
                                         <div class="font-bold text-lg">Medium</div>
                                    </div>
@@ -681,6 +681,13 @@
                 </form>
                 <div id="quiz-result" class="hidden"></div>
                 <div id="quiz-active-view" class="hidden"></div>
+            </div>
+            <!-- Static Quiz Footer -->
+            <div id="quiz-footer" class="p-6 border-t bg-slate-50 rounded-b-lg hidden">
+                <div class="flex justify-between">
+                    <button id="prev-q-btn" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold hover:bg-slate-300 transition-colors">Previous</button>
+                    <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Next</button>
+                </div>
             </div>
         </div>
     </div>
@@ -907,6 +914,7 @@
                 form.classList.remove('hidden');
                 result.classList.add('hidden');
                 activeView.classList.add('hidden');
+                document.getElementById('quiz-footer').classList.add('hidden');
                 result.innerHTML = '';
                 activeView.innerHTML = '';
                 quizQuestions = [];
@@ -961,20 +969,35 @@
                      sourcePool = (questionPatterns[sectionalSubject] || []).map(q => ({...q, subject: sectionalSubject}));
                  }
 
-                 const count = test_type === 'flt' ? (main_subject === 'gs' ? 5 : 5) : parseInt(num_questions); // Capping FLT for demo
-                 if (sourcePool.length === 0) return [];
-                 const shuffled = [...sourcePool].sort(() => 0.5 - Math.random());
+                 const count = test_type === 'flt' ? 5 : parseInt(num_questions); // Capping FLT for demo, otherwise use 100 for GS, 80 for CSAT
+
+                 const generated = [];
+                 if (sourcePool.length > 0) {
+                     for (let i = 0; i < count; i++) {
+                         // Pick a random question from the pool. This allows duplicates if the pool is smaller than the count.
+                         generated.push(sourcePool[Math.floor(Math.random() * sourcePool.length)]);
+                     }
+                 }
                  
-                 return shuffled.slice(0, Math.min(count, shuffled.length)).map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
+                 return generated.map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
              };
 
             const displayQuiz = () => {
                 const { activeView } = DOMElements.quizzieModal;
+                const footer = document.getElementById('quiz-footer');
+                const prevBtn = document.getElementById('prev-q-btn');
+                const nextBtn = document.getElementById('next-q-btn');
                 let currentQuestionIndex = 0;
+
+                function updateFooterButtons() {
+                    prevBtn.classList.toggle('invisible', currentQuestionIndex === 0);
+                    nextBtn.textContent = currentQuestionIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next';
+                }
 
                 function renderQuestion() {
                     if (quizQuestions.length === 0) {
-                        activeView.innerHTML = `<div class="p-4 text-center">No questions available.</div> <div class="mt-6 flex justify-end"><button data-action="retake-quiz" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Start Over</button></div>`;
+                        activeView.innerHTML = `<div class="p-4 text-center">No questions available for this combination.</div>`;
+                        footer.classList.add('hidden');
                         return;
                     }
                     const q = quizQuestions[currentQuestionIndex];
@@ -993,11 +1016,8 @@
                             <p class="mb-6 text-slate-800 text-lg whitespace-pre-wrap text-left">${q.question}</p>
                             <div class="space-y-3 radio-card-group">${optionsHTML}</div>
                         </div>
-                        <div class="mt-8 flex justify-between">
-                            <button id="prev-q-btn" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold hover:bg-slate-300 transition-colors ${currentQuestionIndex === 0 ? 'invisible' : ''}">Previous</button>
-                            <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">${currentQuestionIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next'}</button>
-                        </div>
                     `;
+                    updateFooterButtons();
                 }
 
                 function navigate(direction) {
@@ -1015,12 +1035,10 @@
                 activeView.onchange = (e) => {
                     if(e.target.type === 'radio') {
                        userAnswers[currentQuestionIndex] = parseInt(e.target.value);
-                       // Auto-next on selection for smoother experience
-                       // setTimeout(() => navigate('next'), 200);
                     }
                 };
 
-                activeView.onclick = (e) => {
+                footer.onclick = (e) => {
                     if (e.target.id === 'next-q-btn') navigate('next');
                     if (e.target.id === 'prev-q-btn') navigate('prev');
                 };
@@ -1030,6 +1048,7 @@
             
             const calculateAndShowResults = () => {
                 const { activeView, modal } = DOMElements.quizzieModal;
+                document.getElementById('quiz-footer').classList.add('hidden');
                 modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
                 
                 let score = 0;
@@ -1052,7 +1071,7 @@
                     }
                 });
                 
-                const percentage = (score / (quizQuestions.length * 2)) * 100;
+                const percentage = quizQuestions.length > 0 ? (score / (quizQuestions.length * 2)) * 100 : 0;
                 let feedback = '';
                 const weakAreas = Object.keys(wrongTopics).sort((a,b) => wrongTopics[b] - wrongTopics[a]);
                 const weakAreasText = `Your performance suggests a need to revisit concepts in: ${weakAreas.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}.`;
@@ -1099,7 +1118,7 @@
                         if(optIndex === q.answerIndex) {
                             classes += ' option-correct';
                             icon = `<i class="fas fa-check-circle text-green-500 mr-3"></i>`;
-                        } else if (userAnswerIndex === optIndex) {
+                        } else if (userAnswerIndex === optIndex && userAnswerIndex !== q.answerIndex) {
                             classes += ' option-incorrect';
                             icon = `<i class="fas fa-times-circle text-red-500 mr-3"></i>`;
                         } else {
@@ -1140,6 +1159,7 @@
                     userAnswers = new Array(quizQuestions.length);
                     result.classList.add('hidden');
                     activeView.classList.remove('hidden');
+                    document.getElementById('quiz-footer').classList.remove('hidden');
                     displayQuiz();
                 }, 500);
             };
@@ -1283,3 +1303,4 @@
     </script>
 </body>
 </html>
+
