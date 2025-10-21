@@ -940,14 +940,18 @@
                 DOMElements.mobileUserActions.classList.toggle('hidden', !isLoggedIn);
                 
                 if (isLoggedIn) {
-                    const { doc, getDoc } = firestore;
-                    const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
-                    const userDoc = await getDoc(userDocRef);
-
                     let displayName = '';
-                    if (userDoc.exists()) {
-                        currentUserProfile = userDoc.data();
-                        displayName = currentUserProfile.firstName || '';
+                    try {
+                        const { doc, getDoc } = firestore;
+                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
+                        const userDoc = await getDoc(userDocRef);
+
+                        if (userDoc.exists()) {
+                            currentUserProfile = userDoc.data();
+                            displayName = currentUserProfile.firstName || '';
+                        }
+                    } catch (error) {
+                        console.error("Could not fetch user profile, possibly offline:", error);
                     }
 
                     if (!displayName && user.email) {
@@ -1796,3 +1800,4 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
     </script>
 </body>
 </html>
+
