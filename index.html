@@ -59,7 +59,7 @@
           50% { opacity: 0.2; }
         }
         .pulsing-dots span {
-          animation: pulse 1.4s infinite;
+            animation: pulse 1.4s infinite;
         }
         .pulsing-dots span:nth-child(1) { animation-delay: 0s; }
         .pulsing-dots span:nth-child(2) { animation-delay: 0.2s; }
@@ -103,6 +103,19 @@
         }
         .logo-container:hover {
             transform: scale(1.05);
+        }
+        /* Custom radio button cards */
+        .radio-card-group input[type="radio"] {
+            display: none;
+        }
+        .radio-card {
+            border: 2px solid #e2e8f0; /* slate-200 */
+            transition: all 0.2s ease-in-out;
+        }
+        .radio-card-group input[type="radio"]:checked + .radio-card {
+            border-color: #3b82f6; /* blue-500 */
+            background-color: #eff6ff; /* blue-50 */
+            box-shadow: 0 0 0 2px #3b82f6;
         }
     </style>
 </head>
@@ -521,43 +534,54 @@
     <!-- Quizzie Modal -->
     <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8 max-h-[90vh] flex flex-col">
-            <div class="p-8 border-b sticky top-0 bg-white z-10">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold text-slate-800">AI Based Quiz Module</h2>
+            <div class="p-6 border-b sticky top-0 bg-white z-10">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-slate-800">AI Quiz Module</h2>
                     <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
                 </div>
+                <!-- Progress Bar -->
+                <div id="quiz-progress-bar" class="w-full bg-slate-200 rounded-full h-2.5">
+                    <div id="quiz-progress-indicator" class="bg-blue-600 h-2.5 rounded-full" style="width: 25%"></div>
+                </div>
+                <div id="quiz-progress-text" class="text-center text-sm text-slate-500 mt-1">Step 1 of 4</div>
             </div>
             <div id="quizzie-content" class="p-8 overflow-y-auto">
                 <form id="quizzie-form">
                     <!-- Step 1: Main Subject -->
-                    <div data-step="1" class="active space-y-4">
-                        <h3 class="text-xl font-semibold text-slate-700">Step 1: Choose your Subject</h3>
+                    <div data-step="1" class="active space-y-6">
+                        <h3 class="text-xl font-semibold text-slate-700">Choose your Subject</h3>
                         <div>
-                            <label for="quiz-main-subject" class="block text-slate-700 font-semibold mb-2">Subject</label>
-                            <select id="quiz-main-subject" name="main_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg" required>
+                            <select id="quiz-main-subject" name="main_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-lg" required>
                                 <option value="">-- Select a Subject --</option>
-                                <option value="gs">General Studies</option>
-                                <option value="csat">CSAT</option>
+                                <option value="gs">General Studies (Prelims)</option>
+                                <option value="csat">CSAT (Prelims)</option>
                             </select>
                         </div>
-                        <div class="flex justify-end">
-                            <button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                        <div class="flex justify-end pt-4">
+                            <button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-colors">Next</button>
                         </div>
                     </div>
 
                     <!-- Step 2: Test Type & Sectional Details -->
-                    <div data-step="2" class="space-y-4">
-                        <h3 class="text-xl font-semibold text-slate-700">Step 2: Define your Test</h3>
+                    <div data-step="2" class="space-y-6">
+                        <h3 class="text-xl font-semibold text-slate-700">Define your Test</h3>
                         
-                        <!-- Test Type Radio -->
-                        <div class="quiz-step-group active">
+                        <div class="radio-card-group">
                             <label class="block text-slate-700 font-semibold mb-2">Test Type</label>
-                            <div class="flex flex-col space-y-2">
-                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
-                                    <input type="radio" name="test_type" value="sectional" class="mr-3" required> Sectional Test
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label>
+                                    <input type="radio" name="test_type" value="sectional" class="mr-3" required>
+                                    <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
+                                        <div class="font-bold text-lg">Sectional Test</div>
+                                        <div class="text-sm text-slate-500">Focus on a specific subject</div>
+                                    </div>
                                 </label>
-                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
-                                    <input type="radio" name="test_type" value="flt" class="mr-3"> Full Length Test (FLT)
+                                <label>
+                                    <input type="radio" name="test_type" value="flt" class="mr-3"> 
+                                    <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
+                                        <div class="font-bold text-lg">Full Length Test</div>
+                                        <div class="text-sm text-slate-500">Simulate the real exam</div>
+                                    </div>
                                 </label>
                             </div>
                         </div>
@@ -565,7 +589,7 @@
                         <!-- Sectional Subject for GS -->
                         <div id="gs-sectional-group" class="quiz-step-group">
                             <label for="gs-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
-                            <select id="gs-subject" name="gs_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                            <select id="gs-subject" name="gs_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-base">
                                 <option value="history">History</option>
                                 <option value="geography">Geography</option>
                                 <option value="polity">Polity</option>
@@ -578,27 +602,27 @@
                         <!-- Sectional Subject for CSAT -->
                         <div id="csat-sectional-group" class="quiz-step-group">
                             <label for="csat-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
-                            <select id="csat-subject" name="csat_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                            <select id="csat-subject" name="csat_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-base">
                                 <option value="quant">Quant</option>
                                 <option value="reasoning">Reasoning</option>
                                 <option value="comprehension">Comprehension</option>
                             </select>
                         </div>
 
-                        <div class="flex justify-between">
-                            <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
-                            <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                        <div class="flex justify-between pt-4">
+                            <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 text-slate-800 px-8 py-3 rounded-lg font-semibold text-base hover:bg-slate-300 transition-colors">Back</button>
+                            <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-colors">Next</button>
                         </div>
                     </div>
 
                     <!-- Step 3: Questions & Type -->
-                    <div data-step="3" class="space-y-4">
-                         <h3 class="text-xl font-semibold text-slate-700">Step 3: Customize Questions</h3>
+                    <div data-step="3" class="space-y-6">
+                         <h3 class="text-xl font-semibold text-slate-700">Customize Questions</h3>
 
                          <!-- Number of Questions (for Sectional) -->
                         <div id="num-questions-group" class="quiz-step-group">
                             <label for="num-questions" class="block text-slate-700 font-semibold mb-2">Number of Questions</label>
-                            <select id="num-questions" name="num_questions" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                            <select id="num-questions" name="num_questions" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-base">
                                 <option value="5">5</option>
                                 <option value="10">10</option>
                                 <option value="25">25</option>
@@ -609,33 +633,48 @@
                          <!-- Question Type (for GS Sectional) -->
                         <div id="question-type-group" class="quiz-step-group">
                             <label class="block text-slate-700 font-semibold mb-2">Nature of Questions</label>
-                            <select name="question_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                            <select name="question_type" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-base">
                                 <option value="static">Static</option>
                                 <option value="current">Current Affairs</option>
                                 <option value="blend">A Blend of Static & Current</option>
                             </select>
                         </div>
 
-                        <div class="flex justify-between">
-                            <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
-                            <button type="button" data-next="4" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                        <div class="flex justify-between pt-4">
+                            <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 text-slate-800 px-8 py-3 rounded-lg font-semibold text-base hover:bg-slate-300 transition-colors">Back</button>
+                            <button type="button" data-next="4" class="next-step-btn bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-colors">Next</button>
                         </div>
                     </div>
                     
                     <!-- Step 4: Difficulty -->
-                    <div data-step="4" class="space-y-4">
-                        <h3 class="text-xl font-semibold text-slate-700">Step 4: Difficulty Level</h3>
-                        <div>
+                    <div data-step="4" class="space-y-6">
+                        <h3 class="text-xl font-semibold text-slate-700">Difficulty Level</h3>
+                        <div class="radio-card-group">
                            <label class="block text-slate-700 font-semibold mb-2">Choose Difficulty</label>
-                            <div class="flex flex-col space-y-2">
-                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="easy" class="mr-3" required> Easy</label>
-                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="medium" class="mr-3"> Medium</label>
-                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="tough" class="mr-3"> Tough</label>
-                            </div>
+                           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                               <label>
+                                   <input type="radio" name="difficulty" value="easy" required>
+                                   <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
+                                        <div class="font-bold text-lg">Easy</div>
+                                   </div>
+                               </label>
+                               <label>
+                                   <input type="radio" name="difficulty" value="medium">
+                                   <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
+                                        <div class="font-bold text-lg">Medium</div>
+                                   </div>
+                               </label>
+                               <label>
+                                   <input type="radio" name="difficulty" value="tough">
+                                   <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
+                                        <div class="font-bold text-lg">Tough</div>
+                                   </div>
+                               </label>
+                           </div>
                         </div>
-                        <div class="flex justify-between">
-                            <button type="button" data-prev="3" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
-                            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">Generate Quiz</button>
+                        <div class="flex justify-between pt-4">
+                            <button type="button" data-prev="3" class="prev-step-btn bg-slate-200 text-slate-800 px-8 py-3 rounded-lg font-semibold text-base hover:bg-slate-300 transition-colors">Back</button>
+                            <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-green-700 transition-colors">Generate Quiz</button>
                         </div>
                     </div>
 
@@ -687,7 +726,7 @@
                 console.error("Firebase initialization failed:", error);
                 showNotification("Could not connect to online services.", true);
             }
-           
+            
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
             let currentUser = null;
             let generatedPlanHTML = '';
@@ -695,31 +734,44 @@
             let quizQuestions = [];
             let userAnswers = [];
             
+            // --- EXPANDED QUESTION BANK ---
             const questionBank = {
               "gs_question_patterns": {
                 "history": [
                   { "type": "multiple_statement_correct", "question": "With reference to ancient India, consider the following statements:\n1. The concept of Stupa is Buddhist in origin.\n2. Stupa was generally a repository of relics.\n3. Stupa was a votive and commemorative structure in Buddhist tradition.\nHow many of the statements given above are correct?", "options": ["Only one", "Only two", "All three", "None"], "answer": "Only two", "explanation": "Statements 2 and 3 are correct. The concept of stupas is pre-Buddhist, but it was perfected under Buddhism." },
-                  { "type": "chronological_order", "question": "Consider the following dynasties:\n1. Hoysala\n2. Gahadavala\n3. Kakatiya\n4. Yadava\nHow many of the above dynasties established their kingdoms in the early eighth century AD?", "options": ["Only one", "Only two", "Only three", "None"], "answer": "None", "explanation": "These dynasties were established much later, primarily between the 10th and 12th centuries." },
-                  { "type": "match_the_following", "question": "Consider the following pairs:\nLiterary work       Author\n1. Devichandragupta : Bilhana\n2. Hammira-Mahakavya : Nayachandra Suri\n3. Milinda-panha     : Nagarjuna\n4. Nitivakyamrita    : Somadeva Suri\nHow many of the above pairs are correctly matched?", "options": ["Only one", "Only two", "Only three", "All four"], "answer": "Only two", "explanation": "Devichandragupta was written by Vishakhadatta, and Milinda-panha is attributed to Nagasena, not Nagarjuna. The other two pairs are correct." }
+                  { "type": "chronological_order", "question": "Consider the following events in the history of India:\n1. Rise of Pratiharas under King Bhoja\n2. Establishment of Pallava power under Mahendravarman I\n3. Establishment of Chola power by Parantaka I\n4. Pala dynasty founded by Gopala\nWhat is the correct chronological order of the above events?", "options": ["2-4-1-3", "3-1-4-2", "2-1-4-3", "3-4-1-2"], "answer": "2-4-1-3", "explanation": "Pallavas (Mahendravarman I) were around 600 AD. Palas (Gopala) around 750 AD. Pratiharas (Bhoja) around 836 AD. Cholas (Parantaka I) around 907 AD." },
+                  { "type": "match_the_following", "question": "Consider the following pairs:\nLiterary work      Author\n1. Devichandragupta : Bilhana\n2. Hammira-Mahakavya : Nayachandra Suri\n3. Milinda-panha     : Nagarjuna\n4. Nitivakyamrita    : Somadeva Suri\nHow many of the above pairs are correctly matched?", "options": ["Only one", "Only two", "Only three", "All four"], "answer": "Only two", "explanation": "Devichandragupta was written by Vishakhadatta, and Milinda-panha is attributed to Nagasena, not Nagarjuna. The other two pairs are correct." },
+                  { "type": "conceptual_definition", "question": "The term 'Sreni' in ancient India referred to:", "options": ["A type of coin", "An organization of merchants", "A village administrator", "A judicial officer"], "answer": "An organization of merchants", "explanation": "Srenis were guilds or corporations of traders, merchants, and artisans in ancient India. They were powerful economic and sometimes administrative bodies."}
                 ],
                 "polity": [
                   { "type": "statement_assertion_reason", "question": "Consider the following statements:\nStatement-I: In India, prisons are managed by State Governments with their own rules and regulations.\nStatement-II: In India, prisons are governed by the Prisons Act, 1894 which expressly kept the subject of prisons in the control of Provincial Governments.\nWhich one of the following is correct in respect of the above statements?", "options": ["Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I", "Statement-I is correct but Statement-II is incorrect", "Statement-I is incorrect but Statement-II is correct"], "answer": "Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "explanation": "The Prisons Act, 1894, placed prisons under provincial (now state) control, which is why state governments manage them today, as stated in the Constitution." },
-                  { "type": "how_many_correct", "question": "With reference to the Indian Parliament, consider the following statements:\n1. A bill pending in the Lok Sabha lapses on its dissolution.\n2. A bill passed by the Lok Sabha and pending in the Rajya Sabha lapses on the dissolution of the Lok Sabha.\n3. A bill in regard to which the President of India has notified his/her intention to summon the Houses to a joint sitting does not lapse on the dissolution of the Lok Sabha.\nHow many of the above statements are correct?", "options": ["Only one", "Only two", "All three", "None"], "answer": "All three", "explanation": "All three statements accurately describe the rules regarding the lapsing of bills upon the dissolution of the Lok Sabha as per parliamentary procedure." }
+                  { "type": "how_many_correct", "question": "With reference to the Indian Parliament, consider the following statements:\n1. A bill pending in the Lok Sabha lapses on its dissolution.\n2. A bill passed by the Lok Sabha and pending in the Rajya Sabha lapses on the dissolution of the Lok Sabha.\n3. A bill in regard to which the President of India has notified his/her intention to summon the Houses to a joint sitting does not lapse on the dissolution of the Lok Sabha.\nHow many of the above statements are correct?", "options": ["Only one", "Only two", "All three", "None"], "answer": "All three", "explanation": "All three statements accurately describe the rules regarding the lapsing of bills upon the dissolution of the Lok Sabha as per parliamentary procedure." },
+                  { "type": "multiple_application_correct", "question": "Which of the following are envisaged by the Right against Exploitation in the Constitution of India?\n1. Prohibition of traffic in human beings and forced labour\n2. Abolition of untouchability\n3. Protection of the interests of minorities\n4. Prohibition of employment of children in factories and mines\nSelect the correct answer using the code given below:", "options": ["1 and 4 only", "2, 3 and 4", "1 and 2 only", "1, 2, 3 and 4"], "answer": "1 and 4 only", "explanation": "The Right against Exploitation comprises Articles 23 (Prohibition of traffic in human beings and forced labour) and 24 (Prohibition of employment of children in factories, etc.). Abolition of untouchability is under the Right to Equality (Art 17), and protection of minorities is under Cultural and Educational Rights (Art 29 & 30)." }
                 ],
                 "economy": [
                   { "type": "conceptual_definition", "question": "In the context of finance, the term 'beta' refers to:", "options": ["the process of simultaneous buying and selling of an asset from different platforms", "an investment strategy of a portfolio manager to balance risk versus reward", "a type of systemic risk that arises where perfect hedging is not possible", "a numeric value that measures the fluctuations of a stock to changes in the overall stock market"], "answer": "a numeric value that measures the fluctuations of a stock to changes in the overall stock market", "explanation": "Beta is a measure of a stock's volatility in relation to the overall market. A beta greater than 1 indicates the stock is more volatile than the market, while a beta less than 1 means it is less volatile." },
-                  { "type": "multiple_application_correct", "question": "Consider the following markets:\n1. Government Bond Market\n2. Call Money Market\n3. Treasury Bill Market\n4. Stock Market\nHow many of the above are included in capital markets?", "options": ["Only one", "Only two", "Only three", "All four"], "answer": "Only two", "explanation": "The Government Bond Market and the Stock Market are parts of the capital market, which deals with long-term funds. The Call Money and Treasury Bill markets are part of the money market, dealing with short-term funds." }
+                  { "type": "multiple_application_correct", "question": "Consider the following markets:\n1. Government Bond Market\n2. Call Money Market\n3. Treasury Bill Market\n4. Stock Market\nHow many of the above are included in capital markets?", "options": ["Only one", "Only two", "Only three", "All four"], "answer": "Only two", "explanation": "The Government Bond Market and the Stock Market are parts of the capital market, which deals with long-term funds. The Call Money and Treasury Bill markets are part of the money market, dealing with short-term funds." },
+                  { "type": "conceptual_definition", "question": "Which one of the following best describes the term 'helicopter money'?", "options": ["A policy of quantitative easing by the central bank", "An unconventional monetary policy tool involving printing large sums of money and distributing it to the public", "Foreign aid provided to a country after a natural disaster", "A tax rebate given to low-income households"], "answer": "An unconventional monetary policy tool involving printing large sums of money and distributing it to the public", "explanation": "Helicopter money is a last-resort monetary stimulus strategy to spur inflation and economic output by putting money directly into the hands of the public, as if dropping it from a helicopter." }
                 ],
                 "geography": [
-                  { "type": "statement_assertion_reason", "question": "Consider the following statements:\nStatement-I: The soil in tropical rain forests is rich in nutrients.\nStatement-II: The high temperature and moisture of tropical rain forests cause dead organic matter in the soil to decompose quickly.\nWhich one of the following is correct in respect of the above statements?", "options": ["Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I", "Statement-I is correct but Statement-II is incorrect", "Statement-I is incorrect but Statement-II is correct"], "answer": "Statement-I is incorrect but Statement-II is correct", "explanation": "Statement II is correct, but rapid decomposition and heavy rainfall lead to leaching, making the topsoil of tropical rainforests nutrient-poor, not rich. Thus, Statement I is incorrect." }
+                  { "type": "statement_assertion_reason", "question": "Consider the following statements:\nStatement-I: The soil in tropical rain forests is rich in nutrients.\nStatement-II: The high temperature and moisture of tropical rain forests cause dead organic matter in the soil to decompose quickly.\nWhich one of the following is correct in respect of the above statements?", "options": ["Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I", "Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I", "Statement-I is correct but Statement-II is incorrect", "Statement-I is incorrect but Statement-II is correct"], "answer": "Statement-I is incorrect but Statement-II is correct", "explanation": "Statement II is correct, but rapid decomposition and heavy rainfall lead to leaching, making the topsoil of tropical rainforests nutrient-poor, not rich. Thus, Statement I is incorrect." },
+                  { "type": "how_many_correct", "question": "Consider the following rivers:\n1. Brahmani\n2. Nagavali\n3. Subarnarekha\n4. Vamsadhara\nWhich of the above rise from the Eastern Ghats?", "options": ["1 and 2", "2 and 4", "3 and 4", "1 and 3"], "answer": "2 and 4", "explanation": "The Brahmani and Subarnarekha rivers originate from the Chota Nagpur Plateau. The Nagavali and Vamsadhara rivers originate in the Eastern Ghats."}
+                ],
+                "environment": [
+                    { "type": "conceptual_definition", "question": "What is 'blue carbon'?", "options": ["Carbon captured by the world's oceans and coastal ecosystems", "Carbon stored in forest biomass", "Carbon emitted by burning fossil fuels", "Carbon sequestered in agricultural soils"], "answer": "Carbon captured by the world's oceans and coastal ecosystems", "explanation": "Blue carbon refers to the carbon dioxide removed from the atmosphere by marine ecosystems like mangroves, salt marshes, and seagrass meadows."}
+                ],
+                "science-tech": [
+                    { "type": "multiple_application_correct", "question": "Consider the following activities:\n1. Spraying pesticides on a crop field\n2. Inspecting the craters of active volcanoes\n3. Collecting breath samples from spouting whales for DNA analysis\nAt the present level of technology, which of the above activities can be successfully carried out by using drones?", "options": ["1 and 2 only", "2 and 3 only", "1 and 3 only", "1, 2 and 3"], "answer": "1, 2 and 3", "explanation": "Drones are now widely used for all three purposes: precision agriculture (spraying), aerial surveillance in hazardous environments (volcanoes), and scientific research (collecting samples from whales)." }
                 ]
               },
               "csat_question_patterns": {
                 "quant": [
-                  { "type": "problem_solving", "question": "A person travels from X to Y at a speed of 40 km/h and returns by increasing his speed by 50%. What is his average speed for both the trips?", "options": ["48 km/h", "50 km/h", "52 km/h", "55 km/h"], "answer": "48 km/h", "explanation": "Return speed is 40 * 1.5 = 60 km/h. Average speed = (2 * 40 * 60) / (40 + 60) = 4800 / 100 = 48 km/h." }
+                  { "type": "problem_solving", "question": "A person travels from X to Y at a speed of 40 km/h and returns by increasing his speed by 50%. What is his average speed for both the trips?", "options": ["48 km/h", "50 km/h", "52 km/h", "55 km/h"], "answer": "48 km/h", "explanation": "Return speed is 40 * 1.5 = 60 km/h. Average speed = (2 * 40 * 60) / (40 + 60) = 4800 / 100 = 48 km/h." },
+                  { "type": "problem_solving", "question": "A student has to get 40% marks to pass an examination. He got 40 marks and failed by 40 marks. The maximum marks for the examination are:", "options": ["200", "300", "400", "500"], "answer": "200", "explanation": "Passing marks = 40 (scored) + 40 (failed by) = 80. Since 80 marks are 40% of the total, the maximum marks are (80 / 40) * 100 = 200."}
                 ],
                 "reasoning": [
-                  { "type": "logical_deduction", "question": "Statements:\n1. All cats are dogs.\n2. All dogs are elephants.\nConclusions:\nI. All cats are elephants.\nII. Some elephants are cats.", "options": ["Only conclusion I follows", "Only conclusion II follows", "Both I and II follow", "Neither I nor II follows"], "answer": "Both I and II follow", "explanation": "This is a case of direct logical deduction. If A->B and B->C, then A->C. Also, if all A are C, then some C must be A." }
+                  { "type": "logical_deduction", "question": "Statements:\n1. All cats are dogs.\n2. All dogs are elephants.\nConclusions:\nI. All cats are elephants.\nII. Some elephants are cats.", "options": ["Only conclusion I follows", "Only conclusion II follows", "Both I and II follow", "Neither I nor II follows"], "answer": "Both I and II follow", "explanation": "This is a case of direct logical deduction. If A->B and B->C, then A->C. Also, if all A are C, then some C must be A." },
+                  { "type": "data_sufficiency", "question": "What is the value of X? \nStatement 1: X is a prime number. \nStatement 2: X^2 - 4 = 0.", "options": ["Statement 1 alone is sufficient", "Statement 2 alone is sufficient", "Both statements together are sufficient", "Statements are not sufficient"], "answer": "Statement 2 alone is sufficient", "explanation": "Statement 2 gives X^2 = 4, so X = 2 or -2. Statement 1 says X is prime, so X can be 2, 3, 5, etc. Statement 2 alone gives a definitive value (or values) for X. Thus, it is sufficient to determine X's value from a limited set."}
                 ],
                 "comprehension": [
                   { "type": "passage_inference", "question": "Read the following passage and answer the item that follows. 'The quest for a just society has been a perennial theme in human history. It has led to revolutions, reforms, and the creation of vast legal and ethical frameworks. Yet, the definition of 'just' remains elusive, varying across cultures and epochs. A society that provides equal opportunity may be considered just by some, while others might argue that a just society is one that ensures equal outcomes.'\nWhat is the most logical and rational inference that can be made from the passage?", "options": ["There is no universal concept of a just society.", "Equal opportunity is the only path to a just society.", "Equal outcomes are impossible to achieve.", "Revolutions are the best way to create a just society."], "answer": "There is no universal concept of a just society.", "explanation": "The passage explicitly states that the definition of 'just' is 'elusive, varying across cultures and epochs', which directly supports this inference." }
@@ -729,7 +781,7 @@
             
             // --- UI Element Refs ---
             const DOMElements = {
-                 authLinks: document.getElementById('auth-links'),
+                authLinks: document.getElementById('auth-links'),
                 userDashboardLink: document.getElementById('user-dashboard-link'),
                 dashboardSection: document.getElementById('dashboard'),
                 mobileMenuButton: document.getElementById('mobile-menu-button'),
@@ -761,6 +813,9 @@
                     csatSectionalGroup: document.getElementById('csat-sectional-group'),
                     numQuestionsGroup: document.getElementById('num-questions-group'),
                     questionTypeGroup: document.getElementById('question-type-group'),
+                    progressBar: document.getElementById('quiz-progress-bar'),
+                    progressIndicator: document.getElementById('quiz-progress-indicator'),
+                    progressText: document.getElementById('quiz-progress-text'),
                 },
                 plansList: document.getElementById('plans-list'),
                 copyrightYear: document.getElementById('copyright-year'),
@@ -860,6 +915,7 @@
                     step.classList.toggle('active', index === 0);
                 });
                 updateQuizzieForm();
+                updateQuizProgressBar(1, 4);
             };
 
             const updateQuizzieForm = () => {
@@ -882,37 +938,35 @@
                 }
             };
 
-             const generateQuizQuestions = (params) => {
-                const { main_subject, test_type, gs_subject, csat_subject, num_questions } = params;
-                let generated = [];
-                let sourcePool = [];
-                const questionPatterns = main_subject === 'gs' ? questionBank.gs_question_patterns : questionBank.csat_question_patterns;
-
-                if (!questionPatterns) { return []; }
-
-                if (test_type === 'flt') {
-                    Object.keys(questionPatterns).forEach(subject => {
-                        sourcePool.push(...(questionPatterns[subject] || []).map(q => ({...q, subject})));
-                    });
-                } else {
-                    const sectionalSubject = main_subject === 'gs' ? gs_subject : csat_subject;
-                    sourcePool = (questionPatterns[sectionalSubject] || []).map(q => ({...q, subject: sectionalSubject}));
-                }
-
-                const count = test_type === 'flt' ? (main_subject === 'gs' ? 100 : 80) : parseInt(num_questions);
-                if (sourcePool.length === 0) return [];
-                const shuffled = [...sourcePool].sort(() => 0.5 - Math.random());
-                generated = shuffled.slice(0, count);
-                // Ensure unique questions if pool is large enough
-                if (sourcePool.length >= count) {
-                     // The slice already gives unique items from shuffled array
-                } else {
-                    // If pool is smaller, we just return what we have to avoid duplicates
-                    generated = shuffled;
-                }
-                
-                return generated.map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
+            const updateQuizProgressBar = (current, total) => {
+                const { progressIndicator, progressText } = DOMElements.quizzieModal;
+                const percentage = (current / total) * 100;
+                progressIndicator.style.width = `${percentage}%`;
+                progressText.textContent = `Step ${current} of ${total}`;
             };
+
+             const generateQuizQuestions = (params) => {
+                 const { main_subject, test_type, gs_subject, csat_subject, num_questions } = params;
+                 let sourcePool = [];
+                 const questionPatterns = main_subject === 'gs' ? questionBank.gs_question_patterns : questionBank.csat_question_patterns;
+
+                 if (!questionPatterns) { return []; }
+
+                 if (test_type === 'flt') {
+                     Object.keys(questionPatterns).forEach(subject => {
+                         sourcePool.push(...(questionPatterns[subject] || []).map(q => ({...q, subject})));
+                     });
+                 } else {
+                     const sectionalSubject = main_subject === 'gs' ? gs_subject : csat_subject;
+                     sourcePool = (questionPatterns[sectionalSubject] || []).map(q => ({...q, subject: sectionalSubject}));
+                 }
+
+                 const count = test_type === 'flt' ? (main_subject === 'gs' ? 5 : 5) : parseInt(num_questions); // Capping FLT for demo
+                 if (sourcePool.length === 0) return [];
+                 const shuffled = [...sourcePool].sort(() => 0.5 - Math.random());
+                 
+                 return shuffled.slice(0, Math.min(count, shuffled.length)).map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
+             };
 
             const displayQuiz = () => {
                 const { activeView } = DOMElements.quizzieModal;
@@ -925,21 +979,23 @@
                     }
                     const q = quizQuestions[currentQuestionIndex];
                     let optionsHTML = q.options.map((opt, index) => `
-                        <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="q${currentQuestionIndex}" value="${index}" class="mr-3" ${userAnswers[currentQuestionIndex] == index ? 'checked' : ''}>
-                            <span class="text-left">${opt}</span>
+                        <label>
+                            <input type="radio" name="q${currentQuestionIndex}" value="${index}" class="hidden" ${userAnswers[currentQuestionIndex] == index ? 'checked' : ''}>
+                            <div class="p-4 border-2 border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer radio-card">
+                                <span class="text-slate-700">${opt}</span>
+                            </div>
                         </label>
                     `).join('');
 
                     activeView.innerHTML = `
                         <div class="quiz-question active">
-                            <h3 class="text-xl font-semibold mb-2">Question ${currentQuestionIndex + 1} of ${quizQuestions.length}</h3>
-                            <p class="mb-4 text-slate-700 whitespace-pre-wrap text-left">${q.question}</p>
-                            <div class="space-y-2">${optionsHTML}</div>
+                            <div class="mb-4 text-sm text-slate-500 font-semibold">Question ${currentQuestionIndex + 1} of ${quizQuestions.length}</div>
+                            <p class="mb-6 text-slate-800 text-lg whitespace-pre-wrap text-left">${q.question}</p>
+                            <div class="space-y-3 radio-card-group">${optionsHTML}</div>
                         </div>
                         <div class="mt-8 flex justify-between">
-                            <button id="prev-q-btn" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold ${currentQuestionIndex === 0 ? 'invisible' : ''}">Previous</button>
-                            <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">${currentQuestionIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next'}</button>
+                            <button id="prev-q-btn" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold hover:bg-slate-300 transition-colors ${currentQuestionIndex === 0 ? 'invisible' : ''}">Previous</button>
+                            <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">${currentQuestionIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next'}</button>
                         </div>
                     `;
                 }
@@ -959,6 +1015,8 @@
                 activeView.onchange = (e) => {
                     if(e.target.type === 'radio') {
                        userAnswers[currentQuestionIndex] = parseInt(e.target.value);
+                       // Auto-next on selection for smoother experience
+                       // setTimeout(() => navigate('next'), 200);
                     }
                 };
 
@@ -971,7 +1029,9 @@
             };
             
             const calculateAndShowResults = () => {
-                const { activeView } = DOMElements.quizzieModal;
+                const { activeView, modal } = DOMElements.quizzieModal;
+                modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
+                
                 let score = 0;
                 let correctCount = 0;
                 let incorrectCount = 0;
@@ -998,24 +1058,35 @@
                 const weakAreasText = `Your performance suggests a need to revisit concepts in: ${weakAreas.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}.`;
 
                 if (percentage >= 75) {
-                    feedback = `Excellent performance. You have a strong command of the subjects. To improve further, double-check your reasoning on the few questions you missed, especially in ${weakAreas.length > 0 ? weakAreas[0] : 'your weaker areas'}.`;
+                    feedback = `Excellent performance! You have a strong command of the subjects. To improve further, double-check your reasoning on the few questions you missed.`;
                 } else if (percentage >= 40) {
-                    feedback = `A decent score, but there are significant conceptual gaps. ${weakAreas.length > 0 ? weakAreasText : 'Review the explanations for your incorrect answers to strengthen your foundations.'}`;
+                    feedback = `A decent score, but there are conceptual gaps. ${weakAreas.length > 0 ? weakAreasText : 'Review the explanations for your incorrect answers to strengthen your foundations.'}`;
                 } else {
                     feedback = `This score indicates a weak foundation in the tested areas. A thorough revision is required. ${weakAreas.length > 0 ? weakAreasText : 'Begin by reviewing the fundamental concepts and explanations provided for all questions.'}`;
                 }
 
 
                 let resultHTML = `
-                    <div class="p-6 bg-blue-50 rounded-lg text-center">
-                        <h3 class="text-2xl font-bold">Quiz Results</h3>
-                        <p class="text-4xl font-bold mt-4">${score.toFixed(2)} / ${quizQuestions.length * 2}</p>
-                        <div class="flex justify-center space-x-6 mt-4 text-slate-700">
-                            <span><i class="fas fa-check-circle text-green-500 mr-1"></i>Correct: ${correctCount}</span>
-                            <span><i class="fas fa-times-circle text-red-500 mr-1"></i>Incorrect: ${incorrectCount}</span>
-                            <span><i class="fas fa-minus-circle text-gray-400 mr-1"></i>Unanswered: ${unansweredCount}</span>
+                    <div class="text-center">
+                        <h3 class="text-3xl font-bold text-slate-800">Quiz Results</h3>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
+                        <div class="bg-blue-50 p-4 rounded-lg text-center">
+                            <div class="text-sm text-blue-700 font-semibold">SCORE</div>
+                            <div class="text-3xl font-bold text-blue-900">${score.toFixed(2)} / ${quizQuestions.length * 2}</div>
                         </div>
-                        <div class="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-md text-left"><strong>Feedback:</strong> ${feedback}</div>
+                        <div class="bg-green-50 p-4 rounded-lg text-center">
+                            <div class="text-sm text-green-700 font-semibold">CORRECT</div>
+                            <div class="text-3xl font-bold text-green-900">${correctCount}</div>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg text-center">
+                            <div class="text-sm text-red-700 font-semibold">INCORRECT</div>
+                            <div class="text-3xl font-bold text-red-900">${incorrectCount}</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-r-lg">
+                        <h4 class="font-bold mb-1">Feedback & Analysis</h4>
+                        <p>${feedback}</p>
                     </div>
                     <h3 class="text-xl font-bold mt-8 mb-4">Review Your Answers</h3>
                 `;
@@ -1023,18 +1094,23 @@
                 resultHTML += quizQuestions.map((q, index) => {
                     const userAnswerIndex = userAnswers[index];
                     const optionsReview = q.options.map((opt, optIndex) => {
-                        let classes = 'p-3 border rounded-lg flex';
+                        let classes = 'p-3 border rounded-lg flex items-center text-left';
+                        let icon = '';
                         if(optIndex === q.answerIndex) {
                             classes += ' option-correct';
+                            icon = `<i class="fas fa-check-circle text-green-500 mr-3"></i>`;
                         } else if (userAnswerIndex === optIndex) {
                             classes += ' option-incorrect';
+                            icon = `<i class="fas fa-times-circle text-red-500 mr-3"></i>`;
+                        } else {
+                            icon = `<i class="far fa-circle text-slate-300 mr-3"></i>`;
                         }
-                        return `<div class="${classes}">${opt}</div>`;
+                        return `<div class="${classes}">${icon}<span>${opt}</span></div>`;
                     }).join('');
 
                     return `
-                        <div class="mb-6">
-                            <p class="font-semibold mb-3">Question ${index + 1}: ${q.question}</p>
+                        <div class="mb-6 border-b pb-6">
+                            <p class="font-semibold mb-3 text-slate-800">Q ${index + 1}: ${q.question}</p>
                             <div class="space-y-2">${optionsReview}</div>
                             <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm">
                                 <p><strong>Explanation:</strong> ${q.explanation}</p>
@@ -1050,7 +1126,8 @@
 
             const handleQuizSubmit = (e) => {
                 e.preventDefault();
-                const { form, result, activeView } = DOMElements.quizzieModal;
+                const { form, result, activeView, modal } = DOMElements.quizzieModal;
+                modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
 
@@ -1094,19 +1171,47 @@
                 if (target.closest('#planner-feature-card')) { /* reset and open planner */ }
                 if (targetId === 'close-planner-modal') closeModal(DOMElements.plannerModal.modal);
 
-                if (target.closest('#quizzie-feature-card')) { resetQuizzieModal(); openModal(DOMElements.quizzieModal.modal); }
+                if (target.closest('#quizzie-feature-card')) { 
+                    resetQuizzieModal(); 
+                    DOMElements.quizzieModal.modal.querySelector('#quiz-progress-bar').parentElement.classList.remove('hidden');
+                    openModal(DOMElements.quizzieModal.modal); 
+                }
                 if (targetId === 'close-quizzie-modal') closeModal(DOMElements.quizzieModal.modal);
-                if(target.closest('[data-action="retake-quiz"]')) resetQuizzieModal();
+                if(target.closest('[data-action="retake-quiz"]')) {
+                    resetQuizzieModal();
+                    DOMElements.quizzieModal.modal.querySelector('#quiz-progress-bar').parentElement.classList.remove('hidden');
+                }
                 
                 const stepBtn = target.closest('.next-step-btn, .prev-step-btn');
                 if (stepBtn) {
                     const modalForm = stepBtn.closest('form');
-                    const direction = stepBtn.classList.contains('next-step-btn') ? 'next' : 'prev';
                     const currentStep = stepBtn.closest('[data-step]');
                     const currentStepNumber = parseInt(currentStep.dataset.step);
-                    const nextStepNumber = direction === 'next' ? currentStepNumber + 1 : currentStepNumber - 1;
+                    
+                    let nextStepNumber = stepBtn.classList.contains('next-step-btn') 
+                        ? currentStepNumber + 1 
+                        : currentStepNumber - 1;
+
+                    // Skip step 3 if test type is FLT
+                    if (stepBtn.classList.contains('next-step-btn') && currentStepNumber === 2) {
+                        const testType = new FormData(modalForm).get('test_type');
+                        if (testType === 'flt') {
+                            nextStepNumber = 4; // Skip to difficulty
+                        }
+                    }
+                    if (stepBtn.classList.contains('prev-step-btn') && currentStepNumber === 4) {
+                         const testType = new FormData(modalForm).get('test_type');
+                        if (testType === 'flt') {
+                            nextStepNumber = 2; // Skip back to test type
+                        }
+                    }
+
                     const nextStep = modalForm.querySelector(`[data-step="${nextStepNumber}"]`);
-                    if (nextStep) { currentStep.classList.remove('active'); nextStep.classList.add('active'); }
+                    if (nextStep) { 
+                        currentStep.classList.remove('active'); 
+                        nextStep.classList.add('active'); 
+                        updateQuizProgressBar(nextStepNumber, 4);
+                    }
                 }
             });
 
@@ -1178,4 +1283,3 @@
     </script>
 </body>
 </html>
-
