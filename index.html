@@ -915,7 +915,7 @@
                 const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
 - If the user selects 'basic' difficulty, generate straightforward, knowledge-based questions that test fundamental concepts.
 - If the user selects 'advanced' difficulty, generate tricky, application-based, or multi-statement questions (e.g., "How many of the above statements are correct?") that require deeper analysis and are designed to be challenging.
-For each question, provide a question, four options, the correct answer, and a detailed and thorough explanation that elaborates on why the correct answer is right and why the other options are incorrect. You must return the response in a valid JSON format according to the provided schema.`;
+For each question, provide a question, four options in an array, the correct answer (which must be one of the provided options), and a detailed and thorough explanation that elaborates on why the correct answer is right and why the other options are incorrect. You must return the response in a valid JSON format according to the provided schema.`;
 
                 let userQuery = `Generate ${count} questions. Difficulty: ${difficulty}. `;
                 if (test_type === 'flt') {
@@ -969,16 +969,22 @@ For each question, provide a question, four options, the correct answer, and a d
                     const result = await response.json();
                     const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (jsonText) {
-                        const parsedJson = JSON.parse(jsonText);
-                        const questions = parsedJson.questions || [];
-                        
-                        if (questions.length > count) {
-                            questions.length = count;
-                        } else if (questions.length < count) {
-                             console.warn(`API returned ${questions.length} questions, but ${count} were requested.`);
-                        }
+                         try {
+                            const parsedJson = JSON.parse(jsonText);
+                            const questions = parsedJson.questions || [];
+                            
+                            if (questions.length > count) {
+                                questions.length = count;
+                            } else if (questions.length < count) {
+                                 console.warn(`API returned ${questions.length} questions, but ${count} were requested.`);
+                            }
 
-                        return questions.map(q => ({...q, subject: gs_subject || csat_subject, answerIndex: q.options.indexOf(q.answer)}));
+                            return questions.map(q => ({...q, subject: gs_subject || csat_subject, answerIndex: q.options.indexOf(q.answer)}));
+                        } catch (parseError) {
+                             console.error("Failed to parse JSON response from AI:", parseError);
+                             console.error("Invalid JSON string received:", jsonText);
+                             throw new Error("Failed to parse AI response.");
+                        }
                     }
                     return [];
                 } catch (error) {
@@ -1361,3 +1367,4 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
     </script>
 </body>
 </html>
+
