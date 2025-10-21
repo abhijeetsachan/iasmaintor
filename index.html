@@ -117,6 +117,12 @@
             background-color: #eff6ff; /* blue-50 */
             box-shadow: 0 0 0 2px #3b82f6;
         }
+        
+        /* AI Loader Animation */
+        @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse-inner { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.9); } }
+        .ai-loader .outer-ring { animation: rotate 3s linear infinite; }
+        .ai-loader .inner-dot { animation: pulse-inner 1.5s ease-in-out infinite; }
     </style>
 </head>
 <body class="text-slate-800">
@@ -541,15 +547,16 @@
     <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8 max-h-[90vh] flex flex-col">
             <div class="p-6 border-b sticky top-0 bg-white z-10">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-slate-800">AI Quiz Module</h2>
                     <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
                 </div>
-                <!-- Progress Bar -->
-                <div id="quiz-progress-bar" class="w-full bg-slate-200 rounded-full h-2.5">
-                    <div id="quiz-progress-indicator" class="bg-blue-600 h-2.5 rounded-full" style="width: 25%"></div>
+                <div id="quiz-progress-container" class="mt-4">
+                    <div id="quiz-progress-bar" class="w-full bg-slate-200 rounded-full h-2.5">
+                        <div id="quiz-progress-indicator" class="bg-blue-600 h-2.5 rounded-full" style="width: 25%"></div>
+                    </div>
+                    <div id="quiz-progress-text" class="text-center text-sm text-slate-500 mt-1">Step 1 of 4</div>
                 </div>
-                <div id="quiz-progress-text" class="text-center text-sm text-slate-500 mt-1">Step 1 of 4</div>
             </div>
             <div id="quizzie-content" class="p-8 overflow-y-auto flex-grow">
                 <form id="quizzie-form">
@@ -784,6 +791,7 @@
                     progressBar: document.getElementById('quiz-progress-bar'),
                     progressIndicator: document.getElementById('quiz-progress-indicator'),
                     progressText: document.getElementById('quiz-progress-text'),
+                    progressContainer: document.getElementById('quiz-progress-container'),
                 },
                 plansList: document.getElementById('plans-list'),
                 quizzesList: document.getElementById('quizzes-list'),
@@ -922,7 +930,7 @@ The plan should be practical and cover a mix of General Studies subjects and the
                     step.classList.toggle('active', index === 0);
                 });
 
-                modal.querySelector('#quiz-progress-bar').parentElement.classList.remove('hidden');
+                modal.querySelector('#quiz-progress-container').classList.remove('hidden');
                 
                 updateQuizzieForm();
                 updateQuizProgressBar(1, 4);
@@ -1188,8 +1196,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
             const calculateAndShowResults = async () => {
                 const { activeView, modal } = DOMElements.quizzieModal;
                 document.getElementById('quiz-footer').classList.add('hidden');
-                modal.querySelector('#quiz-progress-bar').classList.add('hidden');
-                modal.querySelector('#quiz-progress-text').classList.add('hidden');
+                modal.querySelector('#quiz-progress-container').classList.add('hidden');
                 
                 let score = 0;
                 let correctCount = 0;
@@ -1295,7 +1302,7 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
             const handleQuizSubmit = async (e) => {
                 e.preventDefault();
                 const { form, result, activeView, modal } = DOMElements.quizzieModal;
-                modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
+                modal.querySelector('#quiz-progress-container').classList.add('hidden');
                 const formData = new FormData(form);
                 currentQuizParams = Object.fromEntries(formData.entries());
 
