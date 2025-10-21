@@ -864,7 +864,7 @@
 
             // --- Quizzie Logic ---
             const resetQuizzieModal = () => {
-                const { form, result, activeView } = DOMElements.quizzieModal;
+                const { form, result, activeView, modal } = DOMElements.quizzieModal;
                 form.reset();
                 form.classList.remove('hidden');
                 result.classList.add('hidden');
@@ -877,6 +877,10 @@
                 form.querySelectorAll('[data-step]').forEach((step, index) => {
                     step.classList.toggle('active', index === 0);
                 });
+
+                modal.querySelector('#quiz-progress-bar').classList.remove('hidden');
+                modal.querySelector('#quiz-progress-text').classList.remove('hidden');
+                
                 updateQuizzieForm();
                 updateQuizProgressBar(1, 4);
             };
@@ -912,7 +916,7 @@
                 const { main_subject, test_type, gs_subject, csat_subject, num_questions, difficulty, question_type } = params;
                 const count = test_type === 'flt' ? 5 : parseInt(num_questions);
 
-                const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam. For each question, provide a question, four options, the correct answer, and a concise explanation. You must return the response in a valid JSON format according to the provided schema.`;
+                const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam. For each question, provide a question, four options, the correct answer, and a detailed and thorough explanation that elaborates on why the correct answer is right and why the other options are incorrect. You must return the response in a valid JSON format according to the provided schema.`;
 
                 let userQuery = `Generate ${count} questions. Difficulty: ${difficulty}. `;
                 if (test_type === 'flt') {
@@ -968,15 +972,14 @@
                     if (jsonText) {
                         const parsedJson = JSON.parse(jsonText);
                         const questions = parsedJson.questions || [];
-                        // Ensure the correct number of questions is returned, matching the user's request
+                        
                         if (questions.length > count) {
                             questions.length = count;
                         } else if (questions.length < count) {
-                             // If API returns fewer, we can't create more, but we can notify the user or just use what we have.
                              console.warn(`API returned ${questions.length} questions, but ${count} were requested.`);
                         }
 
-                        return questions.map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
+                        return questions.map(q => ({...q, subject: gs_subject || csat_subject, answerIndex: q.options.indexOf(q.answer)}));
                     }
                     return [];
                 } catch (error) {
@@ -985,6 +988,49 @@
                     return [];
                 }
             };
+
+            const generateAIFeedback = async (correctCount, incorrectCount, unansweredCount, totalQuestions, wrongQuestions) => {
+                const systemPrompt = `You are an expert mentor for the UPSC Civil Services Exam. Your task is to provide a concise, insightful, and encouraging analysis of a student's quiz performance. Your analysis should be in a single paragraph.`;
+
+                let userQuery = `A student has just completed a quiz. Here is their performance summary:
+- Total Questions: ${totalQuestions}
+- Correct Answers: ${correctCount}
+- Incorrect Answers: ${incorrectCount}
+- Unanswered: ${unansweredCount}
+
+Here are the questions the student answered incorrectly, along with their correct answers and explanations:
+${JSON.stringify(wrongQuestions, null, 2)}
+
+Based on this data, provide a concise, insightful, and encouraging analysis of the student's performance. Your analysis should be in a single paragraph and do the following:
+1. Start with an overall assessment (e.g., "Good attempt," "This indicates a need for more focus," etc.).
+2. Identify potential patterns in the mistakes. Are they conceptual errors, factual mistakes, or related to a specific topic? Do not just list the topics.
+3. Suggest specific, actionable areas for improvement. For example, 'It seems you're struggling with chronology in Ancient History. Revisiting a timeline chart could be helpful.' or 'The errors in Polity suggest a need to brush up on Fundamental Rights.'
+4. Maintain a supportive and motivational tone.`;
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                const feedbackText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                return feedbackText || "Could not generate feedback at this time.";
+            };
+
 
             const displayQuiz = () => {
                 const { activeView } = DOMElements.quizzieModal;
@@ -1050,16 +1096,17 @@
                 renderQuestion();
             };
             
-            const calculateAndShowResults = () => {
+            const calculateAndShowResults = async () => {
                 const { activeView, modal } = DOMElements.quizzieModal;
                 document.getElementById('quiz-footer').classList.add('hidden');
-                modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
+                modal.querySelector('#quiz-progress-bar').classList.add('hidden');
+                modal.querySelector('#quiz-progress-text').classList.add('hidden');
                 
                 let score = 0;
                 let correctCount = 0;
                 let incorrectCount = 0;
                 let unansweredCount = 0;
-                const wrongTopics = {};
+                const wrongQuestions = [];
 
                 quizQuestions.forEach((q, index) => {
                     const userAnswerIndex = userAnswers[index];
@@ -1071,24 +1118,16 @@
                     } else {
                         incorrectCount++;
                         score -= 0.66;
-                        wrongTopics[q.subject || 'general'] = (wrongTopics[q.subject || 'general'] || 0) + 1;
+                        wrongQuestions.push({
+                            question: q.question,
+                            yourAnswer: q.options[userAnswerIndex],
+                            correctAnswer: q.answer,
+                            explanation: q.explanation,
+                            subject: q.subject || 'general'
+                        });
                     }
                 });
                 
-                const percentage = quizQuestions.length > 0 ? (score / (quizQuestions.length * 2)) * 100 : 0;
-                let feedback = '';
-                const weakAreas = Object.keys(wrongTopics).sort((a,b) => wrongTopics[b] - wrongTopics[a]);
-                const weakAreasText = `Your performance suggests a need to revisit concepts in: ${weakAreas.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}.`;
-
-                if (percentage >= 75) {
-                    feedback = `Excellent performance! You have a strong command of the subjects. To improve further, double-check your reasoning on the few questions you missed.`;
-                } else if (percentage >= 40) {
-                    feedback = `A decent score, but there are conceptual gaps. ${weakAreas.length > 0 ? weakAreasText : 'Review the explanations for your incorrect answers to strengthen your foundations.'}`;
-                } else {
-                    feedback = `This score indicates a weak foundation in the tested areas. A thorough revision is required. ${weakAreas.length > 0 ? weakAreasText : 'Begin by reviewing the fundamental concepts and explanations provided for all questions.'}`;
-                }
-
-
                 let resultHTML = `
                     <div class="text-center">
                         <h3 class="text-3xl font-bold text-slate-800">Quiz Results</h3>
@@ -1107,9 +1146,14 @@
                             <div class="text-3xl font-bold text-red-900">${incorrectCount}</div>
                         </div>
                     </div>
-                    <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-r-lg">
-                        <h4 class="font-bold mb-1">Feedback & Analysis</h4>
-                        <p>${feedback}</p>
+                    <div id="ai-feedback-container" class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-r-lg">
+                        <h4 class="font-bold mb-1">AI-Powered Feedback & Analysis</h4>
+                        <div id="ai-feedback-content">
+                            <div class="font-semibold flex items-center">
+                                <span>Analyzing your performance</span>
+                                <span class="pulsing-dots ml-1"><span>.</span><span>.</span><span>.</span></span>
+                            </div>
+                        </div>
                     </div>
                     <h3 class="text-xl font-bold mt-8 mb-4">Review Your Answers</h3>
                 `;
@@ -1145,12 +1189,23 @@
                 resultHTML += `<div class="mt-8 flex justify-end"><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
 
                 activeView.innerHTML = resultHTML;
+
+                // Generate and display AI feedback
+                const aiFeedbackContainer = activeView.querySelector('#ai-feedback-content');
+                try {
+                    const feedback = await generateAIFeedback(correctCount, incorrectCount, unansweredCount, quizQuestions.length, wrongQuestions);
+                    aiFeedbackContainer.innerHTML = `<p>${feedback}</p>`;
+                } catch (error) {
+                    console.error("Failed to get AI feedback:", error);
+                    aiFeedbackContainer.innerHTML = `<p>Could not generate AI feedback at this time. Please review the explanations below.</p>`;
+                }
             };
 
             const handleQuizSubmit = async (e) => {
                 e.preventDefault();
                 const { form, result, activeView, modal } = DOMElements.quizzieModal;
-                modal.querySelector('#quiz-progress-bar').parentElement.classList.add('hidden');
+                modal.querySelector('#quiz-progress-bar').classList.add('hidden');
+                modal.querySelector('#quiz-progress-text').classList.add('hidden');
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
 
@@ -1199,13 +1254,11 @@
 
                 if (target.closest('#quizzie-feature-card')) { 
                     resetQuizzieModal(); 
-                    DOMElements.quizzieModal.modal.querySelector('#quiz-progress-bar').parentElement.classList.remove('hidden');
                     openModal(DOMElements.quizzieModal.modal); 
                 }
                 if (targetId === 'close-quizzie-modal') closeModal(DOMElements.quizzieModal.modal);
                 if(target.closest('[data-action="retake-quiz"]')) {
                     resetQuizzieModal();
-                    DOMElements.quizzieModal.modal.querySelector('#quiz-progress-bar').parentElement.classList.remove('hidden');
                 }
                 
                 const stepBtn = target.closest('.next-step-btn, .prev-step-btn');
@@ -1309,4 +1362,6 @@
     </script>
 </body>
 </html>
+
+
 
