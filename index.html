@@ -123,6 +123,26 @@
         @keyframes pulse-inner { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.9); } }
         .ai-loader .outer-ring { animation: rotate 3s linear infinite; }
         .ai-loader .inner-dot { animation: pulse-inner 1.5s ease-in-out infinite; }
+        
+        /* Success Tick Animation */
+        @keyframes circle-animation {
+            from { stroke-dashoffset: 140; }
+            to { stroke-dashoffset: 280; }
+        }
+        @keyframes tick-animation {
+            from { stroke-dashoffset: 25; }
+            to { stroke-dashoffset: 0; }
+        }
+        #success-overlay .circle {
+            stroke-dasharray: 140;
+            stroke-dashoffset: 140;
+            animation: circle-animation 0.5s ease-in-out forwards;
+        }
+        #success-overlay .tick {
+            stroke-dasharray: 25;
+            stroke-dashoffset: 25;
+            animation: tick-animation 0.3s ease-in-out 0.5s forwards;
+        }
     </style>
 </head>
 <body class="text-slate-800">
@@ -750,6 +770,19 @@
         </div>
     </div>
 
+    <div id="success-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-2xl p-8 text-center">
+            <div class="svg-container w-24 h-24 mx-auto mb-4">
+                <svg class="ft-green-tick" xmlns="http://www.w3.org/2000/svg" height="100" width="100" viewBox="0 0 48 48" aria-hidden="true">
+                    <circle class="circle" fill="none" stroke="#22c55e" stroke-width="3" cx="24" cy="24" r="22"/>
+                    <path class="tick" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M14 27l5.917 4.917L34 17"/>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-800">Registration Successful!</h3>
+            <p class="text-slate-500 mt-2">Welcome to iasmaintor!</p>
+        </div>
+    </div>
+
     <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none"></div>
 
     <script type="module">
@@ -835,6 +868,7 @@
                 mobileUserActions: document.getElementById('mobile-user-actions'),
                 header: document.getElementById('header'),
                 notification: document.getElementById('notification'),
+                successOverlay: document.getElementById('success-overlay'),
                 authModal: {
                     modal: document.getElementById('auth-modal'),
                     error: document.getElementById('auth-error'),
@@ -1588,13 +1622,16 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
 
                 if (target.closest('#my-account-btn, #mobile-my-account-btn')) {
                     e.preventDefault();
-                    if(currentUserProfile) {
+                    if(currentUser && currentUserProfile) {
                         const { form, error } = DOMElements.accountModal;
                         error.classList.add('hidden');
                         form.elements['account-first-name'].value = currentUserProfile.firstName || '';
                         form.elements['account-last-name'].value = currentUserProfile.lastName || '';
                         form.elements['account-email'].value = currentUser.email;
                         openModal(DOMElements.accountModal.modal);
+                    } else if (currentUser) {
+                        // This is a fallback in case profile hasn't loaded yet
+                        showNotification("Loading account details, please try again in a moment.");
                     } else {
                         showNotification("Please log in to view your account.", true);
                     }
@@ -1655,7 +1692,14 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                     });
                     
                     closeModal(DOMElements.authModal.modal);
-                    showNotification('Account created successfully!');
+
+                    const successOverlay = DOMElements.successOverlay;
+                    successOverlay.classList.remove('hidden');
+
+                    setTimeout(() => {
+                        successOverlay.classList.add('hidden');
+                    }, 2500);
+                    
                 } catch (error) { 
                     errorEl.textContent = error.message; 
                     errorEl.classList.remove('hidden'); 
@@ -1684,7 +1728,6 @@ Based on this data, provide a concise, insightful, and encouraging analysis of t
                     currentUserProfile.firstName = firstName;
                     currentUserProfile.lastName = lastName;
                     DOMElements.userGreeting.textContent = `Hi, ${firstName}`;
-                    // The icon doesn't need to be updated as it's static
 
                     closeModal(DOMElements.accountModal.modal);
                 } catch (error) {
