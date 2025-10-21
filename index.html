@@ -81,6 +81,10 @@
             border-color: #ef4444; /* red-500 */
         }
 
+        #quizzie-content {
+            min-height: 450px;
+        }
+
         /* Logo Animation */
         @keyframes gradient-animation {
             0% { background-position: 0% 50%; }
@@ -208,12 +212,14 @@
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">The Ultimate Toolkit for UPSC Success</h2>
                 <p class="text-slate-600 max-w-3xl mx-auto mb-12">Stop juggling countless resources. We bring everything you need into one intelligent platform, designed to optimize your preparation.</p>
                 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div id="planner-feature-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer">
-                        <div class="bg-blue-100 text-blue-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M5.636 5.636l-1.414-1.414M19.778 5.636l-1.414 1.414M18.364 18.364l1.414 1.414M4.222 18.364l1.414-1.414M12 12a3 3 0 100-6 3 3 0 000 6z" /></svg>
+                    <div id="quizzie-feature-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer">
+                         <div class="bg-rose-100 text-rose-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.79 4 4 0 1.98-1.789 3.63-3.772 4.1-1.37.31-2.73.22-4.008-.25M8.228 9c-1.18.23-2.33.8-3.228 1.65a6 6 0 000 8.7L5 21M8.228 9l-2.5 2.5M15.772 15l2.5-2.5" />
+                            </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">AI-Powered Study Plan</h3>
-                        <p class="text-slate-500">A dynamic schedule that adapts to your progress, syllabus weightage, and time available.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Quizzie - AI Quiz Module</h3>
+                        <p class="text-slate-500">Generate UPSC-style quizzes based on subject, difficulty, and question type.</p>
                     </div>
                     <a href="https://maintor.vercel.app/" target="_blank" rel="noopener noreferrer" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
                          <div class="bg-green-100 text-green-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
@@ -222,21 +228,19 @@
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Mains Answer Evaluation</h3>
                         <p class="text-slate-500">Get instant, data-driven feedback on your answer structure, content, and relevance.</p>
                     </a>
-                    <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
+                    <div id="current-affairs-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 300ms;">
                          <div class="bg-indigo-100 text-indigo-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6" /></svg>
                         </div>
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Integrated Current Affairs</h3>
                         <p class="text-slate-500">Daily news linked directly to syllabus topics, with notes and revision quizzes.</p>
                     </div>
-                    <div id="quizzie-feature-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 450ms;">
-                         <div class="bg-rose-100 text-rose-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.79 4 4 0 1.98-1.789 3.63-3.772 4.1-1.37.31-2.73.22-4.008-.25M8.228 9c-1.18.23-2.33.8-3.228 1.65a6 6 0 000 8.7L5 21M8.228 9l-2.5 2.5M15.772 15l2.5-2.5" />
-                            </svg>
+                    <div id="planner-feature-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 450ms;">
+                        <div class="bg-blue-100 text-blue-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M5.636 5.636l-1.414-1.414M19.778 5.636l-1.414 1.414M18.364 18.364l1.414 1.414M4.222 18.364l1.414-1.414M12 12a3 3 0 100-6 3 3 0 000 6z" /></svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Quizzie - AI Quiz Module</h3>
-                        <p class="text-slate-500">Generate UPSC-style quizzes based on subject, difficulty, and question type.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 mb-2">AI-Powered Study Plan</h3>
+                        <p class="text-slate-500">A dynamic schedule that adapts to your progress, syllabus weightage, and time available.</p>
                     </div>
                 </div>
             </div>
@@ -516,128 +520,128 @@
 
     <!-- Quizzie Modal -->
     <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8 max-h-[90vh] overflow-y-auto">
-            <div class="p-8">
-                <div class="flex justify-between items-center mb-6 border-b pb-4 sticky top-0 bg-white z-10 -mt-8 -mx-8 pt-8 px-8">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8 max-h-[90vh] flex flex-col">
+            <div class="p-8 border-b sticky top-0 bg-white z-10">
+                <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-slate-800">AI Based Quiz Module</h2>
                     <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
                 </div>
-                <div id="quizzie-content">
-                    <form id="quizzie-form">
-                        <!-- Step 1: Main Subject -->
-                        <div data-step="1" class="active space-y-4">
-                            <h3 class="text-xl font-semibold text-slate-700">Step 1: Choose your Subject</h3>
-                            <div>
-                                <label for="quiz-main-subject" class="block text-slate-700 font-semibold mb-2">Subject</label>
-                                <select id="quiz-main-subject" name="main_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg" required>
-                                    <option value="">-- Select a Subject --</option>
-                                    <option value="gs">General Studies</option>
-                                    <option value="csat">CSAT</option>
-                                </select>
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+            </div>
+            <div id="quizzie-content" class="p-8 overflow-y-auto">
+                <form id="quizzie-form">
+                    <!-- Step 1: Main Subject -->
+                    <div data-step="1" class="active space-y-4">
+                        <h3 class="text-xl font-semibold text-slate-700">Step 1: Choose your Subject</h3>
+                        <div>
+                            <label for="quiz-main-subject" class="block text-slate-700 font-semibold mb-2">Subject</label>
+                            <select id="quiz-main-subject" name="main_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg" required>
+                                <option value="">-- Select a Subject --</option>
+                                <option value="gs">General Studies</option>
+                                <option value="csat">CSAT</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Test Type & Sectional Details -->
+                    <div data-step="2" class="space-y-4">
+                        <h3 class="text-xl font-semibold text-slate-700">Step 2: Define your Test</h3>
+                        
+                        <!-- Test Type Radio -->
+                        <div class="quiz-step-group active">
+                            <label class="block text-slate-700 font-semibold mb-2">Test Type</label>
+                            <div class="flex flex-col space-y-2">
+                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                                    <input type="radio" name="test_type" value="sectional" class="mr-3" required> Sectional Test
+                                </label>
+                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                                    <input type="radio" name="test_type" value="flt" class="mr-3"> Full Length Test (FLT)
+                                </label>
                             </div>
                         </div>
 
-                        <!-- Step 2: Test Type & Sectional Details -->
-                        <div data-step="2" class="space-y-4">
-                            <h3 class="text-xl font-semibold text-slate-700">Step 2: Define your Test</h3>
-                            
-                            <!-- Test Type Radio -->
-                            <div class="quiz-step-group active">
-                                <label class="block text-slate-700 font-semibold mb-2">Test Type</label>
-                                <div class="flex flex-col space-y-2">
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
-                                        <input type="radio" name="test_type" value="sectional" class="mr-3" required> Sectional Test
-                                    </label>
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
-                                        <input type="radio" name="test_type" value="flt" class="mr-3"> Full Length Test (FLT)
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Sectional Subject for GS -->
-                            <div id="gs-sectional-group" class="quiz-step-group">
-                                <label for="gs-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
-                                <select id="gs-subject" name="gs_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
-                                    <option value="history">History</option>
-                                    <option value="geography">Geography</option>
-                                    <option value="polity">Polity</option>
-                                    <option value="economy">Economy</option>
-                                    <option value="environment">Environment</option>
-                                    <option value="science-tech">Science & Tech</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Sectional Subject for CSAT -->
-                            <div id="csat-sectional-group" class="quiz-step-group">
-                                <label for="csat-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
-                                <select id="csat-subject" name="csat_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
-                                    <option value="quant">Quant</option>
-                                    <option value="reasoning">Reasoning</option>
-                                    <option value="comprehension">Comprehension</option>
-                                </select>
-                            </div>
-
-                            <div class="flex justify-between">
-                                <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
-                                <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
-                            </div>
-                        </div>
-
-                        <!-- Step 3: Questions & Type -->
-                        <div data-step="3" class="space-y-4">
-                             <h3 class="text-xl font-semibold text-slate-700">Step 3: Customize Questions</h3>
-
-                             <!-- Number of Questions (for Sectional) -->
-                            <div id="num-questions-group" class="quiz-step-group">
-                                <label for="num-questions" class="block text-slate-700 font-semibold mb-2">Number of Questions</label>
-                                <select id="num-questions" name="num_questions" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
-                                    <option value="5">5</option>
-                                    <option value="10">10</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                </select>
-                            </div>
-
-                             <!-- Question Type (for GS Sectional) -->
-                            <div id="question-type-group" class="quiz-step-group">
-                                <label class="block text-slate-700 font-semibold mb-2">Nature of Questions</label>
-                                <select name="question_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
-                                    <option value="static">Static</option>
-                                    <option value="current">Current Affairs</option>
-                                    <option value="blend">A Blend of Static & Current</option>
-                                </select>
-                            </div>
-
-                            <div class="flex justify-between">
-                                <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
-                                <button type="button" data-next="4" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
-                            </div>
+                        <!-- Sectional Subject for GS -->
+                        <div id="gs-sectional-group" class="quiz-step-group">
+                            <label for="gs-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
+                            <select id="gs-subject" name="gs_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                <option value="history">History</option>
+                                <option value="geography">Geography</option>
+                                <option value="polity">Polity</option>
+                                <option value="economy">Economy</option>
+                                <option value="environment">Environment</option>
+                                <option value="science-tech">Science & Tech</option>
+                            </select>
                         </div>
                         
-                        <!-- Step 4: Difficulty -->
-                        <div data-step="4" class="space-y-4">
-                            <h3 class="text-xl font-semibold text-slate-700">Step 4: Difficulty Level</h3>
-                            <div>
-                               <label class="block text-slate-700 font-semibold mb-2">Choose Difficulty</label>
-                                <div class="flex flex-col space-y-2">
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="easy" class="mr-3" required> Easy</label>
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="medium" class="mr-3"> Medium</label>
-                                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="tough" class="mr-3"> Tough</label>
-                                </div>
-                            </div>
-                            <div class="flex justify-between">
-                                <button type="button" data-prev="3" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
-                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">Generate Quiz</button>
-                            </div>
+                        <!-- Sectional Subject for CSAT -->
+                        <div id="csat-sectional-group" class="quiz-step-group">
+                            <label for="csat-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
+                            <select id="csat-subject" name="csat_subject" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                <option value="quant">Quant</option>
+                                <option value="reasoning">Reasoning</option>
+                                <option value="comprehension">Comprehension</option>
+                            </select>
                         </div>
 
-                    </form>
-                    <div id="quiz-result" class="hidden"></div>
-                    <div id="quiz-active-view" class="hidden"></div>
-                </div>
+                        <div class="flex justify-between">
+                            <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
+                            <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Questions & Type -->
+                    <div data-step="3" class="space-y-4">
+                         <h3 class="text-xl font-semibold text-slate-700">Step 3: Customize Questions</h3>
+
+                         <!-- Number of Questions (for Sectional) -->
+                        <div id="num-questions-group" class="quiz-step-group">
+                            <label for="num-questions" class="block text-slate-700 font-semibold mb-2">Number of Questions</label>
+                            <select id="num-questions" name="num_questions" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+
+                         <!-- Question Type (for GS Sectional) -->
+                        <div id="question-type-group" class="quiz-step-group">
+                            <label class="block text-slate-700 font-semibold mb-2">Nature of Questions</label>
+                            <select name="question_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                <option value="static">Static</option>
+                                <option value="current">Current Affairs</option>
+                                <option value="blend">A Blend of Static & Current</option>
+                            </select>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
+                            <button type="button" data-next="4" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Next</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Difficulty -->
+                    <div data-step="4" class="space-y-4">
+                        <h3 class="text-xl font-semibold text-slate-700">Step 4: Difficulty Level</h3>
+                        <div>
+                           <label class="block text-slate-700 font-semibold mb-2">Choose Difficulty</label>
+                            <div class="flex flex-col space-y-2">
+                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="easy" class="mr-3" required> Easy</label>
+                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="medium" class="mr-3"> Medium</label>
+                                <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="difficulty" value="tough" class="mr-3"> Tough</label>
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <button type="button" data-prev="3" class="prev-step-btn bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold">Back</button>
+                            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">Generate Quiz</button>
+                        </div>
+                    </div>
+
+                </form>
+                <div id="quiz-result" class="hidden"></div>
+                <div id="quiz-active-view" class="hidden"></div>
             </div>
         </div>
     </div>
@@ -899,9 +903,14 @@
                 if (sourcePool.length === 0) return [];
                 const shuffled = [...sourcePool].sort(() => 0.5 - Math.random());
                 generated = shuffled.slice(0, count);
-                while (generated.length > 0 && generated.length < count) {
-                    generated.push(...shuffled.slice(0, count - generated.length));
+                // Ensure unique questions if pool is large enough
+                if (sourcePool.length >= count) {
+                     // The slice already gives unique items from shuffled array
+                } else {
+                    // If pool is smaller, we just return what we have to avoid duplicates
+                    generated = shuffled;
                 }
+                
                 return generated.map(q => ({...q, answerIndex: q.options.indexOf(q.answer)}));
             };
 
@@ -982,12 +991,20 @@
                         wrongTopics[q.subject] = (wrongTopics[q.subject] || 0) + 1;
                     }
                 });
-
-                let feedback = 'Good overall performance.';
+                
+                const percentage = (score / (quizQuestions.length * 2)) * 100;
+                let feedback = '';
                 const weakAreas = Object.keys(wrongTopics).sort((a,b) => wrongTopics[b] - wrongTopics[a]);
-                if(weakAreas.length > 0) {
-                    feedback = `You need to focus more on: ${weakAreas.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}.`;
+                const weakAreasText = `Your performance suggests a need to revisit concepts in: ${weakAreas.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}.`;
+
+                if (percentage >= 75) {
+                    feedback = `Excellent performance. You have a strong command of the subjects. To improve further, double-check your reasoning on the few questions you missed, especially in ${weakAreas.length > 0 ? weakAreas[0] : 'your weaker areas'}.`;
+                } else if (percentage >= 40) {
+                    feedback = `A decent score, but there are significant conceptual gaps. ${weakAreas.length > 0 ? weakAreasText : 'Review the explanations for your incorrect answers to strengthen your foundations.'}`;
+                } else {
+                    feedback = `This score indicates a weak foundation in the tested areas. A thorough revision is required. ${weakAreas.length > 0 ? weakAreasText : 'Begin by reviewing the fundamental concepts and explanations provided for all questions.'}`;
                 }
+
 
                 let resultHTML = `
                     <div class="p-6 bg-blue-50 rounded-lg text-center">
@@ -998,7 +1015,7 @@
                             <span><i class="fas fa-times-circle text-red-500 mr-1"></i>Incorrect: ${incorrectCount}</span>
                             <span><i class="fas fa-minus-circle text-gray-400 mr-1"></i>Unanswered: ${unansweredCount}</span>
                         </div>
-                        <div class="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-md"><strong>Feedback:</strong> ${feedback}</div>
+                        <div class="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-md text-left"><strong>Feedback:</strong> ${feedback}</div>
                     </div>
                     <h3 class="text-xl font-bold mt-8 mb-4">Review Your Answers</h3>
                 `;
@@ -1069,6 +1086,10 @@
                     try { await firebaseAuth.signOut(auth); showNotification('Logged out.'); }
                     catch (error) { showNotification('Logout failed.', true); }
                 }
+                
+                if (target.closest('#current-affairs-card')) {
+                    showNotification("We're currently working on this.");
+                }
 
                 if (target.closest('#planner-feature-card')) { /* reset and open planner */ }
                 if (targetId === 'close-planner-modal') closeModal(DOMElements.plannerModal.modal);
@@ -1097,7 +1118,6 @@
                 try {
                     await firebaseAuth.signInWithEmailAndPassword(auth, email, password);
                     closeModal(DOMElements.authModal.modal);
-                    showNotification('Logged in successfully!');
                 } catch (error) {
                     console.error("Login failed:", error); // Log the actual error for debugging
                     errorEl.textContent = "Invalid email or password. Please check again.";
@@ -1158,5 +1178,4 @@
     </script>
 </body>
 </html>
-
 
