@@ -1324,7 +1324,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const wrapper = actionElement;
                 const parentLi = wrapper?.closest('li.syllabus-item');
                 const childUl = parentLi?.querySelector(':scope > ul.syllabus-list');
-                const toggleIcon = wrapper?.querySelector(':scope > .syllabus-toggle');
+                // --- ### BUG FIX HERE ### ---
+                // The selector ':scope > .syllabus-toggle' was wrong because the toggle is nested.
+                const toggleIcon = wrapper?.querySelector('.syllabus-toggle');
+                // --- ### END BUG FIX ### ---
                 const hasChildren = wrapper?.dataset.hasChildren === 'true';
 
                 if (childUl && toggleIcon && hasChildren) {
