@@ -10,6 +10,9 @@ import { getMainsGS3Syllabus } from './syllabus-mains-gs3-data.js';
 import { getMainsGS4Syllabus } from './syllabus-mains-gs4-data.js';
 import { OPTIONAL_SUBJECT_LIST, getOptionalSyllabusById } from './optional-syllabus-data.js';
 
+// --- ### NEW CHATBOT IMPORT ### ---
+import { initChatbot } from './chatbot.js';
+
 // --- ADDED: Firebase SDK Modules (from app.js) ---
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { 
@@ -24,7 +27,7 @@ import {
     getFirestore,
     doc,
     getDoc,
-    getDocs,
+    getDocs, // <-- PREVIOUS FIX
     setDoc,
     onSnapshot,
     collection,
@@ -124,6 +127,9 @@ function showNotification(message, isError = false) {
     el.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transition-opacity duration-300 pointer-events-none z-[60] text-white ${isError ? 'bg-red-600' : 'bg-slate-800'} opacity-100`;
     setTimeout(() => { if (el) el.classList.remove('opacity-100'); }, 3000);
 }
+
+// --- ### NEW CHATBOT INITIALIZATION ### ---
+initChatbot(showNotification); // Initialize the chatbot
 
 function openModal(modal) {
     if (modal instanceof HTMLElement) {
@@ -1042,7 +1048,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Store module references
         Object.assign(firestoreModule, {
-            getFirestore, doc, getDoc, getDocs, setDoc, onSnapshot, collection, query, orderBy, serverTimestamp, updateDoc, enableIndexedDbPersistence
+            getFirestore, doc, getDoc, getDocs, // <-- PREVIOUS FIX
+            setDoc, onSnapshot, collection, query, orderBy, serverTimestamp, updateDoc, enableIndexedDbPersistence
         });
         Object.assign(firebaseAuthModule, {
             getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut
@@ -1671,5 +1678,3 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
 }); // End DOMContentLoaded
-
-
