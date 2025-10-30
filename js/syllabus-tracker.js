@@ -677,12 +677,16 @@ function updateTrackerDashboard() {
     }
 
     updateCircle(dashboard.querySelector('.progress-circle.overall'), overallProgress);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(2) .progress-circle'), prelimsGS);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(3) .progress-circle'), prelimsCSAT);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(4) .progress-circle'), mainsGS1);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(5) .progress-circle'), mainsGS2);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(6) .progress-circle'), mainsGS3);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(7) .progress-circle'), mainsGS4);
+
+    // --- ### FIX for Dashboard Bug ### ---
+    // Selectors changed from (2), (3), (4)... to (1), (2), (3)...
+    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(1) .progress-circle'), prelimsGS);
+    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(2) .progress-circle'), prelimsCSAT);
+    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(3) .progress-circle'), mainsGS1);
+    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(4) .progress-circle'), mainsGS2);
+    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(5) .progress-circle'), mainsGS3);
+    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(6) .progress-circle'), mainsGS4);
+    // --- ### END FIX ### ---
 
     const optP1Card = dashboard.querySelector('#optional-p1-card');
     const optP2Card = dashboard.querySelector('#optional-p2-card');
@@ -1299,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const action = actionElement?.dataset.action;
 
         // --- ### FIX for Button Bug ### ---
-        // This logic now correctly allows buttons with 'data-action' to proceed.
+        // This check now allows clicks with a 'data-action' OR specific IDs to pass through.
         if (!action && !target.classList.contains('tab-button') && !target.classList.contains('gs-chip') && !target.classList.contains('select-optional-btn')) {
             return;
         }
@@ -1382,7 +1386,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                         child.status = status;
                         
                         // Find the DOM element for the child and update it
-                        const childLi = parentLi.querySelector(`li[data-id="${child.id}"]`);
+                        // Use document.querySelector for a global search, as childLi might be in a different part of the DOM tree (e.g., in prelims vs mains)
+                        // A safer way is to find the childLi within the specific tree container
+                        const childLi = document.querySelector(`li[data-id="${child.id}"]`);
                         if (childLi) {
                             const toggleButton = childLi.querySelector(`button[data-action="toggle-status"]`);
                             if (toggleButton) {
@@ -1391,6 +1397,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 toggleButton.className = `progress-toggle status-${status}-ui flex-shrink-0`;
                                 toggleButton.setAttribute('data-current-status', status);
                             }
+                        } else {
+                            console.warn(`Could not find childLi DOM element for ${child.id}`);
                         }
                         
                         if (child.children && child.children.length > 0) {
@@ -1412,13 +1420,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 updateParentStatuses(itemId, document);
                 updateTrackerDashboard(); // <-- Dashboard update
                 
-                // Save all children
+                // Save all children (only save micro-topics)
                 function saveAllChildren(node) {
                     if (!node) return;
                     if (!Array.isArray(node.children) || node.children.length === 0) {
+                        // This is a micro-topic, save it
                         saveTopicProgress(node.id, { status: node.status, startDate: node.startDate, revisions: node.revisions });
                         return;
                     }
+                    // This is a parent, recurse
                     node.children.forEach(saveAllChildren);
                 }
                 saveAllChildren(topicItem);
