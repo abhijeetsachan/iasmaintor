@@ -25,6 +25,9 @@ import { GoogleAuthProvider, linkWithPopup } from "https://www.gstatic.com/fireb
 // --- RE-INTRODUCED IMPORTS FOR QUIZZIE MODULE ---
 import { initQuizzie, resetQuizzieModal } from './quizzie.js';
 
+// --- ### NEW CHATBOT IMPORT ### ---
+import { initChatbot } from './chatbot.js';
+
 document.addEventListener('DOMContentLoaded', async function() {
     // --- Firebase Initialization ---
     let app, db, auth;
@@ -154,6 +157,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         dashboardProgressBars: document.getElementById('dashboard-progress-bars'),
         copyrightYear: document.getElementById('copyright-year'),
         
+        // --- Mentorship Modal Elements ---
+        mentorshipModal: document.getElementById('mentorship-modal'),
+        mentorshipForm: document.getElementById('mentorship-form'),
+        mentorshipError: document.getElementById('mentorship-error'),
+        closeMentorshipModalBtn: document.getElementById('close-mentorship-modal'),
+
         // --- QUIZZIE MODULE ELEMENTS ---
         quizzieModal: document.getElementById('quizzie-modal'),
         quizzieForm: document.getElementById('quizzie-form'),
@@ -205,6 +214,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else {
         console.warn("Quizzie initialization skipped: Some DOM elements are missing. Quizzie module will be unavailable.");
     }
+
+    // --- ### NEW CHATBOT INITIALIZATION ### ---
+    initChatbot(showNotification); // Initialize the chatbot
 
     // --- Core App Logic ---
     if (DOMElements.copyrightYear) DOMElements.copyrightYear.textContent = new Date().getFullYear();
@@ -340,7 +352,29 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!target.closest('#user-menu')) { if (DOMElements.userDropdown) DOMElements.userDropdown.classList.add('hidden'); }
 
         // Auth Triggers
-        if (['login-btn', 'mobile-login-btn', 'start-trial-btn', 'final-cta-btn'].includes(targetId) || target.closest('#login-btn, #mobile-login-btn, #start-trial-btn, #final-cta-btn')) { e.preventDefault(); openAuthModal('login'); }
+        if (['login-btn', 'mobile-login-btn'].includes(targetId) || target.closest('#login-btn, #mobile-login-btn')) { 
+            e.preventDefault(); 
+            openAuthModal('login'); 
+        }
+
+        // Mentorship Triggers
+        if (target.closest('#mentorship-cta-btn, #mentorship-final-cta-btn')) {
+            e.preventDefault();
+            if (!currentUser || currentUser.isAnonymous) {
+                showNotification("Please log in to request mentorship.", false);
+                openAuthModal('login');
+            } else {
+                // User is logged in, show the form and pre-fill email
+                if(DOMElements.mentorshipForm) DOMElements.mentorshipForm.elements['mentorship-email'].value = currentUser.email;
+                if(DOMElements.mentorshipError) DOMElements.mentorshipError.classList.add('hidden');
+                openModal(DOMElements.mentorshipModal);
+            }
+        }
+        
+        if (targetId === 'close-mentorship-modal') {
+             closeModal(DOMElements.mentorshipModal);
+        }
+
         if (targetId === 'close-auth-modal') closeModal(DOMElements.authModal.modal);
         if (targetId === 'auth-switch-to-signup') openAuthModal('signup');
         if (targetId === 'auth-switch-to-login' || targetId === 'auth-switch-to-login-from-reset') openAuthModal('login');
@@ -495,6 +529,61 @@ document.addEventListener('DOMContentLoaded', async function() {
                 errorEl.textContent="Reset failed."; 
                 errorEl.classList.remove('hidden');
             } 
+        }
+    });
+
+    // --- Mentorship Form Submit Listener ---
+    DOMElements.mentorshipForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = currentUser?.uid;
+        if (!userId || currentUser?.isAnonymous) {
+            showNotification("You must be logged in.", true);
+            return;
+        }
+        if (!firebaseEnabled || !firestoreModule) {
+            showNotification("Service not available. Please try again.", true);
+            return;
+        }
+
+        const name = e.target.elements['mentorship-name'].value;
+        const phone = e.target.elements['mentorship-phone'].value;
+        const details = e.target.elements['mentorship-details'].value;
+        const errorEl = DOMElements.mentorshipError;
+        const submitBtn = e.target.elements['mentorship-submit-btn'];
+
+        if (errorEl) errorEl.classList.add('hidden');
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting...";
+
+        const { doc, updateDoc, serverTimestamp } = firestoreModule;
+        // This will save the request inside the user's document
+        const userDocRef = doc(db, 'artifacts', appId, 'users', userId);
+
+        try {
+            await updateDoc(userDocRef, {
+                mentorshipRequest: {
+                    name: name,
+                    phone: phone,
+                    details: details,
+                    email: currentUser.email, // Save email for reference
+                    requestedAt: serverTimestamp()
+                }
+            });
+
+            showNotification('Request submitted successfully!');
+            closeModal(DOMElements.mentorshipModal);
+            DOMElements.mentorshipForm.reset();
+
+        } catch (error) {
+            console.error("Mentorship form submit error:", error);
+            if (errorEl) {
+                errorEl.textContent = "Submission failed. Please try again.";
+                errorEl.classList.remove('hidden');
+            }
+            showNotification("Submission failed. Please try again.", true);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit Request";
         }
     });
 
