@@ -1298,6 +1298,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const actionElement = target.closest('[data-action]');
         const action = actionElement?.dataset.action;
 
+        // --- ### FIX for Button Bug ### ---
+        // This logic now correctly allows buttons with 'data-action' to proceed.
         if (!action && !target.classList.contains('tab-button') && !target.classList.contains('gs-chip') && !target.classList.contains('select-optional-btn')) {
             return;
         }
@@ -1324,10 +1326,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const wrapper = actionElement;
                 const parentLi = wrapper?.closest('li.syllabus-item');
                 const childUl = parentLi?.querySelector(':scope > ul.syllabus-list');
-                // --- ### BUG FIX HERE ### ---
-                // The selector ':scope > .syllabus-toggle' was wrong because the toggle is nested.
+                
+                // --- ### FIX for Expand Bug ### ---
                 const toggleIcon = wrapper?.querySelector('.syllabus-toggle');
-                // --- ### END BUG FIX ### ---
+                // --- ### END FIX ### ---
+
                 const hasChildren = wrapper?.dataset.hasChildren === 'true';
 
                 if (childUl && toggleIcon && hasChildren) {
@@ -1352,22 +1355,74 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (DOMElements.sdateTopicName) DOMElements.sdateTopicName.textContent = topicName;
                 if (DOMElements.startDateInput) DOMElements.startDateInput.valueAsDate = new Date();
                 if (DOMElements.startDateModal) openModal(DOMElements.startDateModal);
-            } else {
+            } else if (isMicroTopic) {
+                 // This is a MICRO topic
                  topicItem.status = newStatus;
                  const statusText = newStatus.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                  actionElement.textContent = statusText;
                  actionElement.className = `progress-toggle status-${newStatus}-ui flex-shrink-0`;
                  actionElement.setAttribute('data-current-status', newStatus);
                  updateParentStatuses(itemId, document);
-                 updateTrackerDashboard();
+                 updateTrackerDashboard(); // <-- Dashboard update
                  
-                 if (isMicroTopic) {
-                     saveTopicProgress(itemId, { 
-                         status: topicItem.status, 
-                         startDate: topicItem.startDate, 
-                         revisions: topicItem.revisions 
-                     });
-                 }
+                 saveTopicProgress(itemId, { 
+                     status: topicItem.status, 
+                     startDate: topicItem.startDate, 
+                     revisions: topicItem.revisions 
+                 });
+            } else {
+                // --- ### FIX for Dashboard Bug ### ---
+                // This is a PARENT topic
+                const parentLi = actionElement.closest('li.syllabus-item');
+
+                function updateAllChildren(node, status) {
+                    if (!node || !Array.isArray(node.children)) return;
+                    
+                    node.children.forEach(child => {
+                        child.status = status;
+                        
+                        // Find the DOM element for the child and update it
+                        const childLi = parentLi.querySelector(`li[data-id="${child.id}"]`);
+                        if (childLi) {
+                            const toggleButton = childLi.querySelector(`button[data-action="toggle-status"]`);
+                            if (toggleButton) {
+                                const childStatusText = status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                toggleButton.textContent = childStatusText;
+                                toggleButton.className = `progress-toggle status-${status}-ui flex-shrink-0`;
+                                toggleButton.setAttribute('data-current-status', status);
+                            }
+                        }
+                        
+                        if (child.children && child.children.length > 0) {
+                            updateAllChildren(child, status);
+                        }
+                    });
+                }
+                
+                // Update data model and DOM for all children
+                topicItem.status = newStatus;
+                updateAllChildren(topicItem, newStatus);
+                
+                // Update this parent's button UI
+                const statusText = newStatus.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                actionElement.textContent = statusText;
+                actionElement.className = `progress-toggle status-${newStatus}-ui flex-shrink-0`;
+                actionElement.setAttribute('data-current-status', newStatus);
+                
+                updateParentStatuses(itemId, document);
+                updateTrackerDashboard(); // <-- Dashboard update
+                
+                // Save all children
+                function saveAllChildren(node) {
+                    if (!node) return;
+                    if (!Array.isArray(node.children) || node.children.length === 0) {
+                        saveTopicProgress(node.id, { status: node.status, startDate: node.startDate, revisions: node.revisions });
+                        return;
+                    }
+                    node.children.forEach(saveAllChildren);
+                }
+                saveAllChildren(topicItem);
+                // --- ### END FIX ### ---
             }
         }
          else if (action === 'srs-bar' && target.classList.contains('revision-dot')) {
@@ -1452,8 +1507,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showNotification(`Optional set to ${subjectId.toUpperCase()}! Syncing...`);
             } catch (error) { console.error("Error setting optional:", error); showNotification("Failed to save optional choice.", true); }
         }
-        else if (target.id === 'confirm-revision-submit-btn') {
-            e.preventDefault(); const { itemId: revItemId, dayKey: revDayKey } = srsModalContext; const itemToRevise = revItemId ? findItemById(revItemId, syllabusData) : null;
+        // --- ### FIX for "Yes, Confirm" Button ### ---
+        else if (action === 'confirm-revision') {
+            e.preventDefault(); 
+            const { itemId: revItemId, dayKey: revDayKey } = srsModalContext; 
+            const itemToRevise = revItemId ? findItemById(revItemId, syllabusData) : null;
+            
             if (itemToRevise?.revisions && revDayKey) {
                 itemToRevise.revisions[revDayKey] = true;
                 if (revDayKey === 'd21') { 
@@ -1461,7 +1520,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     updateParentStatuses(revItemId, document); 
                 }
                 showNotification(`Revision ${revDayKey.toUpperCase()} confirmed!`);
-                closeModal(DOMElements.confirmRevisionModal); srsModalContext = {};
+                closeModal(DOMElements.confirmRevisionModal); 
+                srsModalContext = {};
                 
                 const listItem = document.querySelector(`li[data-id="${revItemId}"]`);
                 if (listItem) {
@@ -1475,15 +1535,21 @@ document.addEventListener('DOMContentLoaded', async function() {
                          }
                      }
                  }
-                updateTrackerDashboard();
+                updateTrackerDashboard(); // <-- Dashboard update
                 
                 saveTopicProgress(revItemId, {
                     status: itemToRevise.status,
                     startDate: itemToRevise.startDate,
                     revisions: itemToRevise.revisions
                 });
-            } else { showNotification("Error confirming revision.", true); console.error("Revision confirm failed:", srsModalContext, itemToRevise); closeModal(DOMElements.confirmRevisionModal); srsModalContext = {}; }
+            } else { 
+                showNotification("Error confirming revision.", true); 
+                console.error("Revision confirm failed:", srsModalContext, itemToRevise); 
+                closeModal(DOMElements.confirmRevisionModal); 
+                srsModalContext = {}; 
+            }
         }
+        // --- ### END FIX ### ---
 
     }); // End Main Click Handler
 
@@ -1515,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else { console.warn("Could not find list item to update SRS UI after setting start date:", srsItemId); }
 
             updateParentStatuses(srsItemId, document);
-            updateTrackerDashboard();
+            updateTrackerDashboard(); // <-- Dashboard update
             
             saveTopicProgress(srsItemId, {
                 status: itemToStart.status,
