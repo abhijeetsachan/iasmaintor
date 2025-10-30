@@ -409,10 +409,11 @@ function createSyllabusItemHTML(item, level) {
     // Generate controls (SRS bar, AI buttons) only for micro-topics
     let controlsHTML = '';
     if (isMicroTopic) {
+        // MODIFIED: AI buttons are now flex-wrap, and the outer container stacks on mobile
         controlsHTML = `
-            <div class="flex items-center space-x-3 text-sm flex-shrink-0 ml-auto">
+            <div class="flex flex-col items-start gap-2 lg:flex-row lg:items-center lg:space-x-3 text-sm flex-shrink-0">
                 ${createSRSBarHTML(item)}
-                <div class="flex space-x-1 flex-shrink-0">
+                <div class="flex flex-wrap gap-1 flex-shrink-0">
                     <button class="ai-button bg-blue-100 text-blue-800 hover:bg-blue-200" data-id="${itemId}" data-action="ai-plan">AI Plan</button>
                     <button class="ai-button bg-purple-100 text-purple-800 hover:bg-purple-200" data-id="${itemId}" data-action="ai-resources">Resources</button>
                     <button class="ai-button bg-rose-100 text-rose-800 hover:bg-rose-200" data-id="${itemId}" data-action="ai-pyq">PYQs</button>
@@ -430,15 +431,24 @@ function createSyllabusItemHTML(item, level) {
             ${statusText}
         </button>`;
 
-    // Assemble the list item HTML
-    // IMPORTANT: data-has-children attribute is crucial for the click handler
+    // --- MODIFIED HTML STRUCTURE ---
+    // The wrapper is now flex-col md:flex-row.
+    // The label and controls are grouped into responsive containers.
     return `
         <li class="syllabus-item level-${level} ${isMicroTopic ? 'is-micro-topic' : ''}" data-id="${itemId}">
+            
             <div class="syllabus-item-content-wrapper" data-action="syllabus-toggle-item" data-has-children="${hasChildren}">
-                <span class="syllabus-toggle ${hasChildren ? '' : 'invisible'} flex-shrink-0 mr-2"></span>
-                <span class="syllabus-label flex-grow mr-4">${itemName}</span>
-                ${controlsHTML}  ${progressToggle} </div>
-            ${hasChildren ? `<ul class="syllabus-list" style="display: none;"></ul>` : ''} </li>`;
+                
+                <div class="flex items-center w-full flex-grow min-w-0"> <span class="syllabus-toggle ${hasChildren ? '' : 'invisible'} flex-shrink-0 mr-2"></span>
+                    <span class="syllabus-label mr-4 break-words">${itemName}</span> </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 w-full md:w-auto flex-shrink-0">
+                    ${controlsHTML}
+                    ${progressToggle}
+                </div>
+            </div>
+            ${hasChildren ? `<ul class="syllabus-list" style="display: none;"></ul>` : ''}
+        </li>`;
 }
 
 
@@ -1605,10 +1615,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                  if (revisionsDue.length > 0 && DOMElements.dailyReminderModal) {
                      if(DOMElements.reminderCount) DOMElements.reminderCount.textContent = revisionsDue.length;
                      if(DOMElements.reminderTopicList) {
+                         // MODIFIED: Added responsive classes (gap-2, break-words, flex-shrink-0)
                          DOMElements.reminderTopicList.innerHTML = revisionsDue.map(r => `
-                             <div class="flex items-center justify-between text-slate-700 py-1">
-                                 <span class="text-sm"> D-${r.days} (${r.status === 'overdue' ? 'Overdue' : 'Due'}): <a href="#" data-action="jump-to-topic" data-id="${r.id}" class="text-blue-600 hover:underline ml-1">${r.topicName}</a> </span>
-                                 <span class="text-xs ${r.status === 'overdue' ? 'text-red-500 font-semibold' : 'text-orange-500'}"> ${r.status.toUpperCase()} </span>
+                             <div class="flex items-center justify-between text-slate-700 py-1 gap-2">
+                                 <span class="text-sm break-words"> 
+                                     D-${r.days} (${r.status === 'overdue' ? 'Overdue' : 'Due'}): 
+                                     <a href="#" data-action="jump-to-topic" data-id="${r.id}" class="text-blue-600 hover:underline ml-1">${r.topicName}</a> 
+                                 </span>
+                                 <span class="text-xs flex-shrink-0 ${r.status === 'overdue' ? 'text-red-500 font-semibold' : 'text-orange-500'}"> 
+                                     ${r.status.toUpperCase()} 
+                                 </span>
                              </div>`).join('');
                      }
                      openModal(DOMElements.dailyReminderModal);
