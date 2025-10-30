@@ -1,9 +1,0 @@
-# Secret environment variables
-.env
-.env.local
-
-# Dependencies
-node_modules
-
-# Vercel deployment files
-.vercel
