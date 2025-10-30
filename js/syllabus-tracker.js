@@ -37,26 +37,27 @@ import {
 
 // --- Global Constants ---
 const REVISION_SCHEDULE = { d1: 1, d3: 3, d7: 7, d21: 21 }; // SRS days
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`; // Standardized model
-const GEMINI_API_URL_SEARCH = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`; // Potentially different endpoint if needed
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_URL_SEARCH = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 // --- State Variables (Module Scope) ---
-let syllabusData = []; // Full hierarchical data - Will be assembled
-let optionalSubject = null; // User's selected optional subject ID
-let isSyllabusLoading = true; // Flag to prevent multiple load triggers
-let srsModalContext = {}; // Stores context for SRS modals (start date, confirm revision)
+let syllabusData = [];
+let optionalSubject = null;
+let isSyllabusLoading = true;
+let srsModalContext = {};
 
 // --- ADDED: Auth State Variables (from app.js) ---
 let currentUserProfile = null;
 let authReady = false;
+let firebaseEnabled = false; // Added this flag
 
 // --- Firebase Refs & Utility Placeholders ---
-let db, auth; // Firebase services
-let firestoreModule = {}; // To hold imported Firestore functions
-let firebaseAuthModule = {}; // To hold imported Auth functions
-let currentUser = null; // Holds the current authenticated user object
-let appId = 'default-app-id'; // Application ID, potentially passed from index.html
-let unsubscribeOptional = null; // Firestore listener for optional subject changes
+let db, auth;
+let firestoreModule = {};
+let firebaseAuthModule = {};
+let currentUser = null;
+let appId = 'default-app-id';
+let unsubscribeOptional = null;
 
 // --- DOM Elements (MERGED) ---
 const DOMElements = {
@@ -115,9 +116,6 @@ const DOMElements = {
 
 // --- Utility Functions (MERGED) ---
 
-/**
- * Shows a temporary notification message at the bottom right.
- */
 function showNotification(message, isError = false) {
     const el = document.getElementById('notification');
     if (!el) { console.warn("Notification element not found."); return; }
@@ -126,9 +124,6 @@ function showNotification(message, isError = false) {
     setTimeout(() => { if (el) el.classList.remove('opacity-100'); }, 3000);
 }
 
-/**
- * Opens a modal dialog with animation.
- */
 function openModal(modal) {
     if (modal instanceof HTMLElement) {
         modal.classList.remove('hidden');
@@ -145,9 +140,6 @@ function openModal(modal) {
     }
 }
 
-/**
- * Closes a modal dialog with animation.
- */
 function closeModal(modal) {
      if (modal instanceof HTMLElement) {
         const content = modal.querySelector('.modal-content');
@@ -162,11 +154,7 @@ function closeModal(modal) {
     }
 }
 
-/**
- * ADDED: Opens the authentication modal. (from app.js)
- */
 const openAuthModal = (mode = 'login') => {
-    // Check if user is already logged in (and not anonymous)
     if (currentUser && !currentUser.isAnonymous) {
         showNotification("You are already logged in.", false);
         return;
@@ -193,9 +181,6 @@ const openAuthModal = (mode = 'login') => {
     openModal(modal);
 };
 
-/**
- * ADDED: Updates header UI based on auth state. (from app.js)
- */
 const updateUIForAuthStateChange = (user) => {
     const isLoggedIn = !!user;
     const isAnon = user?.isAnonymous ?? false;
@@ -224,15 +209,12 @@ const updateUIForAuthStateChange = (user) => {
         if (DOMElements.userAvatar) DOMElements.userAvatar.innerHTML = `<i class="fas fa-user text-xl"></i>`;
     }
     
-    // Ensure mobile menu is closed on auth change
     DOMElements.mobileMenu?.classList.add('hidden');
 };
 
-/**
- * ADDED: Fetches user profile data. (from app.js)
- */
 const fetchUserProfile = async (userId) => {
-    if (!firebaseEnabled || !firestoreModule || !userId || auth.currentUser?.isAnonymous) {
+    // Note: firebaseEnabled is checked in the auth listener
+    if (!firestoreModule || !userId || !auth.currentUser || auth.currentUser.isAnonymous) {
         currentUserProfile = null;
         return;
     }
@@ -256,9 +238,6 @@ const fetchUserProfile = async (userId) => {
     }
 };
 
-/**
- * Creates a debounced version of a function.
- */
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -271,9 +250,6 @@ function debounce(func, wait) {
     };
 }
 
-/**
- * Saves the progress for a single micro-topic to Firestore.
- */
 async function saveTopicProgress(itemId, progressData) {
     const userId = currentUser?.uid;
     if (!userId || !db || !firestoreModule?.doc || !firestoreModule?.setDoc) {
@@ -284,7 +260,6 @@ async function saveTopicProgress(itemId, progressData) {
 
     try {
         const { doc, setDoc } = firestoreModule;
-        // Path: users/{userId}/topicProgress/{itemId}
         const topicDocRef = doc(db, 'users', userId, 'topicProgress', itemId);
         
         const cleanData = {
@@ -302,18 +277,24 @@ async function saveTopicProgress(itemId, progressData) {
 }
 
 
-// --- Syllabus Assembly (No Changes) ---
+// --- Syllabus Assembly ---
 function assembleDefaultSyllabus() {
     console.log("Assembling default syllabus...");
     try {
-        // Get raw data (which calls addSRSProperties internally now)
         const prelimsData = getPrelimsSyllabus();
-        const mainsGS1Data = getMainsGS1Syllabus();
+        const mainsGS1Data = getMainsGS1Syllabus(); // This is where the error occurs
         const mainsGS2Data = getMainsGS2Syllabus();
         const mainsGS3Data = getMainsGS3Syllabus();
         const mainsGS4Data = getMainsGS4Syllabus();
 
         if (!prelimsData || !mainsGS1Data || !mainsGS2Data || !mainsGS3Data || !mainsGS4Data) {
+            console.error("One or more syllabus data modules failed to load.", {
+                prelimsData: !!prelimsData,
+                mainsGS1Data: !!mainsGS1Data,
+                mainsGS2Data: !!mainsGS2Data,
+                mainsGS3Data: !!mainsGS3Data,
+                mainsGS4Data: !!mainsGS4Data,
+            });
             throw new Error("One or more syllabus data modules failed to return data.");
         }
 
@@ -351,7 +332,7 @@ function assembleDefaultSyllabus() {
 }
 
 
-// --- Syllabus Data Traversal & Manipulation (No Changes) ---
+// --- Syllabus Data Traversal & Manipulation ---
 function findItemById(id, nodes) {
     if (!id || !Array.isArray(nodes)) return null;
     for (const node of nodes) {
@@ -407,8 +388,37 @@ function updateParentStatuses(childId, containerElement = document) {
     }
 }
 
+function recalculateParentStatus(node) {
+    if (!node) return null;
 
-// --- SRS Logic & Rendering (No Changes) ---
+    if (!Array.isArray(node.children) || node.children.length === 0) {
+        return node.status || STATUSES.NOT_STARTED;
+    }
+
+    const childrenStatuses = node.children
+        .map(child => recalculateParentStatus(child))
+        .filter(status => status !== null);
+
+    if (childrenStatuses.length === 0) {
+        node.status = STATUSES.NOT_STARTED;
+        return node.status;
+    }
+
+    let newParentStatus;
+    if (childrenStatuses.every(s => s === STATUSES.COMPLETED)) {
+        newParentStatus = STATUSES.COMPLETED;
+    } else if (childrenStatuses.some(s => s === STATUSES.IN_PROGRESS || s === STATUSES.COMPLETED)) {
+        newParentStatus = STATUSES.IN_PROGRESS;
+    } else {
+        newParentStatus = STATUSES.NOT_STARTED;
+    }
+
+    node.status = newParentStatus;
+    return newParentStatus;
+}
+
+
+// --- SRS Logic & Rendering ---
 function getRevisionStatus(startDate, days, isDone) {
     if (!startDate) return { status: 'pending', date: null };
     if (isDone) return { status: 'done', date: null };
@@ -462,7 +472,7 @@ function createSRSBarHTML(item) {
 }
 
 
-// --- Syllabus Rendering (MODIFIED for Mobile) ---
+// --- Syllabus Rendering (Mobile-Optimized) ---
 function createSyllabusItemHTML(item, level) {
     if (!item || !item.id || !item.name) return '';
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
@@ -474,7 +484,6 @@ function createSyllabusItemHTML(item, level) {
 
     let controlsHTML = '';
     if (isMicroTopic) {
-        // MODIFIED: AI buttons are now flex-wrap, and the outer container stacks on mobile
         controlsHTML = `
             <div class="flex flex-col items-start gap-2 lg:flex-row lg:items-center lg:space-x-3 text-sm flex-shrink-0">
                 ${createSRSBarHTML(item)}
@@ -495,7 +504,6 @@ function createSyllabusItemHTML(item, level) {
             ${statusText}
         </button>`;
 
-    // --- MODIFIED HTML STRUCTURE (from previous step) ---
     return `
         <li class="syllabus-item level-${level} ${isMicroTopic ? 'is-micro-topic' : ''}" data-id="${itemId}">
             <div class="syllabus-item-content-wrapper" data-action="syllabus-toggle-item" data-has-children="${hasChildren}">
@@ -557,7 +565,7 @@ function renderSyllabus(items, container, level) {
 }
 
 
-// --- Dashboard & Progress Calculation (No Changes) ---
+// --- Dashboard & Progress Calculation ---
 function calculateOverallProgress(nodes) {
     if (!Array.isArray(nodes)) {
         console.warn("calculateOverallProgress received invalid input:", nodes);
@@ -729,7 +737,7 @@ function updateTrackerDashboard() {
 }
 
 
-// --- Tab and Syllabus Rendering Functions (No Changes) ---
+// --- Tab and Syllabus Rendering Functions ---
 function activateTab(tabId) {
     console.log("Activating tab:", tabId);
     if (!tabId) { console.error("activateTab called with invalid tabId"); return; }
@@ -865,7 +873,7 @@ function renderOptionalSelectionList() {
 }
 
 
-// --- AI Integration (No Changes) ---
+// --- AI Integration ---
 async function callGeminiAPI(prompt, systemInstruction, useSearch = false) {
     if (!GEMINI_API_KEY) { console.error("Gemini API Key is missing."); throw new Error("AI Service configuration error."); }
     const API_URL_TO_USE = GEMINI_API_URL;
@@ -929,7 +937,7 @@ async function handleAIGenerator(itemId, action, topicName) {
 }
 
 
-// --- Firebase & Persistence (No Changes) ---
+// --- Firebase & Persistence ---
 function startOptionalSubjectListener(userId) {
     if (unsubscribeOptional) { unsubscribeOptional(); unsubscribeOptional = null; }
     if (!db || !firestoreModule?.doc || !firestoreModule?.onSnapshot || !userId) { console.warn("Firestore not ready for optional listener."); return; }
@@ -939,7 +947,6 @@ function startOptionalSubjectListener(userId) {
     const profileDocRef = doc(db, 'artifacts', appId, 'users', userId);
 
     unsubscribeOptional = onSnapshot(profileDocRef, (docSnap) => {
-        if (!docSnap.exists()) { console.warn("User profile document not found for listener."); return; }
         const profile = docSnap.data()?.profile || {};
         const newOptional = profile.optionalSubject || null;
 
@@ -962,7 +969,11 @@ function startOptionalSubjectListener(userId) {
             if (newOptional) {
                 updateOptionalSyllabusData(syllabusData);
             }
-            renderOptionalTab();
+            // Re-render *if* the optional tab is active, otherwise dashboard will update
+            if (document.getElementById('tab-optional')?.classList.contains('active')) {
+                 renderOptionalTab();
+            }
+            updateTrackerDashboard(); // Also update dashboard totals
             showNotification(`Optional subject updated to ${newOptional ? newOptional.toUpperCase() : 'None'}.`);
         }
     }, (error) => { console.error("Error in optional subject listener:", error); });
@@ -1003,7 +1014,6 @@ function updateOptionalSyllabusData(syllabusDataRef) {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("DOM Content Loaded. Initializing Tracker...");
     
-    // ADDED: Set Copyright Year
     if (DOMElements.copyrightYear) {
         DOMElements.copyrightYear.textContent = new Date().getFullYear();
     }
@@ -1016,8 +1026,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         DOMElements.saveBtn.style.display = 'none';
     }
 
-    let firebaseEnabled = false; // ADDED
-
     // --- Firebase Initialization (from app.js) ---
     try {
         const firebaseConfigFromGlobal = typeof window.__firebase_config !== 'undefined' ? window.__firebase_config : firebaseConfig;
@@ -1029,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const app = getApps().length ? getApp() : initializeApp(firebaseConfigFromGlobal);
         db = getFirestore(app);
         auth = getAuth(app);
-        firebaseEnabled = true; // ADDED
+        firebaseEnabled = true;
 
         // Store module references
         Object.assign(firestoreModule, {
@@ -1046,37 +1054,41 @@ document.addEventListener('DOMContentLoaded', async function() {
         firebaseAuthModule.onAuthStateChanged(auth, async (user) => {
              console.log("Tracker Page: Auth state changed. User:", user ? user.uid : 'null');
              
-             if (user?.uid !== currentUser?.uid) { // Process only if user actually changed
+             if (user?.uid !== currentUser?.uid) {
                 currentUser = user;
                 const userId = user?.uid;
 
-                if (user && !user.isAnonymous) { // User is logged in and NOT anonymous
-                    await fetchUserProfile(userId); // Fetch profile (from app.js)
+                if (user && !user.isAnonymous) {
+                    await fetchUserProfile(userId);
                     
-                    // Load syllabus (from syllabus-tracker.js)
                     if (isSyllabusLoading) {
                         console.log("User found, triggering syllabus load.");
-                        loadSyllabusData(user.uid);
+                        loadSyllabusData(user.uid); // This will hide the loader
                     }
-                } else { // User is logged out OR anonymous
+                } else {
                     currentUserProfile = null;
                     if (unsubscribeOptional) { unsubscribeOptional(); unsubscribeOptional = null; }
                     
-                    // Handle logged-out state for syllabus
                     isSyllabusLoading = false;
-                    console.error("User logged out or authentication failed.");
+                    console.error("User logged out or authentication required.");
+                    // Show auth error *instead* of "Loading..."
                     DOMElements.loadingIndicator.innerHTML = '<p class="text-red-500 p-4">Authentication required. Please log in to view the tracker.</p>';
-                    DOMElements.loadingIndicator.classList.remove('hidden');
+                    DOMElements.loadingIndicator.classList.remove('hidden'); // Ensure it's visible
                     DOMElements.contentWrapper.classList.add('hidden');
                 }
                 
-                // Update header UI (from app.js)
                 updateUIForAuthStateChange(user);
 
                 if (!authReady) {
                     authReady = true;
                     console.log("Tracker Page: Auth Ready.");
                 }
+             } else if (!user) {
+                 // Handle case where user was already null and is still null
+                 DOMElements.loadingIndicator.innerHTML = '<p class="text-red-500 p-4">Authentication required. Please log in to view the tracker.</p>';
+                 DOMElements.loadingIndicator.classList.remove('hidden');
+                 DOMElements.contentWrapper.classList.add('hidden');
+                 updateUIForAuthStateChange(null);
              }
         });
 
@@ -1086,14 +1098,17 @@ document.addEventListener('DOMContentLoaded', async function() {
          DOMElements.loadingIndicator.innerHTML = `<p class="text-red-500 p-4">Error: Services failed to initialize: ${error.message}</p>`;
          DOMElements.loadingIndicator.classList.remove('hidden');
          isSyllabusLoading = false;
+         firebaseEnabled = false;
+         updateUIForAuthStateChange(null); // Show login button even on fail
          return;
     }
 
-    // --- loadSyllabusData (No Changes) ---
+    // --- loadSyllabusData ---
     async function loadSyllabusData(userId) {
         console.log("loadSyllabusData started for user:", userId);
         isSyllabusLoading = false;
 
+        // Keep loader visible
         DOMElements.loadingIndicator?.classList.remove('hidden');
         DOMElements.contentWrapper?.classList.add('hidden');
 
@@ -1114,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log("Optional subject loaded:", optionalSubject);
 
             console.log("Assembling default syllabus structure.");
-            loadedStaticData = assembleDefaultSyllabus();
+            loadedStaticData = assembleDefaultSyllabus(); // This is where the file error happens
             if (loadedStaticData.length === 0) {
                 throw new Error("Assembly function returned empty data.");
             }
@@ -1151,76 +1166,46 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log("Syllabus data preparation and merge complete.");
 
             console.log("Recalculating all parent statuses...");
-            const updateAllParents = (nodes) => {
-                if (!Array.isArray(nodes)) return;
-                nodes.forEach(node => {
-                    if (!node) return;
-                    if (node.children && node.children.length > 0) {
-                        updateAllParents(node.children);
-                    } else if (node.id) {
-                        updateParentStatuses(node.id, document);
-                    }
-                });
-            };
-            updateAllParents(syllabusData);
+            syllabusData.forEach(topLevelNode => recalculateParentStatus(topLevelNode));
             console.log("Parent status recalculation complete.");
 
         } catch (error) {
             console.error("CRITICAL Error during syllabus load:", error);
-            showNotification("Error loading syllabus data. Using default.", true);
-            try {
-                 syllabusData = assembleDefaultSyllabus();
-                 if (optionalSubject) updateOptionalSyllabusData(syllabusData);
-            } catch (assemblyError){ 
-                 console.error("FATAL: Fallback assembly failed:", assemblyError);
-                 syllabusData = []; 
-                 if(DOMElements.loadingIndicator) DOMElements.loadingIndicator.innerHTML = '<p class="text-red-500 p-4">Critical error loading syllabus data.</p>';
-                 if(DOMElements.loadingIndicator) DOMElements.loadingIndicator.classList.remove('hidden'); 
-                 return; 
-            }
-        } finally {
-             DOMElements.loadingIndicator?.classList.add('hidden');
-
-             if (syllabusData.length === 0) { 
-                 console.error("Syllabus data remains empty after load/assembly.");
-                 if (DOMElements.loadingIndicator && !DOMElements.loadingIndicator.innerHTML.includes('Critical error')) {
-                    DOMElements.loadingIndicator.innerHTML = '<p class="text-red-500 p-4">Failed to load syllabus structure.</p>';
-                 }
-                 DOMElements.loadingIndicator?.classList.remove('hidden');
-                 DOMElements.contentWrapper?.classList.add('hidden'); 
-             } else {
-                  DOMElements.contentWrapper?.classList.remove('hidden');
-                  if(DOMElements.contentWrapper) DOMElements.contentWrapper.classList.add('overflow-y-auto'); 
-                  activateTab('dashboard'); 
-                  startDailyReminderCheck(); 
-                  startOptionalSubjectListener(userId); 
-             }
-        }
-    }
+            showNotification("Error loading syllabus data. Please refresh.", true);
+            // This error is likely due to the corrupted file
+            DOMElements.loadingIndicator.innerHTML = `<p class="text-red-500 p-4">A critical error occurred loading syllabus data. Please check console.</p>`;
+            DOMElements.loadingIndicator.classList.remove('hidden'); // Ensure loader shows error
+            DOMElements.contentWrapper.classList.add('hidden');
+            return; // Stop execution
+        } 
+        
+        // This 'finally' block is now only reached on SUCCESS
+        DOMElements.loadingIndicator?.classList.add('hidden'); // Hide loader
+        DOMElements.contentWrapper?.classList.remove('hidden'); // Show content
+        if(DOMElements.contentWrapper) DOMElements.contentWrapper.classList.add('overflow-y-auto'); 
+        activateTab('dashboard'); 
+        startDailyReminderCheck(); 
+        startOptionalSubjectListener(userId); 
+        
+    } // End loadSyllabusData
 
 
     // --- Event Handling (MERGED) ---
 
-    // Global listener to close modals
     document.addEventListener('click', function(e) {
         const activeModals = document.querySelectorAll('.modal.active');
         activeModals.forEach(modal => { if (modal === e.target) closeModal(modal); });
     });
 
-    // --- Main Click Handler (MERGED) ---
     document.addEventListener('click', async function(e) {
         const target = e.target;
         const targetId = target.id;
         
-        // --- ADDED: Auth & UI Click Handlers (from app.js) ---
-        
-        // Close user dropdown
+        // --- Auth & UI Click Handlers ---
         if (!target.closest('#user-menu')) { 
             if (DOMElements.userDropdown) DOMElements.userDropdown.classList.add('hidden'); 
         }
-
-        // Auth Modal Triggers
-        if (targetId === 'login-btn' || target.closest('#login-btn')) {
+        if (target.closest('#login-btn') || targetId === 'mobile-login-btn') {
              e.preventDefault(); 
              openAuthModal('login'); 
              return;
@@ -1238,19 +1223,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
         if (targetId === 'forgot-password-btn') { 
-            document.getElementById('login-view')?.classList.add('hidden'); 
-            DOMElements.authModal.forgotPasswordView?.classList.remove('hidden'); 
+            openAuthModal('forgot'); // Use 'forgot' mode
             return;
         }
-
-        // Close Account Modal
         if (targetId === 'close-account-modal') {
             closeModal(DOMElements.accountModal.modal); 
             return;
         }
-
-        // Logout Triggers
-        if (target.closest('#dropdown-logout-btn, #mobile-logout-btn')) { 
+        if (target.closest('#dropdown-logout-btn') || targetId === 'mobile-logout-btn') { 
              if (firebaseEnabled && firebaseAuthModule && auth) {
                  try { 
                      await firebaseAuthModule.signOut(auth); 
@@ -1265,9 +1245,7 @@ document.addEventListener('DOMContentLoaded', async function() {
              }
              return;
         }
-
-        // Account Modal Triggers
-        if (target.closest('#my-account-btn, #mobile-my-account-btn')) {
+        if (target.closest('#my-account-btn') || targetId === 'mobile-my-account-btn') {
             e.preventDefault();
             if (!authReady) { showNotification("Connecting...", false); return; }
             if (!currentUser || currentUser.isAnonymous) { showNotification("Please log in/sign up.", false); openAuthModal('login'); return; }
@@ -1281,22 +1259,16 @@ document.addEventListener('DOMContentLoaded', async function() {
             openModal(DOMElements.accountModal.modal);
             return;
         }
-
-        // User Menu Toggle
         if (target.closest('#user-menu-button')) { 
             DOMElements.userDropdown?.classList.toggle('hidden'); 
             return;
         }
-
-        // Mobile Menu Toggle
          if (target.closest('#mobile-menu-button')) { 
              DOMElements.mobileMenu?.classList.toggle('hidden'); 
              return;
          }
 
-        // --- Original Syllabus Click Handlers ---
-
-        // Modal close buttons (handled first, but good to keep)
+        // --- Syllabus Click Handlers ---
         if (target.matches('#close-ai-response-modal')) {
              if (DOMElements.aiResponseModal) { closeModal(DOMElements.aiResponseModal); }
              srsModalContext = {}; return;
@@ -1318,7 +1290,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const actionElement = target.closest('[data-action]');
         const action = actionElement?.dataset.action;
 
-        // Exit if no syllabus action
         if (!action && !target.classList.contains('tab-button') && !target.classList.contains('gs-chip') && !target.classList.contains('select-optional-btn')) {
             return;
         }
@@ -1334,15 +1305,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         const topicItem = itemId ? findItemById(itemId, syllabusData) : null;
         const topicName = topicItem?.name || 'Topic';
 
-        // Tab Navigation
         if (target.classList.contains('tab-button') && target.dataset.tab) {
              activateTab(target.dataset.tab); return;
         }
-        // Mains GS Chip Navigation
         if (target.classList.contains('gs-chip') && target.dataset.paper) {
              renderSyllabusMains(target.dataset.paper); return;
         }
-        // Syllabus Toggle (Expand/Collapse)
         if (action === 'syllabus-toggle-item') {
             if (!target.closest('.progress-toggle, .ai-button, .revision-dot, .select-optional-btn')) {
                 const wrapper = actionElement;
@@ -1359,7 +1327,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             }
         }
-        // Toggle Status Button Click
         else if (action === 'toggle-status' && topicItem && actionElement) {
             e.stopPropagation();
             const currentStatus = topicItem.status;
@@ -1392,7 +1359,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                  }
             }
         }
-        // SRS Dot Click
          else if (action === 'srs-bar' && target.classList.contains('revision-dot')) {
              e.stopPropagation();
              const dotEl = target;
@@ -1421,12 +1387,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                  }
              } else { console.warn("Could not find topic data for SRS dot click."); }
          }
-        // AI Smart Tracker Button Click
         else if (action?.startsWith('ai-') && topicItem && actionElement) {
             e.stopPropagation();
             handleAIGenerator(itemId, action, topicName);
         }
-        // Jump to Topic Link Click
         else if (action === 'jump-to-topic' && itemId) {
              e.preventDefault();
              const topic = findItemById(itemId, syllabusData);
@@ -1462,19 +1426,21 @@ document.addEventListener('DOMContentLoaded', async function() {
                  } else { console.warn("Jump target element not found:", itemId); }
              }, 300);
          }
-        // Optional Subject Selection Button Click
         else if (target.classList.contains('select-optional-btn') && target.dataset.subjectId) {
             e.preventDefault(); const subjectId = target.dataset.subjectId;
             if (!currentUser) { showNotification("Please wait for authentication.", true); return; }
-            if (!firestoreModule?.doc || !firestoreModule?.updateDoc) { showNotification("Database service unavailable.", true); return; }
+            if (!firestoreModule?.doc || !firestoreModule?.setDoc) { showNotification("Database service unavailable.", true); return; }
             try {
-                const { doc, updateDoc } = firestoreModule;
+                const { doc, setDoc } = firestoreModule;
                 const profileDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
-                await updateDoc(profileDocRef, { 'profile.optionalSubject': subjectId });
+                // Use setDoc with merge:true to create or update
+                await setDoc(profileDocRef, 
+                    { profile: { optionalSubject: subjectId } }, 
+                    { merge: true } 
+                );
                 showNotification(`Optional set to ${subjectId.toUpperCase()}! Syncing...`);
             } catch (error) { console.error("Error setting optional:", error); showNotification("Failed to save optional choice.", true); }
         }
-        // Confirm Revision Submit Button Click
         else if (target.id === 'confirm-revision-submit-btn') {
             e.preventDefault(); const { itemId: revItemId, dayKey: revDayKey } = srsModalContext; const itemToRevise = revItemId ? findItemById(revItemId, syllabusData) : null;
             if (itemToRevise?.revisions && revDayKey) {
@@ -1513,7 +1479,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Form Submit Listeners (MERGED) ---
 
-    // Syllabus Start Date Modal Form
     DOMElements.startDateForm?.addEventListener('submit', function(e) {
         e.preventDefault();
         const dateString = DOMElements.startDateInput.value;
@@ -1562,11 +1527,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
             closeModal(DOMElements.authModal.modal); 
             showNotification("Logged in!");
+            // No page reload needed, onAuthStateChanged will trigger data load
         } catch(error){ 
              console.error("Login error:", error.code); 
              if(errorEl){
                  let msg = "Login failed. Invalid credentials or network error.";
-                 if (error.code.includes('auth/invalid-credential')) msg = "Invalid email or password.";
+                 if (error.code.includes('auth/invalid-credential') || error.code.includes('auth/wrong-password')) msg = "Invalid email or password.";
                  else if (error.code.includes('auth/user-not-found')) msg = "No user found with this email.";
                  errorEl.textContent = msg; 
                  errorEl.classList.remove('hidden');
@@ -1603,6 +1569,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 DOMElements.successOverlay.classList.remove('hidden'); 
                 setTimeout(() => DOMElements.successOverlay.classList.add('hidden'), 2500); 
             }
+            // onAuthStateChanged will handle the rest
         } catch(error){ 
             console.error("Signup error:", error.code); 
             if(errorEl){
@@ -1673,7 +1640,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
 
-    // --- Daily Reminder Check (MODIFIED for mobile) ---
+    // --- Daily Reminder Check (Mobile-Optimized) ---
      function startDailyReminderCheck() {
          try {
              const today = new Date().toDateString();
@@ -1684,7 +1651,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                  if (revisionsDue.length > 0 && DOMElements.dailyReminderModal) {
                      if(DOMElements.reminderCount) DOMElements.reminderCount.textContent = revisionsDue.length;
                      if(DOMElements.reminderTopicList) {
-                         // MODIFIED: Added responsive classes
                          DOMElements.reminderTopicList.innerHTML = revisionsDue.map(r => `
                              <div class="flex items-center justify-between text-slate-700 py-1 gap-2">
                                  <span class="text-sm break-words"> 
