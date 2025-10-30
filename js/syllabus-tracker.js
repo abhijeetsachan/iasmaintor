@@ -1042,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Store module references
         Object.assign(firestoreModule, {
-            getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, serverTimestamp, updateDoc, enableIndexedDbPersistence
+            getFirestore, doc, getDoc, getDocs, setDoc, onSnapshot, collection, query, orderBy, serverTimestamp, updateDoc, enableIndexedDbPersistence
         });
         Object.assign(firebaseAuthModule, {
             getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut
@@ -1671,4 +1671,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
 }); // End DOMContentLoaded
+
 
