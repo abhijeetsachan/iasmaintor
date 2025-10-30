@@ -24,6 +24,7 @@ import {
     getFirestore,
     doc,
     getDoc,
+    getDocs,
     setDoc,
     onSnapshot,
     collection,
@@ -1670,3 +1671,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
 }); // End DOMContentLoaded
+
