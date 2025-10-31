@@ -1,5 +1,8 @@
 // js/quizzie.js
 
+// Import the new API endpoint
+import { GEMINI_API_ENDPOINT } from './firebase-config.js';
+
 // --- State Variables (Module Scope) ---
 let quizQuestions = [];
 let userAnswers = [];
@@ -7,16 +10,17 @@ let currentQuestionIndex = 0; // Keep track of the current question being viewed
 
 // --- DOM Elements (Passed during init) ---
 let DOMElements = {};
-let GEMINI_API_KEY = '';
-let API_URL = ''; // Gemini API URL
+// REMOVED: let GEMINI_API_KEY = '';
+// REMOVED: let API_URL = '';
 let showNotification = () => {}; // Placeholder for notification function
 let closeModal = () => {}; // Placeholder for closeModal function
 
 // --- Initialization ---
-export function initQuizzie(elements, apiKey, apiUrl, notifyFn, closeModalFn) {
+// *** MODIFICATION: Removed apiKey and apiUrl from init. They are no longer passed from app.js ***
+export function initQuizzie(elements, notifyFn, closeModalFn) {
     DOMElements = elements; // Store reference to quizzie modal elements
-    GEMINI_API_KEY = apiKey;
-    API_URL = apiUrl;
+    // REMOVED: GEMINI_API_KEY = apiKey;
+    // REMOVED: API_URL = apiUrl;
     showNotification = notifyFn; // Store reference to notification function
     closeModal = closeModalFn; // Store reference to close modal function
 
@@ -154,14 +158,12 @@ const handleStepNavigation = (stepBtn) => {
 };
 
 const generateQuizQuestions = async (params) => {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY.length < 10) {
-        console.error("Cannot generate quiz: Gemini API Key is not set or invalid.");
-        throw new Error("API key not configured.");
-    }
+    // *** THIS FUNCTION IS MODIFIED ***
     try {
         const { main_subject, test_type, gs_subject, csat_subject, num_questions, difficulty, question_type } = params;
         const count = test_type === 'flt' ? 5 : parseInt(num_questions || '5');
 
+        // 1. Define Prompts (same as before)
         const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
 - If the user selects 'basic' difficulty, generate straightforward, knowledge-based questions that test fundamental concepts.
 - If the user selects 'advanced' difficulty, generate tricky, application-based, or multi-statement questions (e.g., "How many of the above statements are correct?") that require deeper analysis and are designed to be challenging.
@@ -170,7 +172,6 @@ IMPORTANT FORMATTING: For multi-statement questions, format the question string 
 "Consider the following statements regarding the philosophical tenets of early Jainism and Buddhism:\\n1. Both religions rejected the authority of the Vedas and the efficacy of Vedic rituals.\\n2. Both maintained that the world is impermanent (Anitya) and devoid of a permanent self (Nairatmya or Anatta).\\n3. Jainism lays great emphasis on 'Anekantavada', while Buddhism proposes 'Kshanika Vada'.\\nHow many of the above statements are correct?"
 
 For each question, provide a question (string), four options (array of strings), the correct answer (string, must exactly match one of the options), and a detailed explanation (string). Ensure the answer exactly matches one of the options provided. Return a valid JSON object matching this schema: {"questions": [{"question": "...", "options": ["...", "...", "...", "..."], "answer": "...", "explanation": "..."}]}.`;
-
 
         let userQuery = `Generate ${count} questions. Difficulty: ${difficulty || 'basic'}. `;
         if (test_type === 'flt') {
@@ -183,51 +184,37 @@ For each question, provide a question (string), four options (array of strings),
             }
         }
         
-        // ** CORRECTED v1beta PAYLOAD STRUCTURE **
+        // 2. Define Payload (this goes to *our* backend)
         const payload = {
-            contents: [{ parts: [{ text: userQuery }] }], // Only the userQuery goes here
-            systemInstruction: { parts: [{ text: systemPrompt }] }, // The systemPrompt goes here
-            generationConfig: {
-                // responseMimeType: "application/json", // Not supported this way in v1beta
-            }
+            contents: [{ parts: [{ text: userQuery }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            generationConfig: {}
         };
 
-        console.log("Sending corrected v1beta payload:", JSON.stringify(payload, null, 2));
+        console.log("Sending payload to backend:", JSON.stringify(payload, null, 2));
 
-        // Use fetch (assuming no retry logic for now)
-        const response = await fetch(API_URL, {
+        // 3. Call *our* backend endpoint
+        const response = await fetch(GEMINI_API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
          if (!response.ok) {
-             let errorMsg = `API request failed with status ${response.status}`;
-             let errorBodyText = await response.text();
-             console.error("Raw API Error Response:", errorBodyText);
-             try { 
-                 const errorBody = JSON.parse(errorBodyText); 
-                 // Check for specific model-not-found error again
-                 if (errorBody?.error?.message?.includes("is not found for API version v1beta")) {
-                     errorMsg = errorBody.error.message;
-                 } else {
-                     errorMsg = `API Error (${response.status}): ${errorBody?.error?.message || response.statusText}`; 
-                 }
-             }
-             catch (_) { 
-                 // Check if the 404 text is in the raw response
-                 if (errorBodyText.includes("is not found for API version v1beta")) {
-                    errorMsg = errorBodyText; // Use the raw 404 message
-                 } else {
-                    errorMsg = `API Error (${response.status}): ${response.statusText || 'Unknown error'}`; 
-                 }
+             const errorBody = await response.json(); // Our backend sends JSON errors
+             console.error("Backend API Error:", errorBody);
+             let errorMsg = errorBody.error?.message || `API request failed with status ${response.status}`;
+             // Check for specific model-not-found error again
+             if (errorMsg.includes("is not found for API version v1beta")) {
+                 errorMsg = `API Error: The model 'gemini-2.5-flash' is not available. ${errorMsg}`;
              }
              throw new Error(errorMsg);
          }
 
         const result = await response.json();
-        console.log("Full API Response:", result);
+        console.log("Full API Response from backend:", result);
 
+        // 4. The rest of the parsing logic is the same
         if (!result.candidates || result.candidates.length === 0) {
              const blockReason = result.promptFeedback?.blockReason;
              const safetyRatings = result.promptFeedback?.safetyRatings;
@@ -283,8 +270,9 @@ For each question, provide a question (string), four options (array of strings),
 };
 
 const generateAIFeedback = async (correctCount, incorrectCount, unansweredCount, totalQuestions, wrongQuestions) => {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY.length < 10) { return "AI feedback unavailable: API key not configured."; }
+    // *** THIS FUNCTION IS MODIFIED ***
     
+    // 1. Define Prompts (same as before)
     const systemPrompt = `You are an expert mentor for the UPSC Civil Services Exam. Your task is to provide a concise, insightful, and encouraging analysis of a student's quiz performance. Your analysis should be in a single paragraph. Focus on constructive feedback.`;
     const MAX_WRONG_TO_SEND = 5;
     const wrongQuestionsSample = wrongQuestions.slice(0, MAX_WRONG_TO_SEND).map(wq => ({
@@ -308,6 +296,7 @@ Based ONLY on this data, provide a concise, insightful, and encouraging analysis
 3. Specific, actionable improvement suggestions (e.g., 'Revisiting NCERT chapters,' 'Focusing on PYQs').
 4. Maintain a supportive tone. Do not simply list the wrong questions.`;
 
+    // 2. Define Payload (this goes to *our* backend)
     const payload = {
         contents: [{ parts: [{ text: userQuery }] }],
         systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -315,15 +304,18 @@ Based ONLY on this data, provide a concise, insightful, and encouraging analysis
     };
 
     try {
-        const response = await fetch(API_URL, {
+        // 3. Call *our* backend endpoint
+        const response = await fetch(GEMINI_API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         if (!response.ok) { 
-            console.error("AI Feedback API Error:", await response.text());
+            console.error("AI Feedback API Error:", await response.json());
             throw new Error(`API request failed with status ${response.status}`); 
         }
+
+        // 4. The rest of the parsing logic is the same
         const result = await response.json();
         const candidate = result.candidates?.[0];
         if (!candidate || (candidate.finishReason !== 'STOP' && candidate.finishReason !== 'MAX_TOKENS')) {
