@@ -1,7 +1,8 @@
 // js/app.js (Lean version for index.html)
 
 // --- Imports ---
-import { firebaseConfig, GEMINI_API_KEY } from './firebase-config.js';
+// *** MODIFICATION: GEMINI_API_ENDPOINT is imported but not used directly in this file ***
+import { firebaseConfig, GEMINI_API_ENDPOINT } from './firebase-config.js';
 // Removed syllabus and quizzie imports
 
 // --- Firebase SDK Modules ---
@@ -206,11 +207,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Check if required Quizzie elements are available in the DOM before initializing
     if (Object.values(quizzieElements).every(el => el !== null)) {
+         // *** MODIFICATION: Removed API Key and URL from this call ***
          initQuizzie(
             quizzieElements,
-            GEMINI_API_KEY,
-            // *** REVERTED FIX: Changed back to gemini-2.5-flash per user request ***
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+            // REMOVED: GEMINI_API_KEY, (No longer needed)
+            // REMOVED: `https://generativelanguage...`, (No longer needed)
             showNotification,
             closeModal
         );
@@ -227,34 +228,25 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- UI Update Function ---
     const updateUIForAuthStateChange = (user) => {
+        // ... (This function remains the same)
         const isLoggedIn = !!user;
         const isAnon = user?.isAnonymous ?? false;
-        
-        // --- MODIFICATION: Hide dashboard/user menu if anonymous ---
         const isVisibleUser = isLoggedIn && !isAnon;
-
         DOMElements.authLinks?.classList.toggle('hidden', isVisibleUser);
         DOMElements.userMenu?.classList.toggle('hidden', !isVisibleUser);
         DOMElements.dashboardSection?.classList.toggle('hidden', !isVisibleUser);
         DOMElements.mobileAuthLinks?.classList.toggle('hidden', isVisibleUser);
         DOMElements.mobileUserActions?.classList.toggle('hidden', !isVisibleUser);
-        // --- END MODIFICATION ---
-
         if (isVisibleUser) {
             let displayName = 'User'; let avatarIconClass = 'fas fa-user text-xl';
-            
-            // Note: Since we only display for non-anonymous users now, the anonymous logic below is simplified.
             if (currentUserProfile?.firstName) { displayName = currentUserProfile.firstName; }
             else if (user.email) { const emailName = user.email.split('@')[0]; displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1); }
-            
             const loginBtn = document.getElementById('login-btn'); if(loginBtn) loginBtn.innerHTML = `<i class="fas fa-right-to-bracket mr-2"></i>Log In`;
             const mobileLoginBtn = document.getElementById('mobile-login-btn'); if(mobileLoginBtn) mobileLoginBtn.innerHTML = `<i class="fas fa-right-to-bracket mr-2"></i>Log In`;
             document.getElementById('my-account-btn')?.classList.remove('hidden'); document.getElementById('mobile-my-account-btn')?.classList.remove('hidden');
-            
             if(DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
             if(DOMElements.userAvatar) DOMElements.userAvatar.innerHTML = `<i class="${avatarIconClass}"></i>`;
         } else {
-             // For logged-out or anonymous users
             if(DOMElements.userGreeting) DOMElements.userGreeting.textContent = '';
             const loginBtn = document.getElementById('login-btn'); if(loginBtn) loginBtn.innerHTML = `<i class="fas fa-right-to-bracket mr-2"></i>Log In`;
             const mobileLoginBtn = document.getElementById('mobile-login-btn'); if(mobileLoginBtn) mobileLoginBtn.innerHTML = `<i class="fas fa-right-to-bracket mr-2"></i>Log In`;
@@ -263,11 +255,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Firestore Functions ---
     const fetchUserProfile = async (userId) => {
-        // MODIFICATION: Added non-anonymous check
+        // ... (This function remains the same)
         if (!firebaseEnabled || !firestoreModule || !userId || auth.currentUser?.isAnonymous) { currentUserProfile = null; return; }
         try {
             const { doc, getDoc } = firestoreModule;
-            // Path: artifacts/{appId}/users/{userId}
             const userDocRef = doc(db, 'artifacts', appId, 'users', userId);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
@@ -282,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     const fetchAndDisplayPlans = async (userId) => {
-        // MODIFICATION: Added non-anonymous check
+        // ... (This function remains the same)
         if (!authReady || !firebaseEnabled || !firestoreModule || !userId || auth.currentUser?.isAnonymous) { 
             if(DOMElements.plansList) DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see saved plans.</p>`; 
             return; 
@@ -292,7 +283,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         DOMElements.plansList.innerHTML = `<p class="text-slate-500">Loading saved plans...</p>`;
         try {
             const { collection, query, onSnapshot, orderBy } = firestoreModule;
-            // Path: artifacts/{appId}/users/{userId}/studyPlans
             const plansCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'studyPlans');
             const q = query(plansCollectionRef, orderBy('createdAt', 'desc'));
             unsubscribePlans = onSnapshot(q, (snapshot) => {
@@ -303,7 +293,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                      DOMElements.plansList.innerHTML = docs.map(doc => {
                         const data = doc.data(); const date = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString() : 'N/A';
                         const htmlContent = data.planHTML || '<p class="text-red-500">Error: Plan content missing.</p>';
-                        // Removed inline script sanitization as it can interfere with complex layouts; assumed safe content generation.
                         const sanitizedHtml = htmlContent; 
                         return `<div class="border-b last:border-b-0 pb-6 mb-6"><p class="font-semibold text-slate-600 mb-2">Plan created on: ${date}</p><div class="prose prose-sm max-w-none">${sanitizedHtml.replace(/<div class="mt-8.*?<\/div>/s, '')}</div></div>`;
                     }).join('');
@@ -314,7 +303,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Dashboard Progress Listener (Fixed error handling) ---
     function listenForDashboardProgress(userId) {
-         // MODIFICATION: Added non-anonymous check
+        // ... (This function remains the same)
          if (!authReady || !firebaseEnabled || !firestoreModule || !userId || auth.currentUser?.isAnonymous) { 
              if (DOMElements.dashboardProgressBars) DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Login to load progress.</p>`; 
              return; 
@@ -324,11 +313,9 @@ document.addEventListener('DOMContentLoaded', async function() {
          progressContainer.innerHTML = `<p class="text-slate-500">Loading progress...</p>`;
          try {
             const { doc, onSnapshot } = firestoreModule;
-            // Path: artifacts/{appId}/users/{userId}/progress/summary
             const progressDocRef = doc(db, 'artifacts', appId, 'users', userId, 'progress', 'summary');
             unsubscribeDashboardProgress = onSnapshot(progressDocRef, (docSnap) => {
                 if (!progressContainer) return; 
-                // CRITICAL FIX: If document doesn't exist or is empty, replace loading state with informative message.
                 if (!docSnap.exists() || !docSnap.data() || Object.keys(docSnap.data()).length === 0) { 
                     progressContainer.innerHTML = `<p class="text-slate-500">No syllabus progress found. Start tracking using the "Syllabus Navigator"!</p>`; 
                     return; 
@@ -340,7 +327,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 };
                 progressContainer.innerHTML = ` ${renderBar('Overall Syllabus', data.overall)} ${renderBar('Preliminary (GS)', data.prelimsGS)} ${renderBar('Preliminary (CSAT)', data.prelimsCSAT)} ${renderBar('Mains GS 1', data.mainsGS1)} ${renderBar('Mains GS 2', data.mainsGS2)} ${renderBar('Mains GS 3', data.mainsGS3)} ${renderBar('Mains GS 4', data.mainsGS4)} ${renderBar('Optional Paper I', data.optionalP1)} ${renderBar('Optional Paper II', data.optionalP2)} `;
             }, (error) => { 
-                // CRITICAL FIX: Explicitly handle listener errors
                 console.error("Error fetching dashboard progress:", error); 
                 progressContainer.innerHTML = `<p class="text-red-500">Error loading progress: ${error.code || 'Network Issue'}.</p>`; 
             });
@@ -349,58 +335,43 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Event Listeners ---
     document.body.addEventListener('click', async (e) => {
+        // ... (This function remains the same)
         const target = e.target;
         const targetId = target.id;
-
-        // Close user dropdown
         if (!target.closest('#user-menu')) { if (DOMElements.userDropdown) DOMElements.userDropdown.classList.add('hidden'); }
-
-        // Auth Triggers
         if (['login-btn', 'mobile-login-btn'].includes(targetId) || target.closest('#login-btn, #mobile-login-btn')) { 
             e.preventDefault(); 
             openAuthModal('login'); 
         }
-
-        // Mentorship Triggers
         if (target.closest('#mentorship-cta-btn, #mentorship-final-cta-btn')) {
             e.preventDefault();
             if (!currentUser || currentUser.isAnonymous) {
                 showNotification("Please log in to request mentorship.", false);
                 openAuthModal('login');
             } else {
-                // User is logged in, show the form and pre-fill email
                 if(DOMElements.mentorshipForm) DOMElements.mentorshipForm.elements['mentorship-email'].value = currentUser.email;
                 if(DOMElements.mentorshipError) DOMElements.mentorshipError.classList.add('hidden');
                 openModal(DOMElements.mentorshipModal);
             }
         }
-        
         if (targetId === 'close-mentorship-modal') {
              closeModal(DOMElements.mentorshipModal);
         }
-
         if (targetId === 'close-auth-modal') closeModal(DOMElements.authModal.modal);
         if (targetId === 'auth-switch-to-signup') openAuthModal('signup');
         if (targetId === 'auth-switch-to-login' || targetId === 'auth-switch-to-login-from-reset') openAuthModal('login');
         if (targetId === 'forgot-password-btn') { document.getElementById('login-view')?.classList.add('hidden'); DOMElements.authModal.forgotPasswordView?.classList.remove('hidden'); }
-
-        // Close Account Modal
         if (targetId === 'close-account-modal') closeModal(DOMElements.accountModal.modal);
-
-        // Logout Triggers
         if (target.closest('#dropdown-logout-btn, #mobile-logout-btn')) { 
              if (firebaseEnabled && firebaseAuthModule && auth) {
                  try { await firebaseAuthModule.signOut(auth); showNotification('Logged out.'); }
                  catch (error) { showNotification('Logout failed.', true); console.error("Logout error:", error); }
              } else { showNotification('Cannot log out: Service unavailable.', true); }
         }
-
-        // Account Modal Triggers
         if (target.closest('#my-account-btn, #mobile-my-account-btn')) {
             e.preventDefault();
             if (!authReady) { showNotification("Connecting...", false); return; }
             if (!currentUser || currentUser.isAnonymous) { showNotification("Please log in/sign up.", false); openAuthModal('login'); return; }
-            
             const { form, error } = DOMElements.accountModal;
             if (!form || !error) return;
             error.classList.add('hidden');
@@ -409,17 +380,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             form.elements['account-email'].value = currentUser.email || 'N/A';
             openModal(DOMElements.accountModal.modal);
         }
-
-        // User Menu Toggle
         if (target.closest('#user-menu-button')) { DOMElements.userDropdown?.classList.toggle('hidden'); }
-
-        // Mobile Menu Toggle
          if (target.closest('#mobile-menu-button')) { DOMElements.mobileMenu?.classList.toggle('hidden'); }
-
-        // --- Feature Card Listeners (FIXED) ---
         if (target.closest('#current-affairs-card')) { showNotification("Feature coming soon!"); }
-        
-        // ** FIX HERE: Replace placeholder with modal open **
         if (target.closest('#quizzie-feature-card')) { 
             if (!quizzieInitialized) {
                  showNotification("Quizzie module is not initialized. Please ensure Quizzie.js loads.", true);
@@ -430,24 +393,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                  openAuthModal('login');
                  return;
             }
-            
-            // 1. Reset the form state (handled by quizzie.js reset function)
             resetQuizzieModal(); 
-            // 2. Open the modal
             openModal(DOMElements.quizzieModal);
         }
-        // --- END FEATURE CARD FIX ---
-
     });
 
     // --- Form Submit Listeners (Auth/Account) ---
     DOMElements.authModal.loginForm?.addEventListener('submit', async (e) => {
+        // ... (This function remains the same)
         e.preventDefault(); if (!firebaseEnabled || !firebaseAuthModule || !auth) return;
         const email = e.target.elements['login-email'].value, password = e.target.elements['login-password'].value;
         const errorEl = DOMElements.authModal.error; if(errorEl) errorEl.classList.add('hidden');
         try {
-            // Since we discourage anonymous users, any login attempt will either sign in or link a new account (if coming from anon session, though we discouraged anon session above)
-            // We use standard sign-in, which will handle the session correctly.
             await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
             closeModal(DOMElements.authModal.modal); showNotification("Logged in!");
         } catch(error){ 
@@ -463,15 +420,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
+        // ... (This function remains the same)
         e.preventDefault(); if (!firebaseEnabled || !firebaseAuthModule || !firestoreModule || !auth) return;
         const firstName = e.target.elements['signup-first-name'].value, lastName = e.target.elements['signup-last-name'].value, email = e.target.elements['signup-email'].value, password = e.target.elements['signup-password'].value;
         const errorEl = DOMElements.authModal.error; if(errorEl) errorEl.classList.add('hidden');
         try {
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             const user = userCred.user;
-            
             const { doc, setDoc, serverTimestamp } = firestoreModule; 
-            // Path: artifacts/{appId}/users/{userId}
             const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
             await setDoc(userDocRef, { 
                 profile: { 
@@ -481,8 +437,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     createdAt: serverTimestamp(), 
                     optionalSubject: null 
                 } 
-            }, { merge: true }); // Save to profile subdoc
-            
+            }, { merge: true });
             closeModal(DOMElements.authModal.modal); 
             if (DOMElements.successOverlay) { DOMElements.successOverlay.classList.remove('hidden'); setTimeout(() => DOMElements.successOverlay.classList.add('hidden'), 2500); }
         } catch(error){ 
@@ -498,18 +453,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     
     DOMElements.accountModal.form?.addEventListener('submit', async (e) => { 
+        // ... (This function remains the same)
         e.preventDefault(); 
         const userId = currentUser?.uid; 
-        // MODIFICATION: Check for non-anonymous user again
         if (!userId || currentUser?.isAnonymous) { showNotification("You must be logged in to update account.", true); return; } 
         if (!firebaseEnabled || !firestoreModule) return;
-        
         const firstName = e.target.elements['account-first-name'].value, lastName = e.target.elements['account-last-name'].value;
         const errorEl = DOMElements.accountModal.error; if(errorEl) errorEl.classList.add('hidden');
-        
         const { doc, updateDoc } = firestoreModule; 
-        const userDocRef = doc(db, 'artifacts', appId, 'users', userId); // Path: artifacts/{appId}/users/{userId}
-        
+        const userDocRef = doc(db, 'artifacts', appId, 'users', userId);
         try {
             await updateDoc(userDocRef, { 'profile.firstName': firstName, 'profile.lastName': lastName }); showNotification('Account updated!');
             if (currentUserProfile) { currentUserProfile.firstName = firstName; currentUserProfile.lastName = lastName; } else { currentUserProfile = { firstName, lastName, email: currentUser.email }; }
@@ -524,6 +476,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     
     DOMElements.authModal.forgotPasswordForm?.addEventListener('submit', async (e) => { 
+        // ... (This function remains the same)
         e.preventDefault(); if (!firebaseEnabled || !firebaseAuthModule || !auth) return;
         const email = e.target.elements['reset-email'].value; const errorEl = DOMElements.authModal.error; if(errorEl) errorEl.classList.add('hidden');
         try { await firebaseAuthModule.sendPasswordResetEmail(auth, email); showNotification('Password reset email sent.'); openAuthModal('login'); }
@@ -538,6 +491,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Mentorship Form Submit Listener ---
     DOMElements.mentorshipForm?.addEventListener('submit', async (e) => {
+        // ... (This function remains the same)
         e.preventDefault();
         const userId = currentUser?.uid;
         if (!userId || currentUser?.isAnonymous) {
@@ -548,36 +502,29 @@ document.addEventListener('DOMContentLoaded', async function() {
             showNotification("Service not available. Please try again.", true);
             return;
         }
-
         const name = e.target.elements['mentorship-name'].value;
         const phone = e.target.elements['mentorship-phone'].value;
         const details = e.target.elements['mentorship-details'].value;
         const errorEl = DOMElements.mentorshipError;
         const submitBtn = e.target.elements['mentorship-submit-btn'];
-
         if (errorEl) errorEl.classList.add('hidden');
         submitBtn.disabled = true;
         submitBtn.textContent = "Submitting...";
-
         const { doc, updateDoc, serverTimestamp } = firestoreModule;
-        // This will save the request inside the user's document
         const userDocRef = doc(db, 'artifacts', appId, 'users', userId);
-
         try {
             await updateDoc(userDocRef, {
                 mentorshipRequest: {
                     name: name,
                     phone: phone,
                     details: details,
-                    email: currentUser.email, // Save email for reference
+                    email: currentUser.email,
                     requestedAt: serverTimestamp()
                 }
             });
-
             showNotification('Request submitted successfully!');
             closeModal(DOMElements.mentorshipModal);
             DOMElements.mentorshipForm.reset();
-
         } catch (error) {
             console.error("Mentorship form submit error:", error);
             if (errorEl) {
@@ -595,35 +542,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     let deferredPrompt = null;
     
     window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent the mini-infobar from appearing on mobile
+        // ... (This function remains the same)
         e.preventDefault();
-        // Stash the event so it can be triggered later.
         deferredPrompt = e;
-        // Show our custom install buttons
         if (DOMElements.installPwaBtnDesktop) DOMElements.installPwaBtnDesktop.classList.remove('hidden');
         if (DOMElements.installPwaBtnMobile) DOMElements.installPwaBtnMobile.classList.remove('hidden');
         console.log('PWA: beforeinstallprompt event fired.');
     });
 
     async function handleInstallClick(e) {
-        e.preventDefault(); // Prevent default link behavior if it's an <a> tag
+        // ... (This function remains the same)
+        e.preventDefault();
         if (!deferredPrompt) {
             console.log('PWA: Install prompt not available.');
             return;
         }
-        
-        // Hide the button
         if (DOMElements.installPwaBtnDesktop) DOMElements.installPwaBtnDesktop.classList.add('hidden');
         if (DOMElements.installPwaBtnMobile) DOMElements.installPwaBtnMobile.classList.add('hidden');
-        
-        // Show the install prompt
         deferredPrompt.prompt();
-        
-        // Wait for the user to respond to the prompt
         const { outcome } = await deferredPrompt.userChoice;
         console.log(`User response to the install prompt: ${outcome}`);
-        
-        // We've used the prompt, and can't use it again.
         deferredPrompt = null;
     }
 
@@ -635,8 +573,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     window.addEventListener('appinstalled', () => {
+        // ... (This function remains the same)
         console.log('PWA was installed');
-        // Hide the install buttons
         if (DOMElements.installPwaBtnDesktop) DOMElements.installPwaBtnDesktop.classList.add('hidden');
         if (DOMElements.installPwaBtnMobile) DOMElements.installPwaBtnMobile.classList.add('hidden');
         deferredPrompt = null;
