@@ -1,6 +1,6 @@
 // sw.js (Fixed)
 
-const CACHE_NAME = 'iasmaintor-v1.1'; // Incremented version to force update
+const CACHE_NAME = 'iasmaintor-v1.2'; // Incremented version to force update
 // These are the core files that make up your "app shell".
 const APP_SHELL_URLS = [
   '/',
