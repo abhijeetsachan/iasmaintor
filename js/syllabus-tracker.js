@@ -71,7 +71,11 @@ const DOMElements = {
     contentWrapper: document.getElementById('syllabus-content-wrapper'),
     loadingIndicator: document.getElementById('syllabus-loading'),
     saveBtn: document.getElementById('save-syllabus-btn'),
-    installPwaBtn: document.getElementById('install-pwa-btn'), // <-- PWA: Add install button
+    
+    // --- PWA: Updated Install Button IDs ---
+    installPwaBtnDesktop: document.getElementById('install-pwa-btn-desktop'),
+    installPwaBtnMobile: document.getElementById('install-pwa-btn-mobile'),
+
     tabButtons: document.querySelectorAll('.tab-button'),
     tabContents: document.querySelectorAll('.tab-content'),
     revisionsDueList: document.getElementById('revisions-due-list'),
@@ -125,20 +129,26 @@ window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   // Stash the event so it can be triggered later.
   deferredPrompt = e;
-  // Show our custom install button
-  const installBtn = document.getElementById('install-pwa-btn');
-  if (installBtn) {
-    installBtn.classList.remove('hidden');
+  
+  // --- PWA: Show both install buttons ---
+  if (DOMElements.installPwaBtnDesktop) {
+    DOMElements.installPwaBtnDesktop.classList.remove('hidden');
   }
+  if (DOMElements.installPwaBtnMobile) {
+    DOMElements.installPwaBtnMobile.classList.remove('hidden');
+  }
+  console.log('PWA: beforeinstallprompt event fired.');
 });
 
 // --- PWA: Handle App Installed ---
 window.addEventListener('appinstalled', () => {
     console.log('PWA was installed');
-    // Hide the install button
-    const installBtn = document.getElementById('install-pwa-btn');
-    if (installBtn) {
-        installBtn.classList.add('hidden');
+    // --- PWA: Hide both install buttons ---
+    if (DOMElements.installPwaBtnDesktop) {
+        DOMElements.installPwaBtnDesktop.classList.add('hidden');
+    }
+    if (DOMElements.installPwaBtnMobile) {
+        DOMElements.installPwaBtnMobile.classList.add('hidden');
     }
     deferredPrompt = null;
 });
@@ -1240,10 +1250,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         const targetId = target.id;
         
         // --- PWA: Handle Install Button Click ---
-        if (target.closest('#install-pwa-btn') && deferredPrompt) {
+        if (target.closest('.install-pwa-btn') && deferredPrompt) {
           e.preventDefault();
-          // Hide the button
-          if (DOMElements.installPwaBtn) DOMElements.installPwaBtn.classList.add('hidden');
+          
+          // Hide both buttons
+          if (DOMElements.installPwaBtnDesktop) DOMElements.installPwaBtnDesktop.classList.add('hidden');
+          if (DOMElements.installPwaBtnMobile) DOMElements.installPwaBtnMobile.classList.add('hidden');
+
           // Show the browser's install prompt
           deferredPrompt.prompt();
           // Wait for the user to respond
@@ -1812,4 +1825,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- End PWA Registration ---
 
 }); // End DOMContentLoaded
+
 
