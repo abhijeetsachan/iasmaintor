@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         GoogleAuthProvider, linkWithPopup
     };
     let authReady = false;
+    let authHasChecked = false; // <-- FIX: New flag to track initial auth check
 
     let currentUser = null;
     const getCurrentUser = () => currentUser;
@@ -84,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             firebaseAuthModule.onAuthStateChanged(auth, async (user) => {
                 console.log("Index Page: Auth state changed. User:", user ? user.uid : 'null');
 
-                if (user?.uid !== currentUser?.uid) { // Process only if user actually changed
+                if (user?.uid !== currentUser?.uid || !authHasChecked) { // Process if user changes OR initial check hasn't happened
                     currentUser = user;
                     const userId = user?.uid;
 
@@ -101,22 +102,26 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                         console.log("Index Page: User logged out or anonymous. Data fetching stopped.");
                         
-                        // Clear UI elements and prompt login
-                        if (DOMElements.plansList) { DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see saved plans.</p>`; }
-                        if (DOMElements.dashboardProgressBars) { DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Please log in to see your progress.</p>`; }
-                        
-                        // NOTE: Removed anonymous sign-in attempt as per user request.
+                        // --- FIX: Only update UI to "logged out" state after initial check ---
+                        if (authHasChecked) {
+                            if (DOMElements.plansList) { DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see saved plans.</p>`; }
+                            if (DOMElements.dashboardProgressBars) { DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Please log in to see your progress.</p>`; }
+                        } else {
+                             // --- FIX: Show a neutral loading state initially ---
+                            if (DOMElements.dashboardProgressBars) { DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Authenticating...</p>`; }
+                        }
                     }
                     // --- END MODIFICATION ---
 
                     // Update header UI
                     updateUIForAuthStateChange(user);
 
-                    // Mark auth as ready (no modules to initialize here)
+                    // Mark auth as ready and checked
                     if (!authReady) {
                         authReady = true;
                         console.log("Index Page: Auth Ready.");
                     }
+                    authHasChecked = true; // <-- FIX: Mark that the initial check is complete
                 }
             });
             console.log("Index Page: Firebase initialized. Waiting for auth state...");
@@ -125,6 +130,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.error("Index Page: Firebase init failed:", error);
         showNotification("Core services failed to load.", true);
         authReady = true;
+        authHasChecked = true; // <-- FIX: Also set on failure
         firebaseEnabled = false;
         // Update UI even on failure
         updateUIForAuthStateChange(null);
