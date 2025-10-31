@@ -176,6 +176,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         numQuestionsGroup: document.getElementById('num-questions-group'),
         questionTypeGroup: document.getElementById('question-type-group'),
         quizCloseButton: document.getElementById('close-quizzie-modal'),
+
+        // --- PWA Install Buttons ---
+        installPwaBtnDesktop: document.getElementById('install-pwa-btn-desktop'),
+        installPwaBtnMobile: document.getElementById('install-pwa-btn-mobile'),
     };
 
     // --- Utility Functions (Keep showNotification, open/closeModal, openAuthModal) ---
@@ -586,6 +590,59 @@ document.addEventListener('DOMContentLoaded', async function() {
             submitBtn.textContent = "Submit Request";
         }
     });
+
+    // --- PWA Install Logic ---
+    let deferredPrompt = null;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the mini-infobar from appearing on mobile
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Show our custom install buttons
+        if (DOMElements.installPwaBtnDesktop) DOMElements.installPwaBtnDesktop.classList.remove('hidden');
+        if (DOMElements.installPwaBtnMobile) DOMElements.installPwaBtnMobile.classList.remove('hidden');
+        console.log('PWA: beforeinstallprompt event fired.');
+    });
+
+    async function handleInstallClick(e) {
+        e.preventDefault(); // Prevent default link behavior if it's an <a> tag
+        if (!deferredPrompt) {
+            console.log('PWA: Install prompt not available.');
+            return;
+        }
+        
+        // Hide the button
+        if (DOMElements.installPwaBtnDesktop) DOMElements.installPwaBtnDesktop.classList.add('hidden');
+        if (DOMElements.installPwaBtnMobile) DOMElements.installPwaBtnMobile.classList.add('hidden');
+        
+        // Show the install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        // We've used the prompt, and can't use it again.
+        deferredPrompt = null;
+    }
+
+    if (DOMElements.installPwaBtnDesktop) {
+        DOMElements.installPwaBtnDesktop.addEventListener('click', handleInstallClick);
+    }
+    if (DOMElements.installPwaBtnMobile) {
+        DOMElements.installPwaBtnMobile.addEventListener('click', handleInstallClick);
+    }
+
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        // Hide the install buttons
+        if (DOMElements.installPwaBtnDesktop) DOMElements.installPwaBtnDesktop.classList.add('hidden');
+        if (DOMElements.installPwaBtnMobile) DOMElements.installPwaBtnMobile.classList.add('hidden');
+        deferredPrompt = null;
+    });
+    // --- End PWA Install Logic ---
+
 
     // --- Other UI Listeners (Intersection Observer) ---
     try { const observer = new IntersectionObserver((entries) => entries.forEach(e => e.isIntersecting && e.target.classList.add('visible')), { threshold: 0.1 }); document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el)); }
