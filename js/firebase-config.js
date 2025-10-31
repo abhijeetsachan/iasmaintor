@@ -1,20 +1,27 @@
 // js/firebase-config.js
 
 // --- Firebase Configuration ---
-// These keys are now securely sourced from Vercel's Environment Variables.
-// You must set these in your Vercel Project Settings.
+//
+// !! IMPORTANT !!
+// The 'process.env' variables were causing an error because they only work in a Node.js
+// environment (like a server). This file runs in the user's browser, where 'process' is not defined.
+//
+// You MUST replace the placeholders below (e.g., "YOUR_ACTUAL_API_KEY")
+// with your actual Firebase project keys for the app to work.
+// You can find these values in your Firebase project settings.
+//
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  apiKey: "YOUR_ACTUAL_API_KEY",
+  authDomain: "YOUR_ACTUAL_AUTH_DOMAIN",
+  projectId: "YOUR_ACTUAL_PROJECT_ID",
+  storageBucket: "YOUR_ACTUAL_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_ACTUAL_MESSAGING_SENDER_ID",
+  appId: "YOUR_ACTUAL_APP_ID"
 };
 
 // --- Google AI (Gemini) API Endpoint ---
-// We NO LONGER export the key. Instead, we export the path to our new
-// secure backend API route (the serverless function).
+// This part is correct. We call our OWN backend API route,
+// which securely handles the actual GEMINI_API_KEY.
 const GEMINI_API_ENDPOINT = '/api/gemini';
 
 
@@ -22,6 +29,6 @@ const GEMINI_API_ENDPOINT = '/api/gemini';
 export { firebaseConfig, GEMINI_API_ENDPOINT };
 
 // --- Basic Validation (Optional, for developer feedback) ---
-if (!firebaseConfig.apiKey) {
-    console.error("Firebase API Key is MISSING. Ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in Vercel.");
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_ACTUAL_API_KEY") {
+    console.error("Firebase config is MISSING. Please edit js/firebase-config.js and replace the placeholder values with your actual Firebase project keys.");
 }
