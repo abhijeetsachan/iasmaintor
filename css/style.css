@@ -432,3 +432,42 @@ body {
     font-weight: bold;
     line-height: 1;
 }
+
+/* --- Chatbot Styles (Additions for Read More) --- */
+
+.chat-message.ai .chat-bubble {
+    /* --- Add these new properties --- */
+    position: relative;
+    max-height: 200px; /* You can adjust this value (e.g., 150px, 250px) */
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.chat-message.ai .chat-bubble.expanded {
+    max-height: 1500px; /* A large value to allow for expansion. Animates smoothly. */
+}
+
+.read-more-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    text-align: center;
+    /* This creates the fade-out effect to the bubble's background color */
+    background: linear-gradient(to bottom, transparent, #f1f5f9 70%); 
+    padding-top: 20px;
+    cursor: pointer;
+}
+
+.read-more-btn span {
+    color: #3b82f6; /* blue-500 */
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: underline;
+}
+
+/* Hide the button when the bubble is expanded */
+.chat-message.ai .chat-bubble.expanded .read-more-btn {
+    display: none;
+}
