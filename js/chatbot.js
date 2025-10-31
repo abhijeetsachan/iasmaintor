@@ -142,8 +142,24 @@ async function handleUserMessage(e) {
     } catch (error) {
         console.error("Chatbot API error:", error);
         showTypingIndicator(false);
-        addMessage('ai', "Meow... I seem to be having some trouble connecting. Please try again in a moment.");
-        if(notify) notify("Chatbot error: " + error.message, true);
+
+        // --- UPDATED ERROR HANDLING ---
+        // Provide a more specific, user-friendly message based on the error.
+        let friendlyErrorMessage = "Meow... I'm sorry, I ran into an error. Please try rephrasing your question.";
+        
+        if (error.message.includes('RECITATION')) {
+            friendlyErrorMessage = "Meow... My response was blocked because it was too similar to a source. Could you please ask in a different way?";
+        } else if (error.message.includes('blocked:')) {
+            // This will catch 'blocked: SAFETY' or other block reasons
+            friendlyErrorMessage = "Meow... I'm sorry, I can't answer that. My safety filters were triggered.";
+        } else if (error.message.includes('API key')) {
+             friendlyErrorMessage = "Meow... There seems to be an issue with my API configuration. Please alert the site admin!";
+        }
+        
+        addMessage('ai', friendlyErrorMessage);
+        // --- END UPDATED ERROR HANDLING ---
+        
+        if(notify) notify("Chatbot error: " + error.message, true); // The developer still sees the full error in the notification
     }
 }
 
@@ -267,16 +283,18 @@ async function callGeminiAPI(userText) {
 
     // Check if the content part or its text is missing or not a string
     if (!contentPart || typeof contentPart.text !== 'string') {
-        // Check for a block reason first
+        // Check for a prompt block reason first
         if (result.promptFeedback?.blockReason) {
-            console.error("AI request blocked:", result.promptFeedback.blockReason);
+            console.error("AI request blocked (prompt):", result.promptFeedback.blockReason);
             throw new Error(`Request blocked: ${result.promptFeedback.blockReason}`);
         }
         
         // Log other potential issues for debugging
-        const finishReason = candidate?.finishReason;
+        const finishReason = candidate?.finishReason; // This is where 'RECITATION' lives
         const safetyRatings = candidate?.safetyRatings;
         console.error("AI Error Details:", { finishReason, safetyRatings, response: result });
+        
+        // Throw a specific error for the finish reason
         throw new Error(`AI returned no valid content. Finish Reason: ${finishReason || 'Unknown'}`);
     }
     // --- END FIXED CHECK ---
