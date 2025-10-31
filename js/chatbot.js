@@ -1,7 +1,7 @@
 // js/chatbot.js
 
-// Import the new API endpoint, NOT the key
-import { GEMINI_API_ENDPOINT } from './firebase-config.js';
+// Import the Gemini API key
+import { GEMINI_API_KEY } from './firebase-config.js';
 
 // --- Module State ---
 let DOMElements = {};
@@ -10,7 +10,7 @@ let isChatbotInitialized = false;
 let isChatOpen = false;
 let greetingTimeout;
 let notify; // To store the showNotification function
-// REMOVED: const API_URL = ... (This is no longer needed)
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const GREETINGS = [
     "Hi! My name is Chinki. How may I assist you today?",
@@ -126,7 +126,7 @@ async function handleUserMessage(e) {
     showTypingIndicator(true);
 
     try {
-        // *** MODIFICATION: Call our backend, not Google ***
+        // Call Gemini API
         const aiResponse = await callGeminiAPI(userText);
         
         // Add to history
@@ -144,22 +144,22 @@ async function handleUserMessage(e) {
         showTypingIndicator(false);
 
         // --- UPDATED ERROR HANDLING ---
+        // Provide a more specific, user-friendly message based on the error.
         let friendlyErrorMessage = "Meow... I'm sorry, I ran into an error. Please try rephrasing your question.";
         
         if (error.message.includes('RECITATION')) {
             friendlyErrorMessage = "Meow... My response was blocked because it was too similar to a source. Could you please ask in a different way?";
         } else if (error.message.includes('blocked:')) {
+            // This will catch 'blocked: SAFETY' or other block reasons
             friendlyErrorMessage = "Meow... I'm sorry, I can't answer that. My safety filters were triggered.";
         } else if (error.message.includes('API key')) {
              friendlyErrorMessage = "Meow... There seems to be an issue with my API configuration. Please alert the site admin!";
-        } else if (error.message.includes('API request failed')) {
-             friendlyErrorMessage = "Meow... I'm having trouble connecting to my brain. Please try again in a moment.";
         }
         
         addMessage('ai', friendlyErrorMessage);
         // --- END UPDATED ERROR HANDLING ---
         
-        if(notify) notify("Chatbot error: " + error.message, true); // The developer still sees the full error
+        if(notify) notify("Chatbot error: " + error.message, true); // The developer still sees the full error in the notification
     }
 }
 
@@ -180,9 +180,12 @@ function addMessage(sender, text) {
     messageElement.appendChild(bubble);
     DOMElements.messages.appendChild(messageElement); // <-- Add to DOM first
     
-    // --- "READ MORE" LOGIC (remains the same) ---
+    // --- NEW "READ MORE" LOGIC ---
+    // We check for overflow *after* the element is added to the DOM
     if (sender === 'ai') {
+        // Use requestAnimationFrame to ensure layout is calculated
         requestAnimationFrame(() => {
+            // Check if element is overflowing its container (based on css max-height)
             const isOverflowing = bubble.scrollHeight > bubble.clientHeight;
         
             if (isOverflowing) {
@@ -191,9 +194,10 @@ function addMessage(sender, text) {
                 readMoreBtn.innerHTML = '<span>Read More...</span>';
                 
                 readMoreBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    bubble.classList.add('expanded');
-                    readMoreBtn.remove();
+                    e.stopPropagation(); // Prevent any other clicks
+                    bubble.classList.add('expanded'); // This class expands the max-height
+                    readMoreBtn.remove(); // Remove the button
+                    // Scroll to bottom again in case expansion changed height
                     DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
                 });
                 
@@ -230,14 +234,14 @@ function showTypingIndicator(show) {
 }
 
 /**
- * Calls OUR backend API, which then calls Gemini.
+ * Calls the Gemini API with the current conversation history.
  * @param {string} userText - The latest user text (for context).
  * @returns {Promise<string>} - The AI's text response.
  */
 async function callGeminiAPI(userText) {
-    // *** THIS FUNCTION IS MODIFIED ***
-    
-    // 1. Prepare payload (this is what we send to *our* backend)
+    if (!GEMINI_API_KEY) throw new Error("API key is not configured.");
+
+    // Prepare payload, sending history
     const payload = {
         // Construct the full conversation history for the API
         contents: conversationHistory.map(item => ({
@@ -250,7 +254,7 @@ async function callGeminiAPI(userText) {
         }
     };
     
-    // 2. Clean up history
+    // Clean up history to prevent it from growing too large (e.g., keep last 10 messages + system prompt)
     if (conversationHistory.length > 12) {
         conversationHistory = [
             conversationHistory[0], // Keep system prompt
@@ -258,29 +262,26 @@ async function callGeminiAPI(userText) {
         ];
     }
 
-    // 3. Call our *own* backend endpoint using the imported constant
-    const response = await fetch(GEMINI_API_ENDPOINT, {
+    const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload) // Send the payload to our serverless function
+        body: JSON.stringify(payload)
     });
 
-    // 4. Handle response from *our* backend
     if (!response.ok) {
-        const errorBody = await response.json(); // Our backend sends JSON errors
-        console.error("Backend API Error:", errorBody);
-        // Throw the specific error message from our backend
-        throw new Error(errorBody.error?.message || `API request failed with status ${response.status}`);
+        const errorBody = await response.text();
+        console.error("Gemini API Error:", errorBody);
+        throw new Error(`API request failed with status ${response.status}`);
     }
 
-    const result = await response.json(); // This is the response from Google, forwarded by our backend
+    const result = await response.json();
 
-    // --- 5. FIXED CHECK (remains the same) ---
-    // Safely access the candidate and content part
+    // --- FIXED CHECK ---
+    // Safely access the candidate and content part using optional chaining (?.)
     const candidate = result.candidates?.[0];
     const contentPart = candidate?.content?.parts?.[0];
 
-    // Check if the content part or its text is missing
+    // Check if the content part or its text is missing or not a string
     if (!contentPart || typeof contentPart.text !== 'string') {
         // Check for a prompt block reason first
         if (result.promptFeedback?.blockReason) {
@@ -288,10 +289,12 @@ async function callGeminiAPI(userText) {
             throw new Error(`Request blocked: ${result.promptFeedback.blockReason}`);
         }
         
-        const finishReason = candidate?.finishReason;
+        // Log other potential issues for debugging
+        const finishReason = candidate?.finishReason; // This is where 'RECITATION' lives
         const safetyRatings = candidate?.safetyRatings;
         console.error("AI Error Details:", { finishReason, safetyRatings, response: result });
         
+        // Throw a specific error for the finish reason
         throw new Error(`AI returned no valid content. Finish Reason: ${finishReason || 'Unknown'}`);
     }
     // --- END FIXED CHECK ---
