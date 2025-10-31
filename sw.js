@@ -1,3 +1,5 @@
+// sw.js (Fixed)
+
 const CACHE_NAME = 'iasmaintor-v1.1'; // Incremented version to force update
 // These are the core files that make up your "app shell".
 const APP_SHELL_URLS = [
@@ -23,7 +25,11 @@ const APP_SHELL_URLS = [
   '/js/optional-syllabus-data.js',
   // External assets (FIXED URLs)
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+  // --- FIXED: ADDED FIREBASE SDKs TO CACHE ---
+  'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js',
+  'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js'
 ];
 
 // --- 1. Install Event: Pre-cache the app shell ---
@@ -64,11 +70,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // We must *not* cache API calls to Firebase or Google.
+  // We must *not* cache API calls to our backend (which calls Gemini) or Firebase auth/db.
   // This ensures data is always fresh and auth works.
-  const isApiCall = request.url.includes('generativelanguage.googleapis.com') ||
-                    request.url.includes('firebase') ||
-                    request.url.includes('gstatic.com/firebasejs'); // <-- FIXED URL Check
+  const isApiCall = request.url.includes('generativelanguage.googleapis.com') || // This is redundant if using /api/gemini
+                    request.url.includes('/api/gemini') || // Block caching of our own backend
+                    request.url.includes('firebase');   // Block caching of Firebase auth/db operations
 
   if (isApiCall) {
     // Network-only for APIs
@@ -76,7 +82,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For all other requests (app shell, fonts, etc.): Cache-First
+  // For all other requests (app shell, fonts, Firebase SDKs, etc.): Cache-First
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       // 1. Return cached response if it exists
