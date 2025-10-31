@@ -169,6 +169,7 @@ function addMessage(sender, text) {
     if (sender === 'ai') {
         // Use requestAnimationFrame to ensure layout is calculated
         requestAnimationFrame(() => {
+            // Check if element is overflowing its container (based on css max-height)
             const isOverflowing = bubble.scrollHeight > bubble.clientHeight;
         
             if (isOverflowing) {
@@ -178,8 +179,8 @@ function addMessage(sender, text) {
                 
                 readMoreBtn.addEventListener('click', (e) => {
                     e.stopPropagation(); // Prevent any other clicks
-                    bubble.classList.add('expanded');
-                    readMoreBtn.remove();
+                    bubble.classList.add('expanded'); // This class expands the max-height
+                    readMoreBtn.remove(); // Remove the button
                     // Scroll to bottom again in case expansion changed height
                     DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
                 });
@@ -259,12 +260,27 @@ async function callGeminiAPI(userText) {
 
     const result = await response.json();
 
-    if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content.parts[0].text) {
+    // --- FIXED CHECK ---
+    // Safely access the candidate and content part using optional chaining (?.)
+    const candidate = result.candidates?.[0];
+    const contentPart = candidate?.content?.parts?.[0];
+
+    // Check if the content part or its text is missing or not a string
+    if (!contentPart || typeof contentPart.text !== 'string') {
+        // Check for a block reason first
         if (result.promptFeedback?.blockReason) {
+            console.error("AI request blocked:", result.promptFeedback.blockReason);
             throw new Error(`Request blocked: ${result.promptFeedback.blockReason}`);
         }
-        throw new Error("AI returned no content.");
+        
+        // Log other potential issues for debugging
+        const finishReason = candidate?.finishReason;
+        const safetyRatings = candidate?.safetyRatings;
+        console.error("AI Error Details:", { finishReason, safetyRatings, response: result });
+        throw new Error(`AI returned no valid content. Finish Reason: ${finishReason || 'Unknown'}`);
     }
+    // --- END FIXED CHECK ---
 
-    return result.candidates[0].content.parts[0].text;
+    // If we're here, contentPart.text is valid
+    return contentPart.text;
 }
