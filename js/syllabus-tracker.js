@@ -49,6 +49,7 @@ let syllabusData = [];
 let optionalSubject = null;
 let isSyllabusLoading = true;
 let srsModalContext = {};
+let deferredPrompt = null; // <-- PWA: Add state variable for install prompt
 
 // --- ADDED: Auth State Variables (from app.js) ---
 let currentUserProfile = null;
@@ -70,6 +71,7 @@ const DOMElements = {
     contentWrapper: document.getElementById('syllabus-content-wrapper'),
     loadingIndicator: document.getElementById('syllabus-loading'),
     saveBtn: document.getElementById('save-syllabus-btn'),
+    installPwaBtn: document.getElementById('install-pwa-btn'), // <-- PWA: Add install button
     tabButtons: document.querySelectorAll('.tab-button'),
     tabContents: document.querySelectorAll('.tab-content'),
     revisionsDueList: document.getElementById('revisions-due-list'),
@@ -116,6 +118,30 @@ const DOMElements = {
     accountModal: { modal: document.getElementById('account-modal'), form: document.getElementById('account-form'), error: document.getElementById('account-error') },
     copyrightYear: document.getElementById('copyright-year'),
 };
+
+// --- PWA: Handle Install Prompt ---
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent the mini-infobar from appearing on mobile
+  e.preventDefault();
+  // Stash the event so it can be triggered later.
+  deferredPrompt = e;
+  // Show our custom install button
+  const installBtn = document.getElementById('install-pwa-btn');
+  if (installBtn) {
+    installBtn.classList.remove('hidden');
+  }
+});
+
+// --- PWA: Handle App Installed ---
+window.addEventListener('appinstalled', () => {
+    console.log('PWA was installed');
+    // Hide the install button
+    const installBtn = document.getElementById('install-pwa-btn');
+    if (installBtn) {
+        installBtn.classList.add('hidden');
+    }
+    deferredPrompt = null;
+});
 
 
 // --- Utility Functions (MERGED) ---
@@ -1213,6 +1239,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         const target = e.target;
         const targetId = target.id;
         
+        // --- PWA: Handle Install Button Click ---
+        if (target.closest('#install-pwa-btn') && deferredPrompt) {
+          e.preventDefault();
+          // Hide the button
+          if (DOMElements.installPwaBtn) DOMElements.installPwaBtn.classList.add('hidden');
+          // Show the browser's install prompt
+          deferredPrompt.prompt();
+          // Wait for the user to respond
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`User response to the install prompt: ${outcome}`);
+          // We've used the prompt, and can't use it again.
+          deferredPrompt = null;
+          return; // Stop further execution for this click
+        }
+
         // --- Auth & UI Click Handlers ---
         if (!target.closest('#user-menu')) { 
             if (DOMElements.userDropdown) DOMElements.userDropdown.classList.add('hidden'); 
@@ -1333,7 +1374,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 
                 // --- ### FIX for Expand Bug ### ---
                 const toggleIcon = wrapper?.querySelector('.syllabus-toggle');
-                // --- ### END FIX ### ---
+                // --- ### END FIX ---
 
                 const hasChildren = wrapper?.dataset.hasChildren === 'true';
 
@@ -1755,18 +1796,20 @@ document.addEventListener('DOMContentLoaded', async function() {
              }
          } catch(e) { console.error("Error during daily reminder check:", e); }
     }
-// --- PWA Service Worker Registration ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('Service Worker registered successfully with scope:', registration.scope);
-      })
-      .catch((error) => {
-        console.error('Service Worker registration failed:', error);
+
+    // --- PWA Service Worker Registration ---
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('Service Worker registered successfully with scope:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('Service Worker registration failed:', error);
+          });
       });
-  });
-}
-// --- End PWA Registration ---
+    }
+    // --- End PWA Registration ---
+
 }); // End DOMContentLoaded
 
