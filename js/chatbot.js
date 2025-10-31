@@ -180,10 +180,16 @@ function addMessage(sender, text) {
     messageElement.appendChild(bubble);
     DOMElements.messages.appendChild(messageElement); // <-- Add to DOM first
     
-    // --- "READ MORE" LOGIC (remains the same) ---
+    // --- "READ MORE" LOGIC (MODIFIED) ---
     if (sender === 'ai') {
         requestAnimationFrame(() => {
-            const isOverflowing = bubble.scrollHeight > bubble.clientHeight;
+            // Get the computed style to find the 'max-height' value (e.g., "200px")
+            const computedStyle = window.getComputedStyle(bubble);
+            // Parse the numeric value from the max-height property
+            const maxHeight = parseFloat(computedStyle.maxHeight);
+
+            // Check if the bubble's actual content height is greater than its CSS max-height
+            const isOverflowing = bubble.scrollHeight > maxHeight;
         
             if (isOverflowing) {
                 const readMoreBtn = document.createElement('div');
