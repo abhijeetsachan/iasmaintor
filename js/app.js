@@ -1,9 +1,7 @@
-// js/app.js (Lean version for index.html)
+// js/app.js (Fixed)
 
 // --- Imports ---
-// *** MODIFICATION: GEMINI_API_ENDPOINT is imported but not used directly in this file ***
 import { firebaseConfig, GEMINI_API_ENDPOINT } from './firebase-config.js';
-// Removed syllabus and quizzie imports
 
 // --- Firebase SDK Modules ---
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -43,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         GoogleAuthProvider, linkWithPopup
     };
     let authReady = false;
-    let authHasChecked = false; // <-- FIX: New flag to track initial auth check
+    let authHasChecked = false; // <-- Keep this flag from previous fix
 
     let currentUser = null;
     const getCurrentUser = () => currentUser;
@@ -121,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         authReady = true;
                         console.log("Index Page: Auth Ready.");
                     }
-                    authHasChecked = true; // <-- FIX: Mark that the initial check is complete
+                    authHasChecked = true; // Mark that the initial check is complete
                 }
             });
             console.log("Index Page: Firebase initialized. Waiting for auth state...");
@@ -130,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.error("Index Page: Firebase init failed:", error);
         showNotification("Core services failed to load.", true);
         authReady = true;
-        authHasChecked = true; // <-- FIX: Also set on failure
+        authHasChecked = true; // Also set on failure
         firebaseEnabled = false;
         // Update UI even on failure
         updateUIForAuthStateChange(null);
@@ -279,13 +277,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     const fetchAndDisplayPlans = async (userId) => {
-        // ... (This function remains the same)
-        if (!authReady || !firebaseEnabled || !firestoreModule || !userId || auth.currentUser?.isAnonymous) { 
-            if(DOMElements.plansList) DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see saved plans.</p>`; 
-            return; 
-        }
-        if (unsubscribePlans) { unsubscribePlans(); unsubscribePlans = null; }
+        // --- FIX: Removed the redundant, buggy guard clause ---
         if (!DOMElements.plansList) return;
+
+        if (unsubscribePlans) { unsubscribePlans(); unsubscribePlans = null; }
         DOMElements.plansList.innerHTML = `<p class="text-slate-500">Loading saved plans...</p>`;
         try {
             const { collection, query, onSnapshot, orderBy } = firestoreModule;
@@ -309,13 +304,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Dashboard Progress Listener (Fixed error handling) ---
     function listenForDashboardProgress(userId) {
-        // ... (This function remains the same)
-         if (!authReady || !firebaseEnabled || !firestoreModule || !userId || auth.currentUser?.isAnonymous) { 
-             if (DOMElements.dashboardProgressBars) DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Login to load progress.</p>`; 
-             return; 
-         }
+         // --- FIX: Removed the redundant, buggy guard clause ---
+         const progressContainer = DOMElements.dashboardProgressBars;
+         if (!progressContainer) return;
+
          if (unsubscribeDashboardProgress) { unsubscribeDashboardProgress(); unsubscribeDashboardProgress = null; }
-         const progressContainer = DOMElements.dashboardProgressBars; if (!progressContainer) return;
          progressContainer.innerHTML = `<p class="text-slate-500">Loading progress...</p>`;
          try {
             const { doc, onSnapshot } = firestoreModule;
