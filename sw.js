@@ -1,0 +1,94 @@
+const CACHE_NAME = 'iasmaintor-v1.0';
+// These are the core files that make up your "app shell".
+const APP_SHELL_URLS = [
+  '/',
+  '/index.html',
+  '/tracker.html',
+  '/css/style.css',
+  '/favicon.png',
+  '/manifest.json',
+  // Core JS files
+  '/js/app.js',
+  '/js/syllabus-tracker.js',
+  '/js/utils.js',
+  '/js/quizzie.js',
+  '/js/chatbot.js',
+  '/js/firebase-config.js',
+  // Syllabus data (cache these dynamically, but add key ones if they rarely change)
+  '/js/syllabus-prelims-data.js',
+  '/js/syllabus-mains-gs1-data.js',
+  '/js/syllabus-mains-gs2-data.js',
+  '/js/syllabus-mains-gs3-data.js',
+  '/js/syllabus-mains-gs4-data.js',
+  '/js/optional-syllabus-data.js',
+  // External assets
+  '[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css)',
+  '[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap)'
+];
+
+// --- 1. Install Event: Pre-cache the app shell ---
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('Service Worker: Caching app shell');
+        return cache.addAll(APP_SHELL_URLS);
+      })
+      .catch(err => console.error('Service Worker: Caching failed', err))
+  );
+});
+
+// --- 2. Activate Event: Clean up old caches ---
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('Service Worker: Deleting old cache', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+});
+
+// --- 3. Fetch Event: Serve from cache first, then network ---
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  // --- Challenge / Counterpoint ---
+  // We must *not* cache API calls to Firebase or Google.
+  // This ensures data is always fresh and auth works.
+  const isApiCall = request.url.includes('generativelanguage.googleapis.com') ||
+                    request.url.includes('firebase') ||
+                    request.url.includes('[gstatic.com/firebasejs](https://gstatic.com/firebasejs)'); // Let Firebase SDK update itself
+
+  if (isApiCall) {
+    // Network-only for APIs
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // For all other requests (app shell, fonts, etc.): Cache-First
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      // 1. Return cached response if it exists
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      // 2. If not in cache, fetch from network
+      return fetch(request).then((networkResponse) => {
+        // 3. (Optional but good) Clone response and add to cache for next time
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseToCache);
+        });
+        // 4. Return the network response
+        return networkResponse;
+      });
+    })
+  );
+});
