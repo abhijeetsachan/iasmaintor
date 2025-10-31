@@ -162,11 +162,38 @@ function addMessage(sender, text) {
     bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
     
     messageElement.appendChild(bubble);
-    DOMElements.messages.appendChild(messageElement);
+    DOMElements.messages.appendChild(messageElement); // <-- Add to DOM first
+    
+    // --- NEW "READ MORE" LOGIC ---
+    // We check for overflow *after* the element is added to the DOM
+    if (sender === 'ai') {
+        // Use requestAnimationFrame to ensure layout is calculated
+        requestAnimationFrame(() => {
+            const isOverflowing = bubble.scrollHeight > bubble.clientHeight;
+        
+            if (isOverflowing) {
+                const readMoreBtn = document.createElement('div');
+                readMoreBtn.className = 'read-more-btn';
+                readMoreBtn.innerHTML = '<span>Read More...</span>';
+                
+                readMoreBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent any other clicks
+                    bubble.classList.add('expanded');
+                    readMoreBtn.remove();
+                    // Scroll to bottom again in case expansion changed height
+                    DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
+                });
+                
+                bubble.appendChild(readMoreBtn);
+            }
+        });
+    }
+    // --- END "READ MORE" LOGIC ---
     
     // Scroll to bottom
     DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
 }
+
 
 /**
  * Shows or hides the "Chinki is typing..." indicator.
