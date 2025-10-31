@@ -590,5 +590,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- Other UI Listeners (Intersection Observer) ---
     try { const observer = new IntersectionObserver((entries) => entries.forEach(e => e.isIntersecting && e.target.classList.add('visible')), { threshold: 0.1 }); document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el)); }
     catch (e) { console.warn("Intersection Observer failed."); document.querySelectorAll('.fade-in-up').forEach(el => el.classList.add('visible')); }
-
+// --- PWA Service Worker Registration ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('Service Worker registered successfully with scope:', registration.scope);
+      })
+      .catch((error) => {
+        console.error('Service Worker registration failed:', error);
+      });
+  });
+}
+// --- End PWA Registration ---
 });
