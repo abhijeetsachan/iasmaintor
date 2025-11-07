@@ -1,7 +1,10 @@
-// js/quizzie.js
+// js/quizzie.js (Modified for Database-First Approach)
 
 // Import the new API endpoint
 import { GEMINI_API_ENDPOINT } from './firebase-config.js';
+
+// --- ### NEW: Define the endpoint for our backend logic ---
+const GET_QUIZ_ENDPOINT = '/api/getQuizQuestions';
 
 // --- State Variables (Module Scope) ---
 let quizQuestions = [];
@@ -10,23 +13,28 @@ let currentQuestionIndex = 0; // Keep track of the current question being viewed
 
 // --- DOM Elements (Passed during init) ---
 let DOMElements = {};
-// REMOVED: let GEMINI_API_KEY = '';
-// REMOVED: let API_URL = '';
 let showNotification = () => {}; // Placeholder for notification function
 let closeModal = () => {}; // Placeholder for closeModal function
 
+// --- ### NEW: Firebase & User State ---
+let firebaseDB = {}; // Will hold { db, doc, getDoc, setDoc, arrayUnion, etc. }
+let getCurrentUser = () => null; // Will hold the function from app.js
+
+
 // --- Initialization ---
-// *** MODIFICATION: Removed apiKey and apiUrl from init. They are no longer passed from app.js ***
-export function initQuizzie(elements, notifyFn, closeModalFn) {
-    DOMElements = elements; // Store reference to quizzie modal elements
-    // REMOVED: GEMINI_API_KEY = apiKey;
-    // REMOVED: API_URL = apiUrl;
-    showNotification = notifyFn; // Store reference to notification function
-    closeModal = closeModalFn; // Store reference to close modal function
+// *** MODIFICATION: Now accepts firebaseDB and userFn from app.js ***
+export function initQuizzie(elements, notifyFn, closeModalFn, db, userFn) {
+    DOMElements = elements;
+    showNotification = notifyFn;
+    closeModal = closeModalFn;
+    
+    // --- ### NEW: Store Firebase and Auth functions ---
+    firebaseDB = db;
+    getCurrentUser = userFn;
 
     // Add specific listeners for Quizzie
     DOMElements.form?.addEventListener('change', updateQuizzieForm);
-    DOMElements.form?.addEventListener('submit', handleQuizSubmit);
+    DOMElements.form?.addEventListener('submit', handleQuizSubmit); // This now calls our backend
 
     // Use event delegation for step buttons within the form
     DOMElements.form?.addEventListener('click', (e) => {
@@ -62,11 +70,12 @@ export function initQuizzie(elements, notifyFn, closeModalFn) {
         closeModal(DOMElements.modal);
     });
 
-    console.log("Quizzie module initialized.");
+    console.log("Quizzie module initialized with Database access.");
 }
 
 // Export reset function to be called from app.js when clicking the feature card
 export const resetQuizzieModal = () => {
+    // ... (This function remains the same as before)
     const { form, result, activeView, modal } = DOMElements;
     if (!form || !result || !activeView || !modal) return;
     form.reset();
@@ -96,19 +105,16 @@ export const resetQuizzieModal = () => {
 // --- Quizzie Functions ---
 
 const updateQuizzieForm = () => {
+    // ... (This function remains the same as before)
     const { gsSectionalGroup, csatSectionalGroup, numQuestionsGroup, questionTypeGroup, form } = DOMElements;
     if (!gsSectionalGroup || !csatSectionalGroup || !numQuestionsGroup || !questionTypeGroup || !form) return;
     const formData = new FormData(form);
     const mainSubject = formData.get('main_subject');
     const testType = formData.get('test_type');
-
-    // Hide all conditional groups first
     gsSectionalGroup.style.display = 'none';
     csatSectionalGroup.style.display = 'none';
     numQuestionsGroup.style.display = 'none';
     questionTypeGroup.style.display = 'none';
-
-    // Show based on selections
     if (testType === 'sectional') {
         numQuestionsGroup.style.display = 'block';
         if (mainSubject === 'gs') {
@@ -121,6 +127,7 @@ const updateQuizzieForm = () => {
 };
 
 const updateQuizProgressBar = (current, total) => {
+    // ... (This function remains the same as before)
     const { progressIndicator, progressText } = DOMElements;
     if(!progressIndicator || !progressText) return;
     const percentage = Math.max(0, Math.min(100, (current / total) * 100));
@@ -129,15 +136,13 @@ const updateQuizProgressBar = (current, total) => {
 };
 
 const handleStepNavigation = (stepBtn) => {
+    // ... (This function remains the same as before)
     const modalForm = stepBtn.closest('form');
     if (!modalForm) return;
     const currentStep = stepBtn.closest('[data-step]');
     if (!currentStep) return;
     const currentStepNumber = parseInt(currentStep.dataset.step);
-
     let nextStepNumber = stepBtn.classList.contains('next-step-btn') ? currentStepNumber + 1 : currentStepNumber - 1;
-
-    // Quizzie specific step skipping logic
     if (modalForm.id === 'quizzie-form') {
         if (stepBtn.classList.contains('next-step-btn') && currentStepNumber === 2) {
             const testType = new FormData(modalForm).get('test_type');
@@ -148,7 +153,6 @@ const handleStepNavigation = (stepBtn) => {
             if (testType === 'flt') nextStepNumber = 2;
         }
     }
-
     const nextStep = modalForm.querySelector(`[data-step="${nextStepNumber}"]`);
     if (nextStep) {
         currentStep.classList.remove('active');
@@ -157,120 +161,43 @@ const handleStepNavigation = (stepBtn) => {
     }
 };
 
-const generateQuizQuestions = async (params) => {
-    // *** THIS FUNCTION IS MODIFIED ***
+// --- ### REMOVED: generateQuizQuestions(params) ### ---
+// This function, which called the Gemini API directly from the client,
+// has been removed. Its logic will now live in the backend.
+
+
+// --- ### NEW: updateUserSeenQuestions(questionIds) ### ---
+/**
+ * Saves the IDs of the questions the user just saw to their Firestore doc.
+ * This prevents them from seeing the same questions again.
+ * @param {string[]} questionIds - An array of question document IDs.
+ */
+const updateUserSeenQuestions = async (questionIds)_ => {
+    const user = getCurrentUser();
+    if (!user || !firebaseDB.db || questionIds.length === 0) {
+        console.warn("User, DB, or questions missing. Cannot update seen list.");
+        return;
+    }
+
     try {
-        const { main_subject, test_type, gs_subject, csat_subject, num_questions, difficulty, question_type } = params;
-        const count = test_type === 'flt' ? 5 : parseInt(num_questions || '5');
-
-        // 1. Define Prompts (same as before)
-        const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
-- If the user selects 'basic' difficulty, generate straightforward, knowledge-based questions that test fundamental concepts.
-- If the user selects 'advanced' difficulty, generate tricky, application-based, or multi-statement questions (e.g., "How many of the above statements are correct?") that require deeper analysis and are designed to be challenging.
-
-IMPORTANT FORMATTING: For multi-statement questions, format the question string with newline characters (\\n) to separate the introductory sentence, each numbered statement, and the final question part. For example:
-"Consider the following statements regarding the philosophical tenets of early Jainism and Buddhism:\\n1. Both religions rejected the authority of the Vedas and the efficacy of Vedic rituals.\\n2. Both maintained that the world is impermanent (Anitya) and devoid of a permanent self (Nairatmya or Anatta).\\n3. Jainism lays great emphasis on 'Anekantavada', while Buddhism proposes 'Kshanika Vada'.\\nHow many of the above statements are correct?"
-
-For each question, provide a question (string), four options (array of strings), the correct answer (string, must exactly match one of the options), and a detailed explanation (string). Ensure the answer exactly matches one of the options provided. Return a valid JSON object matching this schema: {"questions": [{"question": "...", "options": ["...", "...", "...", "..."], "answer": "...", "explanation": "..."}]}.`;
-
-        let userQuery = `Generate ${count} questions. Difficulty: ${difficulty || 'basic'}. `;
-        if (test_type === 'flt') {
-            userQuery += `This is a Full Length Test for ${main_subject === 'gs' ? 'General Studies' : 'CSAT'}. The questions should cover a mix of subjects relevant to this paper.`;
-        } else { // Sectional
-            const subject = main_subject === 'gs' ? gs_subject : csat_subject;
-            userQuery += `This is a sectional test for the subject: ${subject || 'unknown'}. `;
-            if (main_subject === 'gs') {
-                userQuery += `The nature of questions should be: ${question_type || 'blend'}.`;
-            }
-        }
+        const { db, doc, setDoc, arrayUnion } = firebaseDB;
+        const seenDocRef = doc(db, 'users', user.uid, 'quizData', 'seen');
         
-        // 2. Define Payload (this goes to *our* backend)
-        const payload = {
-            contents: [{ parts: [{ text: userQuery }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: {}
-        };
+        // Use arrayUnion to safely add the new IDs to the array
+        await setDoc(seenDocRef, { 
+            seenQuestionIds: arrayUnion(...questionIds) 
+        }, { merge: true });
 
-        console.log("Sending payload to backend:", JSON.stringify(payload, null, 2));
+        console.log(`Updated seen questions for user ${user.uid}.`);
 
-        // 3. Call *our* backend endpoint
-        const response = await fetch(GEMINI_API_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-         if (!response.ok) {
-             const errorBody = await response.json(); // Our backend sends JSON errors
-             console.error("Backend API Error:", errorBody);
-             let errorMsg = errorBody.error?.message || `API request failed with status ${response.status}`;
-             // Check for specific model-not-found error again
-             if (errorMsg.includes("is not found for API version v1beta")) {
-                 errorMsg = `API Error: The model 'gemini-2.5-flash' is not available. ${errorMsg}`;
-             }
-             throw new Error(errorMsg);
-         }
-
-        const result = await response.json();
-        console.log("Full API Response from backend:", result);
-
-        // 4. The rest of the parsing logic is the same
-        if (!result.candidates || result.candidates.length === 0) {
-             const blockReason = result.promptFeedback?.blockReason;
-             const safetyRatings = result.promptFeedback?.safetyRatings;
-             let errorMessage = "No content generated by AI.";
-             if (blockReason) {
-                 errorMessage = `No content generated due to safety block: ${blockReason}.`;
-                 console.error("Safety Ratings:", safetyRatings);
-             } else {
-                 errorMessage = "No candidates returned from API. Model may have refused or an internal error occurred.";
-             }
-             throw new Error(errorMessage);
-        }
-
-        const candidate = result.candidates[0];
-        if (candidate.finishReason !== 'STOP' && candidate.finishReason !== 'MAX_TOKENS') {
-             console.warn(`AI response finish reason: ${candidate.finishReason}. Safety Ratings:`, JSON.stringify(candidate.safetyRatings || 'N/A'));
-        }
-
-        const jsonText = candidate.content?.parts?.[0]?.text;
-        if (!jsonText) {
-             console.error("AI response finished but content text is missing.", candidate);
-             throw new Error(`AI response finished but content is empty. Finish Reason: ${candidate.finishReason || 'Unknown'}.`);
-        }
-
-        try {
-            const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
-            const parsedJson = JSON.parse(cleanedJsonText);
-            const questions = parsedJson.questions || [];
-            if (!Array.isArray(questions)) { throw new Error("Invalid format: 'questions' should be an array."); }
-            if (questions.length === 0) { console.warn("AI generated valid JSON but with an empty questions array."); }
-
-            const validQuestions = questions.filter(q => q && typeof q.question === 'string' && Array.isArray(q.options) && q.options.length === 4 && typeof q.answer === 'string' && typeof q.explanation === 'string' && q.options.includes(q.answer));
-            if (validQuestions.length !== questions.length) { 
-                console.warn("Some generated questions had invalid structure or incorrect answer reference and were filtered out."); 
-                questions.forEach((q, index) => { if (!validQuestions.includes(q)) console.warn(`Invalid Q ${index}:`, q); });
-            }
-
-            const finalQuestions = validQuestions.slice(0, count);
-            return finalQuestions.map(q => ({
-                ...q,
-                subject: gs_subject || csat_subject || 'general',
-                answerIndex: q.options.indexOf(q.answer)
-            }));
-        } catch (parseError) {
-            console.error("Failed to parse JSON response from AI:", parseError);
-            console.error("Invalid JSON string received:", jsonText);
-            throw new Error("Failed to parse AI response. The model did not return valid JSON.");
-        }
     } catch (error) {
-        console.error("Error in generateQuizQuestions:", error);
-        throw new Error(`Could not generate quiz questions: ${error.message}`);
+        console.error("Error updating user's seen questions:", error);
+        showNotification("Failed to save quiz progress. You might see these questions again.", true);
     }
 };
 
 const generateAIFeedback = async (correctCount, incorrectCount, unansweredCount, totalQuestions, wrongQuestions) => {
-    // *** THIS FUNCTION IS MODIFIED ***
+    // *** THIS FUNCTION REMAINS, but its AI call is secure via the proxy ***
     
     // 1. Define Prompts (same as before)
     const systemPrompt = `You are an expert mentor for the UPSC Civil Services Exam. Your task is to provide a concise, insightful, and encouraging analysis of a student's quiz performance. Your analysis should be in a single paragraph. Focus on constructive feedback.`;
@@ -304,7 +231,7 @@ Based ONLY on this data, provide a concise, insightful, and encouraging analysis
     };
 
     try {
-        // 3. Call *our* backend endpoint
+        // 3. Call *our* backend endpoint (GEMINI_API_ENDPOINT)
         const response = await fetch(GEMINI_API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -335,20 +262,19 @@ Based ONLY on this data, provide a concise, insightful, and encouraging analysis
 };
 
 const displayQuiz = () => {
+    // ... (This function remains the same as before)
     const { activeView } = DOMElements;
     if (!activeView) return;
     const footer = document.getElementById('quiz-footer');
     if (!footer) return;
     currentQuestionIndex = 0; // Start at the first question
-
     renderQuestion(); // Render the first question
-
-    // Show the footer
     footer.classList.remove('hidden');
     updateFooterButtons(); // Ensure buttons are in correct initial state
 };
 
 function renderQuestion() {
+    // ... (This function remains the same as before)
      const { activeView } = DOMElements;
      if (!activeView) return;
      const footer = document.getElementById('quiz-footer');
@@ -390,6 +316,7 @@ function renderQuestion() {
 }
 
 function updateFooterButtons() {
+    // ... (This function remains the same as before)
     const prevBtn = document.getElementById('prev-q-btn');
     const nextBtn = document.getElementById('next-q-btn');
     if (!prevBtn || !nextBtn) return;
@@ -401,6 +328,7 @@ function updateFooterButtons() {
 
 
 function navigateQuiz(direction) {
+    // ... (This function remains the same as before)
     const { activeView } = DOMElements;
     if (!activeView) return;
     // Save current answer before navigating
@@ -424,6 +352,7 @@ function navigateQuiz(direction) {
 }
 
 const calculateAndShowResults = async () => {
+    // *** MODIFICATION: This function now saves seen questions ***
     const { activeView, modal } = DOMElements;
     if (!activeView || !modal) return;
     const quizFooter = document.getElementById('quiz-footer');
@@ -433,7 +362,16 @@ const calculateAndShowResults = async () => {
 
     let score = 0, correctCount = 0, incorrectCount = 0, unansweredCount = 0;
     const wrongQuestions = [];
+    
+    // --- ### NEW: Get question IDs to save to DB ### ---
+    const seenQuestionIds = [];
+
     quizQuestions.forEach((q, index) => {
+         // --- ### NEW: Add ID to the list to be saved ### ---
+         if (q.id) {
+            seenQuestionIds.push(q.id);
+         }
+
          const userAnswerIndex = userAnswers[index];
          if (userAnswerIndex === undefined || userAnswerIndex === null) {
              unansweredCount++;
@@ -454,6 +392,14 @@ const calculateAndShowResults = async () => {
      });
      score = Math.max(0, parseFloat(score.toFixed(2))); // Round score and ensure non-negative
 
+    // --- ### NEW: Asynchronously save progress to DB ### ---
+    // We call this *before* generating AI feedback.
+    // We don't need to `await` it; let it run in the background.
+    updateUserSeenQuestions(seenQuestionIds).catch(err => {
+        console.error("Failed to update seen questions in background:", err);
+    });
+
+    // ... (Rest of the HTML generation remains the same)
     let resultHTML = `
         <div class="text-center"> <h3 class="text-3xl font-bold text-slate-800">Quiz Results</h3> </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
@@ -489,13 +435,13 @@ const calculateAndShowResults = async () => {
              <div class="mb-6 border-b pb-6">
                  <p class="font-semibold mb-3 text-slate-800 whitespace-pre-wrap">Q ${index + 1}: ${q.question.replace(/\\n/g, '\n')}</p>
                  <div class="space-y-2">${optionsReview}</div>
-                 <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm text-slate-700 whitespace-pre-wrap"> <p><strong>Explanation:</strong> ${q.explanation.replace(/\\n/g, '\n')}</p> </div>
+                 <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm text-slate-700 whitespace-pre-wrap"> <p><strong>Explanation:</strong> ${q.explanation.replace(/\\n/g, '\n')}</p> When</div>
              </div>`;
     }).join('');
     resultHTML += `<div class="mt-8 flex justify-end items-center"><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
     activeView.innerHTML = resultHTML;
 
-    // Fetch and display AI feedback
+    // Fetch and display AI feedback (this remains the same)
     const aiFeedbackContainer = activeView.querySelector('#ai-feedback-content');
      if (aiFeedbackContainer) {
          try {
@@ -509,6 +455,7 @@ const calculateAndShowResults = async () => {
 };
 
 const handleQuizSubmit = async (e) => {
+    // *** MODIFICATION: This function now calls our backend, not Gemini directly ***
     e.preventDefault();
     const { form, activeView, modal } = DOMElements;
     if (!form || !activeView || !modal) return;
@@ -518,34 +465,61 @@ const handleQuizSubmit = async (e) => {
     form.classList.add('hidden');
     activeView.classList.remove('hidden');
     
-    // *** UPDATED LOADING ANIMATION ***
+    // Show loading animation
     activeView.innerHTML = `
         <div class="p-4 bg-blue-50 rounded-lg text-center">
             <div class="loader-bars" aria-label="Loading AI response">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
+                <div class="bar"></div> <div class="bar"></div> <div class="bar"></div> <div class="bar"></div> <div class="bar"></div>
             </div>
-            <p class="font-semibold text-slate-700 mt-4">Generating Questions with AI...</p>
+            <p class="font-semibold text-slate-700 mt-4">Finding the best questions for you...</p>
         </div>
     `;
 
+    const user = getCurrentUser();
+    if (!user) {
+        showNotification("Authentication error. Please log in again.", true);
+        resetQuizzieModal();
+        closeModal(DOMElements.modal);
+        return;
+    }
+
     try {
+        // 1. Get auth token
+        const token = await user.getIdToken();
+        
+        // 2. Get form parameters
         const formData = new FormData(form);
         const params = Object.fromEntries(formData.entries());
-        quizQuestions = await generateQuizQuestions(params);
+
+        // 3. Call our NEW backend endpoint
+        const response = await fetch(GET_QUIZ_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Send auth token
+            },
+            body: JSON.stringify(params) // Send quiz parameters
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || `Request failed (${response.status})`);
+        }
+
+        const { questions } = await response.json();
+        
+        // Store questions and user answers
+        quizQuestions = questions; // These now have IDs: { id, question, ... }
         userAnswers = new Array(quizQuestions.length);
 
         if (quizQuestions.length > 0) {
             displayQuiz();
         } else {
-            activeView.innerHTML = `<div class="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg"> <h4 class="font-bold text-yellow-800">No Questions Generated</h4> <p class="text-yellow-700 mt-2">The AI could not generate questions for this specific combination. Please try different options.</p> <button data-action="retake-quiz" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Start Over</button> </div>`;
+            activeView.innerHTML = `<div class="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg"> <h4 class="font-bold text-yellow-800">No Questions Found</h4> <p class="text-yellow-700 mt-2">We couldn't find any unseen questions for this combination. Please try different options or try again later as we add new questions.</p> <button data-action="retake-quiz" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Start Over</button> </div>`;
         }
     } catch (error) {
         console.error("Quiz generation failed:", error);
-        activeView.innerHTML = `<div class="text-center p-4 bg-red-50 border border-red-200 rounded-lg"> <h4 class="font-bold text-red-800">Quiz Generation Failed</h4> <p class="text-red-700 mt-2">${error.message || 'An unknown error occurred.'}</p> <p class="text-sm text-slate-500 mt-4">This can happen due to network issues, API errors, or safety filters. Please check the console and try again.</p> <button data-action="retake-quiz" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Start Over</button> </div>`;
+        activeView.innerHTML = `<div class="text-center p-4 bg-red-50 border border-red-200 rounded-lg"> <h4 class="font-bold text-red-800">Quiz Generation Failed</h4> <p class="text-red-700 mt-2">${error.message || 'An unknown error occurred.'}</p> <p class="text-sm text-slate-500 mt-4">This can happen due to network issues, API errors, or if we're out of new questions for this topic. Please try again.</p> <button data-action="retake-quiz" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Start Over</button> </div>`;
          const quizFooter = document.getElementById('quiz-footer');
          if(quizFooter) quizFooter.classList.add('hidden');
     }
