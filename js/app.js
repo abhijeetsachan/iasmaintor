@@ -1,4 +1,4 @@
-// js/app.js (Fixed)
+// js/app.js (Modified for Quizzie DB Integration)
 
 // --- Imports ---
 import { firebaseConfig, GEMINI_API_ENDPOINT } from './firebase-config.js';
@@ -18,6 +18,12 @@ import {
     serverTimestamp,
     updateDoc,
     enableIndexedDbPersistence,
+    // --- NEW IMPORTS REQUIRED FOR QUIZZIE ---
+    where,
+    limit,
+    writeBatch,
+    arrayUnion,
+    FieldPath // For 'not-in' query
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { GoogleAuthProvider, linkWithPopup } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -34,7 +40,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- Simplified module objects ---
     let firestoreModule = {
         getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, serverTimestamp, updateDoc,
-        enableIndexedDbPersistence
+        enableIndexedDbPersistence,
+        // --- ADD NEW MODULES FOR QUIZZIE ---
+        where,
+        limit,
+        writeBatch,
+        arrayUnion,
+        FieldPath
     };
     let firebaseAuthModule = {
         getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, EmailAuthProvider, linkWithCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut,
@@ -211,13 +223,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Check if required Quizzie elements are available in the DOM before initializing
     if (Object.values(quizzieElements).every(el => el !== null)) {
-         // *** MODIFICATION: Removed API Key and URL from this call ***
+         
+         // *** --- MODIFICATION: PASS DB AND AUTH FUNCTIONS TO QUIZZIE --- ***
          initQuizzie(
             quizzieElements,
-            // REMOVED: GEMINI_API_KEY, (No longer needed)
-            // REMOVED: `https://generativelanguage...`, (No longer needed)
             showNotification,
-            closeModal
+            closeModal,
+            { // Pass DB and modules
+                db: db,
+                ...firestoreModule // Spread all functions (doc, getDoc, collection, etc.)
+            },
+            getCurrentUser // Pass the function to get the current user state
         );
         quizzieInitialized = true;
     } else {
