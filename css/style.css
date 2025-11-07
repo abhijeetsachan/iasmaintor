@@ -65,71 +65,6 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-html.dark {
-    /* Base Backgrounds */
-    --bg-primary: #0f172a;        /* slate-900 */
-    --bg-secondary: #1e293b;      /* slate-800 */
-    --bg-card: #1e293b;           /* slate-800 */
-    
-    /* Base Text */
-    --text-primary: #f1f5f9;      /* slate-100 */
-    --text-secondary: #94a3b8;    /* slate-400 */
-    --text-tertiary: #cbd5e1;     /* slate-300 */
-    --text-muted: #64748b;        /* slate-500 */
-    --text-white: #ffffff;        /* white (remains same) */
-
-    /* Borders & Dividers */
-    --border-primary: #334155;    /* slate-700 */
-    --border-secondary: #475569;  /* slate-600 */
-    
-    /* Brand Colors (Blue) */
-    --brand-primary: #60a5fa;           /* blue-400 */
-    --brand-primary-hover: #3b82f6;    /* blue-500 */
-    --brand-text-dark: #dbeafe;       /* blue-100 */
-    --brand-bg-light: #1e3a8a;          /* blue-900 */
-    --brand-bg-light-hover: #1e40af;   /* blue-800 */
-
-    /* Accent: Green */
-    --color-green-DEFAULT: #4ade80;    /* green-400 */
-    --color-green-dark: #22c55e;       /* green-500 */
-    --color-green-text-dark: #f0fdf4;  /* green-50 */
-    --color-green-light: #166534;      /* green-800 */
-    --color-green-light-border: #22c55e;/* green-500 */
-    --color-green-bg-faded: #14532d;   /* green-900 */
-
-    /* Accent: Red */
-    --color-red-DEFAULT: #f87171;    /* red-400 */
-    --color-red-light: #991b1b;      /* red-800 */
-
-    /* Accent: Amber (for In-Progress) */
-    --color-amber-light: #92400e;    /* amber-800 */
-    --color-amber-light-border: #d97706; /* amber-600 */
-    --color-amber-dark: #fcd34d;     /* amber-300 */
-
-    /* Accent: Orange (for Due/Prelims) */
-    --color-orange-DEFAULT: #fb923c;    /* orange-400 */
-    --color-orange-dark: #f97316;       /* orange-500 */
-    --color-orange-text-dark: #ffedd5;  /* orange-100 */
-    --color-orange-bg-faded: #7c2d12;   /* orange-900 */
-
-    /* Accent: Indigo (for Mains) */
-    --color-indigo-DEFAULT: #818cf8;    /* indigo-400 */
-    --color-indigo-text-dark: #e0e7ff;  /* indigo-100 */
-    --color-indigo-bg-faded: #3730a3;   /* indigo-800 */
-
-    /* Accent: Pink (for Optional) */
-    --color-pink-DEFAULT: #f472b6;    /* pink-400 */
-    --color-pink-text-dark: #fce7f3;  /* pink-100 */
-    --color-pink-bg-faded: #831843;   /* pink-900 */
-    
-    /* Other */
-    --color-slate-400: #94a3b8;
-    --backdrop-color: rgba(0, 0, 0, 0.7);
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-}
-
 /* --- Refactored Body & Base Styles --- */
 
 body {
@@ -148,22 +83,12 @@ p {
 
 /* --- ### NEW: Override existing Tailwind classes ### --- */
 .text-slate-900 { color: var(--text-primary) !important; }
-html.dark .text-slate-900 { color: var(--text-primary) !important; }
-.dark .dark\:text-slate-100 { color: var(--text-primary) !important; }
-
 .text-slate-800 { color: var(--text-primary) !important; }
 
 .text-slate-700 { color: var(--text-tertiary) !important; }
 
 .text-slate-600 { color: var(--text-secondary) !important; }
-html.dark .text-slate-600 { color: var(--text-secondary) !important; }
-.dark .dark\:text-slate-300 { color: var(--text-secondary) !important; }
-
 .text-slate-500 { color: var(--text-muted) !important; }
-html.dark .text-slate-500 { color: var(--text-muted) !important; }
-.dark .dark\:text-slate-400 { color: var(--text-muted) !important; }
-
-
 .fade-in-up {
     opacity: 0;
     transform: translateY(20px);
@@ -657,13 +582,9 @@ html.dark .text-slate-500 { color: var(--text-muted) !important; }
 #header {
     background-color: rgba(248, 250, 252, 0.8); /* slate-50/80 */
 }
-html.dark #header {
-    background-color: rgba(15, 23, 42, 0.8); /* slate-900/80 */
-}
-
 /* --- ### MODIFIED: More specific selector ### --- */
 /* Target only nav links and the theme button, NOT auth buttons */
-#header nav a, #header .theme-toggle-btn {
+#header nav a {
     color: var(--text-secondary);
 }
 #header nav a:hover {
@@ -741,82 +662,4 @@ footer .border-slate-700 {
     color: var(--bg-primary);
 }
 #notification.bg-red-600 {
-    background-color: var(--color-red-DEFAULT) !important;
-    color: var(--text-white) !important;
-}
-
-/* --- Tracker-specific Styles --- */
-#syllabus-app-container {
-    background-color: var(--bg-card);
-}
-#syllabus-app-container .tab-button.active {
-    border-bottom-color: var(--brand-primary);
-    color: var(--text-primary);
-}
-#syllabus-app-container .tab-button {
-    color: var(--text-muted);
-}
-#syllabus-app-container .tab-button:hover {
-    color: var(--brand-primary);
-}
-#syllabus-loading {
-    background-color: var(--bg-card);
-}
-.ai-button {
-    background-color: var(--brand-bg-light);
-    color: var(--brand-text-dark);
-}
-.ai-button:hover {
-    background-color: var(--brand-bg-light-hover);
-}
-.ai-button.bg-purple-100 {
-    background-color: var(--color-indigo-bg-faded);
-    color: var(--color-indigo-text-dark);
-}
-.ai-button.bg-purple-100:hover {
-    background-color: var(--color-indigo-DEFAULT);
-    color: var(--text-white);
-}
-.ai-button.bg-rose-100 {
-    background-color: var(--color-pink-bg-faded);
-    color: var(--color-pink-text-dark);
-}
-.ai-button.bg-rose-100:hover {
-    background-color: var(--color-pink-DEFAULT);
-    color: var(--text-white);
-}
-
-#optional-selection-screen {
-    background-color: var(--brand-bg-light);
-    border-color: var(--brand-primary);
-}
-#optional-selection-screen h3,
-#optional-selection-screen p {
-    color: var(--brand-text-dark) !important;
-}
-.select-optional-btn {
-    background-color: var(--bg-card);
-    border-color: var(--brand-primary);
-    color: var(--brand-primary);
-}
-.select-optional-btn:hover {
-    background-color: var(--brand-bg-light);
-}
-
-#ai-response-content .bg-slate-50 {
-    background-color: var(--bg-primary);
-}
-
-/* Fix for modal text (overriding overrides) */
-.modal .modal-content .text-slate-500 {
-    color: var(--text-muted) !important;
-}
-.modal .modal-content .text-slate-600 {
-    color: var(--text-secondary) !important;
-}
-.modal .modal-content .text-slate-700 {
-    color: var(--text-tertiary) !important;
-}
-.modal .modal-content .text-slate-800 {
-    color: var(--text-primary) !important;
-}
+    background-color: var(--color-red-DEFAULT) !impor
