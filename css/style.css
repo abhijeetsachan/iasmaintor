@@ -1,4 +1,4 @@
-/* css/style.css (Refactored for Dark Mode) */
+/* css/style.css (FIXED Refactor for Dark Mode) */
 
 :root {
     /* Base Backgrounds */
@@ -134,9 +134,36 @@ html.dark {
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: var(--bg-primary); /* slate-50 */
-    color: var(--text-secondary); /* slate-600 */
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
 }
+
+/* --- ### NEW: Theme-aware typography defaults ### --- */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+}
+p {
+    color: var(--text-secondary);
+}
+
+/* --- ### NEW: Override existing Tailwind classes ### --- */
+.text-slate-900 { color: var(--text-primary) !important; }
+html.dark .text-slate-900 { color: var(--text-primary) !important; }
+.dark .dark\:text-slate-100 { color: var(--text-primary) !important; }
+
+.text-slate-800 { color: var(--text-primary) !important; }
+
+.text-slate-700 { color: var(--text-tertiary) !important; }
+
+.text-slate-600 { color: var(--text-secondary) !important; }
+html.dark .text-slate-600 { color: var(--text-secondary) !important; }
+.dark .dark\:text-slate-300 { color: var(--text-secondary) !important; }
+
+.text-slate-500 { color: var(--text-muted) !important; }
+html.dark .text-slate-500 { color: var(--text-muted) !important; }
+.dark .dark\:text-slate-400 { color: var(--text-muted) !important; }
+
+
 .fade-in-up {
     opacity: 0;
     transform: translateY(20px);
@@ -281,12 +308,7 @@ body {
 #success-overlay .bg-white {
     background-color: var(--bg-card);
 }
-#success-overlay .text-slate-800 {
-    color: var(--text-primary);
-}
-#success-overlay .text-slate-500 {
-    color: var(--text-muted);
-}
+/* Note: text-slate-800 and text-slate-500 are handled by overrides above */
 
 
 /* --- Syllabus Tracker Styles --- */
@@ -502,19 +524,19 @@ body {
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
 }
-/* Dashboard card-specific text */
-.dashboard-card .text-slate-800 { color: var(--text-primary); }
-.dashboard-card .text-slate-700 { color: var(--text-tertiary); }
-.dashboard-card .text-slate-500 { color: var(--text-muted); }
+/* Dashboard card-specific text (Overrides) */
+.dashboard-card .text-slate-800 { color: var(--text-primary) !important; }
+.dashboard-card .text-slate-700 { color: var(--text-tertiary) !important; }
+.dashboard-card .text-slate-500 { color: var(--text-muted) !important; }
 .dashboard-card.bg-yellow-50 {
     background-color: var(--color-orange-bg-faded);
     border-color: var(--color-orange-DEFAULT);
 }
-.dashboard-card .text-yellow-800 { color: var(--color-orange-text-dark); }
-.dashboard-card .text-yellow-700 { color: var(--color-orange-dark); }
-.dashboard-card .text-yellow-600 { color: var(--color-orange-DEFAULT); }
-.dashboard-card .text-green-700 { color: var(--color-green-dark); }
-.dashboard-card .text-blue-600 { color: var(--brand-primary); }
+.dashboard-card .text-yellow-800 { color: var(--color-orange-text-dark) !important; }
+.dashboard-card .text-yellow-700 { color: var(--color-orange-dark) !important; }
+.dashboard-card .text-yellow-600 { color: var(--color-orange-DEFAULT) !important; }
+.dashboard-card .text-green-700 { color: var(--color-green-dark) !important; }
+.dashboard-card .text-blue-600 { color: var(--brand-primary) !important; }
 
 
 /* --- New AI Quiz Loader Animation --- */
@@ -638,17 +660,20 @@ body {
 html.dark #header {
     background-color: rgba(15, 23, 42, 0.8); /* slate-900/80 */
 }
-#header a, #header button {
+
+/* --- ### MODIFIED: More specific selector ### --- */
+/* Target only nav links and the theme button, NOT auth buttons */
+#header nav a, #header .theme-toggle-btn {
     color: var(--text-secondary);
 }
-#header a:hover {
+#header nav a:hover {
     color: var(--brand-primary);
 }
 #header .logo-container {
     color: var(--text-primary);
 }
 #header #user-greeting {
-    color: var(--text-tertiary);
+    color: var(--text-tertiary) !important; /* Override .text-slate-700 */
 }
 
 /* --- Modal Styles --- */
@@ -682,13 +707,17 @@ html.dark #header {
     background-color: var(--bg-secondary);
 }
 .modal .modal-content .text-slate-400 {
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
 }
 .modal .modal-content .text-slate-400:hover {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
 }
 .modal .modal-content .text-blue-600 {
-    color: var(--brand-primary);
+    color: var(--brand-primary) !important;
+}
+.modal .modal-content .bg-red-100 {
+    background-color: var(--color-red-light);
+    color: var(--color-red-DEFAULT);
 }
 
 /* --- Footer Styles --- */
@@ -712,8 +741,8 @@ footer .border-slate-700 {
     color: var(--bg-primary);
 }
 #notification.bg-red-600 {
-    background-color: var(--color-red-DEFAULT);
-    color: var(--text-white);
+    background-color: var(--color-red-DEFAULT) !important;
+    color: var(--text-white) !important;
 }
 
 /* --- Tracker-specific Styles --- */
@@ -763,7 +792,7 @@ footer .border-slate-700 {
 }
 #optional-selection-screen h3,
 #optional-selection-screen p {
-    color: var(--brand-text-dark);
+    color: var(--brand-text-dark) !important;
 }
 .select-optional-btn {
     background-color: var(--bg-card);
@@ -776,4 +805,18 @@ footer .border-slate-700 {
 
 #ai-response-content .bg-slate-50 {
     background-color: var(--bg-primary);
+}
+
+/* Fix for modal text (overriding overrides) */
+.modal .modal-content .text-slate-500 {
+    color: var(--text-muted) !important;
+}
+.modal .modal-content .text-slate-600 {
+    color: var(--text-secondary) !important;
+}
+.modal .modal-content .text-slate-700 {
+    color: var(--text-tertiary) !important;
+}
+.modal .modal-content .text-slate-800 {
+    color: var(--text-primary) !important;
 }
