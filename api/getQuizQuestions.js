@@ -69,19 +69,24 @@ export default async function handler(request, response) {
     const dbQuery = db.collection('quizzieQuestionBank')
       .where('subject', '==', subject)
       .where('difficulty', '==', difficulty)
-      // Note: 'not-in' queries are limited. If 'seenQuestionIds' is large,
-      // this needs a more complex solution. For now, it works.
       // We also add a filter for 'type' if it's not 'blend'
       ...((type !== 'blend') ? [admin.firestore.Filter.where('type', '==', type)] : [])
-      .where(admin.firestore.FieldPath.documentId(), 'not-in', seenQuestionIds.length ? seenQuestionIds : ['_']) // 'not-in' cannot be empty
-      .limit(requestedCount);
+      // --- FIX: REMOVED 'not-in' QUERY ---
+      // .where(admin.firestore.FieldPath.documentId(), 'not-in', seenQuestionIds.length ? seenQuestionIds : ['_']) // 'not-in' cannot be empty
+      .limit(30); // Fetch a larger batch to filter in backend
       
+    // --- FIX: MODIFIED LOGIC ---
     const snapshot = await dbQuery.get();
     
+    // --- MANUAL FILTERING to avoid 'not-in' 10-item limit ---
+    const seenIdsSet = new Set(seenQuestionIds);
     let dbQuestions = [];
     snapshot.forEach(doc => {
-      dbQuestions.push({ id: doc.id, ...doc.data() });
+      if (!seenIdsSet.has(doc.id) && dbQuestions.length < requestedCount) {
+        dbQuestions.push({ id: doc.id, ...doc.data() });
+      }
     });
+    // --- END MANUAL FILTERING ---
 
     let finalQuestions = dbQuestions;
     const newQuestionIdsToSave = []; // IDs of newly generated questions
