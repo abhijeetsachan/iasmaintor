@@ -74,6 +74,7 @@ self.addEventListener('fetch', (event) => {
   // This ensures data is always fresh and auth works.
   const isApiCall = request.url.includes('generativelanguage.googleapis.com') || // This is redundant if using /api/gemini
                     request.url.includes('/api/gemini') || // Block caching of our own backend
+    request.url.includes('/api/getQuizQuestions') || // <-- ADDED THIS LINE
                     request.url.includes('firebase');   // Block caching of Firebase auth/db operations
 
   if (isApiCall) {
