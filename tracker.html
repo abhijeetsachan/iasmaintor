@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth"> <head>
+<html lang="en" class="scroll-smooth">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iasmAintor Syllabus Tracker - iasmaintor</title>
@@ -7,16 +8,48 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/png" href="favicon.png">
     
+    <!-- PWA Manifest Link -->
     <link rel="manifest" href="/manifest.json">
+    <!-- Theme color for PWA -->
     <meta name="theme-color" content="#3b82f6">
 
     <style>
-        /* These styles are now controlled by variables in css/style.css */
-        /* Kept scrollbar-hide as it's layout-related */
+        .tab-button.active {
+            border-bottom: 3px solid #3b82f6;
+            color: #1e293b;
+            font-weight: 600;
+        }
+        .ai-button {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            line-height: 1rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .progress-toggle {
+            height: 32px;
+            padding: 0 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .status-not-started-ui { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+        .status-in-progress-ui { background-color: #fef3c7; color: #b45309; border-color: #fde68a; }
+        .status-completed-ui { background-color: #dcfce7; color: #16a34a; border-color: #a7f3d0; }
+        .gs-chip.active {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            border-color: #3b82f6 !important;
+        }
         .scrollbar-hide::-webkit-scrollbar { 
             display: none; 
         }
@@ -26,11 +59,14 @@
         }
     </style>
 </head>
-<body> <header id="header" class="backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300 shadow-md">
+<body class="text-slate-800 bg-slate-50">
+
+    <header id="header" class="bg-slate-50/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300 shadow-md">
         <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-4 flex flex-wrap justify-between items-center gap-y-2">
-            <a href="index.html" class="logo-container text-2xl font-bold">iasm<span class="ai-gradient">AI</span>ntor</a>
+            <a href="index.html" class="logo-container text-2xl font-bold text-slate-900">iasm<span class="ai-gradient">AI</span>ntor</a>
             
             <div class="flex items-center space-x-2 sm:space-x-4">
+                 <!-- PWA Install Button (Desktop) -->
                  <button id="install-pwa-btn-desktop" class="hidden install-pwa-btn bg-purple-600 text-white p-2 md:px-5 md:py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center">
                     <i class="fas fa-download md:mr-2"></i>
                     <span class="hidden md:inline">Install App</span>
@@ -40,9 +76,6 @@
                      <i class="fas fa-save md:mr-2"></i>
                      <span class="hidden md:inline">Save Progress</span>
                  </button>
-
-                 <button class="theme-toggle-btn w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                    <i class="fas fa-moon text-xl"></i> </button>
 
                  <div id="auth-links" class="flex items-center space-x-4">
                     <a href="#" id="login-btn" class="bg-blue-600 text-white p-2 md:px-5 md:py-2 rounded-lg font-semibold hover:bg-blue-700 transition-transform hover:scale-105 shadow-md flex items-center justify-center">
@@ -56,32 +89,27 @@
                         <span id="user-avatar" class="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center">
                             <i class="fas fa-user text-xl"></i>
                         </span>
-                        <span id="user-greeting" class="font-semibold hidden md:inline"></span>
-                        <svg class="w-5 h-5 hidden md:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <span id="user-greeting" class="font-semibold text-slate-700 hidden md:inline"></span>
+                        <svg class="w-5 h-5 text-slate-500 hidden md:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 dark:bg-slate-700 dark:border dark:border-slate-600">
-                        <a href="index.html#dashboard" id="dropdown-dashboard-link" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-600">My Dashboard</a>
-                        <a href="#" id="my-account-btn" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-600">My Account</a>
-                        <div class="border-t border-slate-200 dark:border-slate-600 my-1"></div>
-                        <button id="dropdown-logout-btn" class="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-slate-100 dark:hover:bg-slate-600">Logout</button>
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                        <a href="index.html#dashboard" id="dropdown-dashboard-link" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Dashboard</a>
+                        <a href="#" id="my-account-btn" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Account</a>
+                        <div class="border-t border-slate-200 my-1"></div>
+                        <button id="dropdown-logout-btn" class="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-slate-100">Logout</button>
                     </div>
                 </div>
 
-                <button id="mobile-menu-button" class="md:hidden">
+                <button id="mobile-menu-button" class="md:hidden text-slate-800">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </button>
             </div>
 
             <div id="mobile-menu" class="hidden md:hidden pb-4 space-y-2 w-full">
-                <hr class="border-slate-200 dark:border-slate-700 my-2">
-                
-                <a href="#" class="theme-toggle-btn block py-2 flex items-center gap-2">
-                    <i class="fas fa-moon text-xl w-6 text-center"></i>
-                    <span>Change Theme</span>
-                </a>
-
+                <hr class="border-slate-200 my-2">
+                <!-- PWA Install Button (Mobile) -->
                 <a href="#" id="install-pwa-btn-mobile" class="hidden install-pwa-btn block bg-purple-600 text-white text-center px-5 py-2 rounded-lg font-semibold hover:bg-purple-700 flex items-center justify-center mb-2">
                     <i class="fas fa-download mr-2"></i>Install App
                 </a>
@@ -92,7 +120,7 @@
                 </div>
                 <div id="mobile-user-actions" class="hidden space-y-2">
                      <a href="index.html#dashboard" class="block py-2 text-blue-600 font-semibold">My Dashboard</a>
-                     <a href="#" id="mobile-my-account-btn" class="block py-2 hover:text-blue-600">My Account</a>
+                     <a href="#" id="mobile-my-account-btn" class="block py-2 text-slate-600 hover:text-blue-600">My Account</a>
                      <button id="mobile-logout-btn" class="w-full bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button>
                 </div>
             </div>
@@ -101,40 +129,139 @@
 
     <main class="pt-32 sm:pt-24 min-h-screen">
         <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8">
-            <div id="syllabus-app-container" class="rounded-xl shadow-2xl overflow-hidden">
+            <div id="syllabus-app-container" class="bg-white rounded-xl shadow-2xl overflow-hidden">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-6 border-b">
-                    <h1 class="text-3xl font-extrabold mb-4 md:mb-0">UPSC Syllabus Navigator</h1>
+                    <h1 class="text-3xl font-extrabold text-slate-900 mb-4 md:mb-0">UPSC Syllabus Navigator</h1>
                     <div class="w-full flex space-x-2 md:space-x-4 text-sm md:text-base overflow-x-auto whitespace-nowrap pb-2 -mb-2 scrollbar-hide">
-                        <button class="tab-button active p-2 md:p-4 transition-colors flex-shrink-0" data-tab="dashboard">Tracker Dashboard</button>
-                        <button class="tab-button p-2 md:p-4 transition-colors flex-shrink-0" data-tab="preliminary">Preliminary</button>
-                        <button class="tab-button p-2 md:p-4 transition-colors flex-shrink-0" data-tab="mains">Mains (GS)</button>
-                        <button class="tab-button p-2 md:p-4 transition-colors flex-shrink-0" data-tab="optional">Optional</button>
+                        <button class="tab-button active p-2 md:p-4 text-slate-600 hover:text-blue-600 transition-colors flex-shrink-0" data-tab="dashboard">Tracker Dashboard</button>
+                        <button class="tab-button p-2 md:p-4 text-slate-600 hover:text-blue-600 transition-colors flex-shrink-0" data-tab="preliminary">Preliminary</button>
+                        <button class="tab-button p-2 md:p-4 text-slate-600 hover:text-blue-600 transition-colors flex-shrink-0" data-tab="mains">Mains (GS)</button>
+                        <button class="tab-button p-2 md:p-4 text-slate-600 hover:text-blue-600 transition-colors flex-shrink-0" data-tab="optional">Optional</button>
                     </div>
                 </div>
 
                 <div id="syllabus-content-wrapper" class="p-4 md:p-8 relative min-h-[60vh] max-h-[calc(100vh-10rem)] overflow-y-auto">
 
-                    <div id="syllabus-loading" class="flex justify-center items-center h-full absolute inset-0 z-20">
+                    <div id="syllabus-loading" class="flex justify-center items-center h-full absolute inset-0 bg-white/90 z-20">
                          <div>
                              <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
-                             <p>Loading progress and fetching user data...</p>
+                             <p class="text-slate-500">Loading progress and fetching user data...</p>
                          </div>
                     </div>
 
                     <div id="tab-dashboard" class="tab-content max-w-7xl mx-auto" data-tab-content="dashboard">
-                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                            <div class="lg:col-span-1 space-y-8"> <div class="dashboard-card text-center">
+                                    <h3 class="text-xl font-bold text-slate-800 mb-4">Overall Syllabus Completion</h3>
+                                    <div class="progress-circle overall mx-auto mb-2" style="--value: 0;">
+                                        <span class="progress-circle-value">0%</span>
+                                    </div>
+                                    <p class="text-sm text-slate-500">Keep pushing forward!</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    <div class="dashboard-card text-center">
+                                        <h4 class="font-semibold text-slate-700 mb-3">Preliminary (GS)</h4>
+                                        <div class="progress-circle prelims mx-auto" style="--value: 0;">
+                                            <span class="progress-circle-value">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-card text-center">
+                                        <h4 class="font-semibold text-slate-700 mb-3">Preliminary (CSAT)</h4>
+                                        <div class="progress-circle prelims mx-auto" style="--value: 0;">
+                                            <span class="progress-circle-value">0%</span>
+                                        </div>
+                                    </div>
+                                     <div class="dashboard-card text-center">
+                                        <h4 class="font-semibold text-slate-700 mb-3">Mains GS 1</h4>
+                                        <div class="progress-circle mains mx-auto" style="--value: 0;">
+                                            <span class="progress-circle-value">0%</span>
+                                        </div>
+                                    </div>
+                                     <div class="dashboard-card text-center">
+                                        <h4 class="font-semibold text-slate-700 mb-3">Mains GS 2</h4>
+                                        <div class="progress-circle mains mx-auto" style="--value: 0;">
+                                            <span class="progress-circle-value">0%</span>
+                                        </div>
+                                    </div>
+                                     <div class="dashboard-card text-center">
+                                        <h4 class="font-semibold text-slate-700 mb-3">Mains GS 3</h4>
+                                        <div class="progress-circle mains mx-auto" style="--value: 0;">
+                                            <span class="progress-circle-value">0%</span>
+                                        </div>
+                                    </div>
+                                     <div class="dashboard-card text-center">
+                                        <h4 class="font-semibold text-slate-700 mb-3">Mains GS 4</h4>
+                                        <div class="progress-circle mains mx-auto" style="--value: 0;">
+                                            <span class="progress-circle-value">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-card text-center hidden" id="optional-p1-card">
+                                        <h4 class="font-semibold text-slate-700 mb-3">Optional P1 (<span id="optional-subject-name-p1"></span>)</h4>
+                                        <div class="progress-circle optional mx-auto" style="--value: 0;">
+                                            <span class="progress-circle-value">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-card text-center hidden" id="optional-p2-card">
+                                        <h4 class="font-semibold text-slate-700 mb-3">Optional P2 (<span id="optional-subject-name-p2"></span>)</h4>
+                                        <div class="progress-circle optional mx-auto" style="--value: 0;">
+                                            <span class="progress-circle-value">0%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><div class="lg:col-span-1"> <div class="dashboard-card bg-yellow-50 border border-yellow-200 h-full flex flex-col sticky top-4"> <h2 class="text-xl font-bold text-yellow-800 mb-4 flex items-center">
+                                        <i class="fas fa-redo-alt mr-3"></i>Revisions Due Today
+                                    </h2>
+                                    <div id="revisions-due-list" class="space-y-3 overflow-y-auto text-sm flex-grow mb-4">
+                                        <p class="text-yellow-700">Checking revision schedule...</p>
+                                    </div>
+                                    <p class="text-xs text-yellow-600 mt-auto border-t pt-3">List shows micro-topics scheduled for today.</p> </div>
+                            </div></div>
+                    </div>
                     
                     <div id="tab-preliminary" class="tab-content hidden" data-tab-content="preliminary">
+                        <div id="prelims-syllabus-tree">
+                            <h2 class="text-2xl font-bold text-slate-800 mb-4">Preliminary Examination Syllabus</h2>
+                            <ul class="syllabus-list space-y-4" data-target-paper="prelims">
+                                </ul>
                         </div>
+                    </div>
 
                     <div id="tab-mains" class="tab-content hidden" data-tab-content="mains">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4">Mains Examination (General Studies)</h2>
+                       <div id="mains-gs-chip-nav" class="flex flex-nowrap gap-2 mb-6 border-b pb-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                            <button class="gs-chip bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-full transition-colors active" data-paper="mains-gs1">GS Paper 1</button>
+                            <button class="gs-chip bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-full transition-colors" data-paper="mains-gs2">GS Paper 2</button>
+                            <button class="gs-chip bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-full transition-colors" data-paper="mains-gs3">GS Paper 3</button>
+                            <button class="gs-chip bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-full transition-colors" data-paper="mains-gs4">GS Paper 4</button>
                         </div>
+                        <div id="mains-syllabus-tree-container" class="space-y-4">
+                             <ul class="syllabus-list" data-target-paper="mains-gs1"></ul>
+                             <ul class="syllabus-list hidden" data-target-paper="mains-gs2"></ul>
+                             <ul class="syllabus-list hidden" data-target-paper="mains-gs3"></ul>
+                             <ul class="syllabus-list hidden" data-target-paper="mains-gs4"></ul>
+                        </div>
+                    </div>
 
                     <div id="tab-optional" class="tab-content hidden" data-tab-content="optional">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4">Optional Subject Syllabus</h2>
+                        <div id="optional-selection-screen" class="hidden max-w-2xl mx-auto text-center py-12 bg-blue-50 rounded-lg border border-blue-200">
+                             <h3 class="text-xl font-bold text-blue-800 mb-4">Choose Your Optional Subject</h3>
+                             <p class="text-blue-700 mb-8">Selecting your optional subject helps tailor your tracker. You can change this later in My Account.</p>
+                             <div id="optional-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 px-8">
+                                 </div>
                         </div>
-                </div>
-            </div>
-        </div>
+                        <div id="optional-syllabus-view" class="hidden">
+                             <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                                 <h3 id="optional-syllabus-title" class="text-xl font-semibold text-slate-700">Optional Subject: <span class="text-blue-600">Loading...</span></h3>
+                                 <p class="text-xs text-slate-500 italic">To change optional, visit My Account.</p>
+                             </div>
+                             <div id="optional-syllabus-tree-container" class="space-y-4">
+                                 </div>
+                        </div>
+                    </div>
+                </div></div></div>
     </main>
 
     <footer class="bg-slate-900 text-slate-400 mt-12">
@@ -143,31 +270,211 @@
         </div>
     </footer>
 
-    <div id="auth-modal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+    <div id="auth-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+            <div class="flex justify-end">
+                <button id="close-auth-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
+            </div>
+            <div id="auth-error" class="bg-red-100 text-red-700 p-3 rounded-md mb-4 hidden"></div>
+            <div id="login-view">
+                <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Welcome Back</h2>
+                <p class="text-center text-slate-500 mb-8">Please enter your details to log in.</p>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="login-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
+                        <input type="email" id="login-email" placeholder="e.g., user@example.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                    </div>
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="login-password" class="block text-slate-700 text-sm font-semibold">Password</label>
+                            <button type="button" id="forgot-password-btn" class="text-sm text-blue-600 hover:underline">Forgot Password?</button>
+                        </div>
+                        <input type="password" id="login-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Log In</button>
+                </form>
+                <p class="text-center text-sm text-slate-600 mt-8">
+                    Don't have an account?
+                    <button id="auth-switch-to-signup" class="font-semibold text-blue-600 hover:underline">Sign Up</button>
+                </p>
+            </div>
+            <div id="signup-view" class="hidden">
+                 <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Create Your Account</h2>
+                 <p class="text-center text-slate-500 mb-8">Get started on your UPSC journey.</p>
+                <form id="signup-form">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="signup-first-name" class="block text-slate-700 text-sm font-semibold mb-2">First Name</label>
+                            <input type="text" id="signup-first-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="signup-last-name" class="block text-slate-700 text-sm font-semibold mb-2">Last Name</label>
+                            <input type="text" id="signup-last-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                    </div>
+                     <div class="mb-4">
+                        <label for="signup-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
+                        <input type="email" id="signup-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="signup-password" class="block text-slate-700 text-sm font-semibold mb-2">Password</label>
+                        <input type="password" id="signup-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required minlength="6">
+                        <p class="text-xs text-slate-500 mt-1">Minimum 6 characters.</p>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Create Account</button>
+                </form>
+                <p class="text-center text-sm text-slate-600 mt-8">
+                    Already have an account?
+                    <button id="auth-switch-to-login" class="font-semibold text-blue-600 hover:underline">Log In</button>
+                </p>
+            </div>
+            <div id="forgot-password-view" class="hidden">
+                 <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Reset Password</h2>
+                 <p class="text-center text-slate-500 mb-8">Enter your email to receive a password reset link.</p>
+                <form id="forgot-password-form">
+                    <div class="mb-4">
+                        <label for="reset-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
+                        <input type="email" id="reset-email" placeholder="e.g., user@example.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Send Reset Link</button>
+                </form>
+                <p class="text-center text-sm text-slate-600 mt-8">
+                    Remembered your password?
+                    <button id="auth-switch-to-login-from-reset" class="font-semibold text-blue-600 hover:underline">Back to Log In</button>
+                </p>
+            </div>
         </div>
+    </div>
 
-    <div id="account-modal" class...
+    <div id="account-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+       <div class="bg-white rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-2xl font-bold text-slate-800">My Account</h2>
+                <button id="close-account-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
+            </div>
+            <div id="account-error" class="bg-red-100 text-red-700 p-3 rounded-md mb-4 hidden"></div>
+            <form id="account-form">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="account-first-name" class="block text-slate-700 text-sm font-semibold mb-2">First Name</label>
+                        <input type="text" id="account-first-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="account-last-name" class="block text-slate-700 text-sm font-semibold mb-2">Last Name</label>
+                        <input type="text" id="account-last-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label for="account-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
+                    <input type="email" id="account-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 cursor-not-allowed" readonly>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Save Changes</button>
+            </form>
         </div>
+    </div>
 
-    <div id="success-overlay" class...
-       </div>
-
-    <div id="start-date-modal" class...
+    <div id="success-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+       <div class="bg-white rounded-lg shadow-2xl p-8 text-center">
+            <div class="svg-container w-24 h-24 mx-auto mb-4">
+                <svg class="ft-green-tick" xmlns="http://www.w3.org/2000/svg" height="100" width="100" viewBox="0 0 48 48" aria-hidden="true">
+                    <circle class="circle" fill="none" stroke="#22c55e" stroke-width="3" cx="24" cy="24" r="22"/>
+                    <path class="tick" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M14 27l5.917 4.917L34 17"/>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-800">Registration Successful!</h3>
+            <p class="text-slate-500 mt-2">Welcome to iasmaintor!</p>
         </div>
+    </div>
 
-    <div id="confirm-revision-modal" class...
+    <div id="start-date-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-8 modal-content">
+            <h3 class="text-xl font-bold text-slate-800 mb-4">Set Start Date</h3>
+            <p class="text-slate-600 mb-6">This date starts your 1-3-7-21 Spaced Repetition schedule for the topic: <strong id="sdate-topic-name"></strong></p>
+            <form id="start-date-form">
+                <input type="date" id="start-date-input" class="w-full px-4 py-3 border border-slate-300 rounded-lg mb-6" required>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="sdate-cancel-btn" class="bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-semibold">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700">Start Tracking</button>
+                </div>
+            </form>
         </div>
+    </div>
 
-    <div id="daily-reminder-modal" class...
+    <div id="confirm-revision-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm p-8 modal-content">
+            <h3 class="text-xl font-bold text-slate-800 mb-4">Confirm Revision</h3>
+            <p class="text-slate-600 mb-6">Mark revision <strong id="confirm-revision-day">D-X</strong> for topic: <strong id="confirm-topic-name"></strong> as done?</p>
+            <div class="flex justify-end space-x-4">
+                <button type="button" id="confirm-revision-cancel-btn" class="bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-semibold">Cancel</button>
+                <button type="button" id="confirm-revision-submit-btn" data-action="confirm-revision" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700">Yes, Confirm</button>
+            </div>
         </div>
+    </div>
 
-    <div id="ai-response-modal" class...
+    <div id="daily-reminder-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-xl p-8 modal-content">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-2xl font-bold text-orange-600 flex items-center"><i class="fas fa-bell mr-3"></i>Daily Revision Reminder!</h3>
+                <button id="close-reminder-btn" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
+            </div>
+            <p class="text-slate-700 mb-6">You have <strong id="reminder-count" class="text-orange-600">X</strong> topics due for revision today. Don't let your progress slip!</p>
+            <div id="reminder-topic-list" class="space-y-3 max-h-60 overflow-y-auto border p-4 rounded-lg bg-slate-50">
+                </div>
+            <div class="mt-6 text-right">
+                <button id="go-to-dashboard-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700">Go to Tracker Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ai-response-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
+         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8 max-h-[90vh] flex flex-col">
+             <div class="p-6 border-b sticky top-0 bg-white z-10 rounded-t-lg">
+                 <div class="flex justify-between items-center">
+                     <h2 id="ai-modal-title" class="text-2xl font-bold text-slate-800">AI Mentor Response</h2>
+                     <button id="close-ai-response-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
+                 </div>
+                 <p id="ai-modal-subtitle" class="text-sm text-slate-500 mt-1">Generating content for: <strong id="ai-topic-name"></strong></p>
+             </div>
+             <div id="ai-response-content" class="p-6 overflow-y-auto flex-grow prose max-w-none">
+                 <div class="flex justify-center items-center h-48 text-center">
+                     <div>
+                         <div class="loader-bars flex justify-center items-end h-16" aria-label="Loading AI response">
+                             <div class="bar w-3 h-3 m-1 bg-blue-500 rounded-full animate-bounce" style="animation-delay:-0.3s"></div>
+                             <div class="bar w-3 h-3 m-1 bg-blue-500 rounded-full animate-bounce" style="animation-delay:-0.15s"></div>
+                             <div class="bar w-3 h-3 m-1 bg-blue-500 rounded-full animate-bounce"></div>
+                         </div>
+                         <p class="text-slate-500 mt-4">Consulting the AI...</p>
+                     </div>
+                 </div>
+             </div>
          </div>
+     </div>
 
-    <div id="chatbot-container" class...
+    <div id="chatbot-container" class="fixed bottom-5 right-5 z-[100]">
+        <div id="chatbot-window" class="hidden absolute bottom-[80px] right-0 w-80 sm:w-96 h-[500px] bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden border border-slate-300">
+            <div class="bg-blue-600 text-white p-3 flex justify-between items-center flex-shrink-0">
+                <h3 class="font-semibold text-lg flex items-center">
+                    <i class="fas fa-cat mr-2"></i> Chinki
+                </h3>
+                <button id="chatbot-close" class="text-blue-200 hover:text-white">&times;</button>
+            </div>
+            <div id="chatbot-messages" class="flex-1 p-3 overflow-y-auto space-y-3">
+                </div>
+            <form id="chatbot-form" class="border-t border-slate-200 p-2 flex items-center bg-white flex-shrink-0">
+                <input type="text" id="chatbot-input" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask Chinki a question..." required>
+                <button type="submit" class="ml-2 bg-blue-600 text-white p-2 rounded-full h-10 w-10 flex-shrink-0 flex items-center justify-center transition-transform hover:scale-110">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
         </div>
-    
-    <div id="notification" class="fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-[60]"></div>
+        
+        <button id="chatbot-toggle" class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110">
+            <i class="fas fa-cat text-3xl"></i>
+            <span id="chatbot-greeting-bubble" class="hidden absolute bottom-14 right-14 w-64 bg-white p-3 rounded-lg shadow-md text-slate-800 text-sm border border-slate-200" style="transform-origin: bottom right;">
+                </span>
+        </button>
+    </div>
+    <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-[60]"></div>
 
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/syllabus-tracker.js"></script>
