@@ -1,4 +1,4 @@
-// js/chatbot.js
+// js/chatbot.js (FIXED)
 
 // Import the new API endpoint, NOT the key
 import { GEMINI_API_ENDPOINT } from './firebase-config.js';
@@ -180,10 +180,11 @@ function addMessage(sender, text) {
     messageElement.appendChild(bubble);
     DOMElements.messages.appendChild(messageElement); // <-- Add to DOM first
     
-    // --- "READ MORE" LOGIC (remains the same) ---
+    // --- "READ MORE" LOGIC (MODIFIED) ---
     if (sender === 'ai') {
         requestAnimationFrame(() => {
-            const isOverflowing = bubble.scrollHeight > bubble.clientHeight;
+            // *** FIX: Check if overflow is more than 1px to avoid rounding errors ***
+            const isOverflowing = (bubble.scrollHeight - bubble.clientHeight) > 1;
         
             if (isOverflowing) {
                 const readMoreBtn = document.createElement('div');
