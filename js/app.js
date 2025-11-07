@@ -1,7 +1,10 @@
-// js/app.js (Modified for Quizzie DB Integration)
+// js/app.js (Modified for Theme Switcher)
 
 // --- Imports ---
 import { firebaseConfig, GEMINI_API_ENDPOINT } from './firebase-config.js';
+
+// --- ### NEW THEME IMPORT ### ---
+import { initThemeSwitcher } from './theme-switcher.js';
 
 // --- Firebase SDK Modules ---
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -34,6 +37,11 @@ import { initQuizzie, resetQuizzieModal } from './quizzie.js';
 import { initChatbot } from './chatbot.js';
 
 document.addEventListener('DOMContentLoaded', async function() {
+    
+    // --- ### NEW: INITIALIZE THEME SWITCHER ### ---
+    // This runs first to prevent a flash of the wrong theme
+    initThemeSwitcher();
+    
     // --- Firebase Initialization ---
     let app, db, auth;
     let firebaseEnabled = false;
@@ -293,7 +301,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     const fetchAndDisplayPlans = async (userId) => {
-        // --- FIX: Removed the redundant, buggy guard clause ---
+        // ... (This function remains the same)
         if (!DOMElements.plansList) return;
 
         if (unsubscribePlans) { unsubscribePlans(); unsubscribePlans = null; }
@@ -320,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Dashboard Progress Listener (Fixed error handling) ---
     function listenForDashboardProgress(userId) {
-         // --- FIX: Removed the redundant, buggy guard clause ---
+         // ... (This function remains the same)
          const progressContainer = DOMElements.dashboardProgressBars;
          if (!progressContainer) return;
 
