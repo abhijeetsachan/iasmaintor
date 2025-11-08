@@ -16,6 +16,7 @@
     <meta name="theme-color" content="#3b82f6">
 
     <style>
+        /* Base styles are inherited from css/style.css */
         .tab-button.active {
             border-bottom: 3px solid #3b82f6;
             color: #1e293b;
@@ -28,21 +29,24 @@
             border-radius: 4px;
             transition: background-color 0.2s;
         }
-        .progress-toggle {
-            height: 32px;
-            padding: 0 12px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border-radius: 6px;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            border: 1px solid transparent;
+        /* Overrides to ensure the nested micro-topic items stack cleanly on mobile */
+        @media (max-width: 767px) {
+            .syllabus-item-content-wrapper {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px; /* Reduced gap */
+            }
+            .syllabus-item-content-wrapper > div {
+                width: 100%;
+            }
+            /* Grouping the SRS bar and AI buttons to stack them horizontally on small screens */
+            .syllabus-item-content-wrapper > div:nth-child(2) {
+                flex-direction: row !important; /* Force AI/SRS block back to row on mobile */
+                flex-wrap: wrap; /* Allow wrapping */
+                gap: 8px;
+            }
         }
-        .status-not-started-ui { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; }
-        .status-in-progress-ui { background-color: #fef3c7; color: #b45309; border-color: #fde68a; }
-        .status-completed-ui { background-color: #dcfce7; color: #16a34a; border-color: #a7f3d0; }
+        /* Style for GS chip navigation - kept for consistency */
         .gs-chip.active {
             background-color: #3b82f6 !important;
             color: white !important;
@@ -145,69 +149,28 @@
                     </div>
 
                     <div id="tab-dashboard" class="tab-content max-w-7xl mx-auto" data-tab-content="dashboard">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:items-stretch">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:items-stretch"> 
 
-                            <div id="dashboard-left-col" class="lg:col-span-1 space-y-8"> 
-                                <div class="dashboard-card text-center">
+                            <div class="lg:col-span-1 space-y-8"> 
+                                <div class="dashboard-card text-center h-full flex flex-col justify-center">
                                     <h3 class="text-xl font-bold text-slate-800 mb-4">Overall Syllabus Completion</h3>
                                     <div class="progress-circle overall mx-auto mb-2" style="--value: 0;">
                                         <span class="progress-circle-value">0%</span>
                                     </div>
                                     <p class="text-sm text-slate-500">Keep pushing forward!</p>
                                 </div>
-
-                                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                                    <div class="dashboard-card text-center">
-                                        <h4 class="font-semibold text-slate-700 mb-3">Preliminary (GS)</h4>
-                                        <div class="progress-circle prelims mx-auto" style="--value: 0;">
-                                            <span class="progress-circle-value">0%</span>
-                                        </div>
-                                    </div>
-                                    <div class="dashboard-card text-center">
-                                        <h4 class="font-semibold text-slate-700 mb-3">Preliminary (CSAT)</h4>
-                                        <div class="progress-circle prelims mx-auto" style="--value: 0;">
-                                            <span class="progress-circle-value">0%</span>
-                                        </div>
-                                    </div>
-                                     <div class="dashboard-card text-center">
-                                        <h4 class="font-semibold text-slate-700 mb-3">Mains GS 1</h4>
-                                        <div class="progress-circle mains mx-auto" style="--value: 0;">
-                                            <span class="progress-circle-value">0%</span>
-                                        </div>
-                                    </div>
-                                     <div class="dashboard-card text-center">
-                                        <h4 class="font-semibold text-slate-700 mb-3">Mains GS 2</h4>
-                                        <div class="progress-circle mains mx-auto" style="--value: 0;">
-                                            <span class="progress-circle-value">0%</span>
-                                        </div>
-                                    </div>
-                                     <div class="dashboard-card text-center">
-                                        <h4 class="font-semibold text-slate-700 mb-3">Mains GS 3</h4>
-                                        <div class="progress-circle mains mx-auto" style="--value: 0;">
-                                            <span class="progress-circle-value">0%</span>
-                                        </div>
-                                    </div>
-                                     <div class="dashboard-card text-center">
-                                        <h4 class="font-semibold text-slate-700 mb-3">Mains GS 4</h4>
-                                        <div class="progress-circle mains mx-auto" style="--value: 0;">
-                                            <span class="progress-circle-value">0%</span>
-                                        </div>
-                                    </div>
-                                    <div class="dashboard-card text-center hidden" id="optional-p1-card">
-                                        <h4 class="font-semibold text-slate-700 mb-3">Optional P1 (<span id="optional-subject-name-p1"></span>)</h4>
-                                        <div class="progress-circle optional mx-auto" style="--value: 0;">
-                                            <span class="progress-circle-value">0%</span>
-                                        </div>
-                                    </div>
-                                    <div class="dashboard-card text-center hidden" id="optional-p2-card">
-                                        <h4 class="font-semibold text-slate-700 mb-3">Optional P2 (<span id="optional-subject-name-p2"></span>)</h4>
-                                        <div class="progress-circle optional mx-auto" style="--value: 0;">
-                                            <span class="progress-circle-value">0%</span>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             
+                            <div id="dashboard-progress-detail" class="lg:col-span-1"> 
+                                <div class="dashboard-card h-full flex flex-col">
+                                    <h3 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Paper-wise Progress</h3>
+                                    <div id="dashboard-progress-list" class="space-y-4 flex-grow" style="max-height: 500px; overflow-y: auto;">
+                                        <p class="text-slate-500">Progress data loading...</p>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-auto pt-3 border-t">Data is updated in real-time from your topic tracking.</p>
+                                </div>
+                            </div>
+
                             <div id="dashboard-right-col" class="lg:col-span-1"> 
                                 <div class="dashboard-card bg-yellow-50 border border-yellow-200 flex flex-col h-full"> 
                                     <h2 class="text-xl font-bold text-yellow-800 mb-4 flex items-center">
@@ -219,7 +182,7 @@
                                     <p class="text-xs text-yellow-600 mt-auto border-t pt-3">List shows micro-topics scheduled for today.</p> 
                                 </div>
                             </div>
-                            </div>
+                        </div>
                     </div>
                     
                     <div id="tab-preliminary" class="tab-content hidden" data-tab-content="preliminary">
