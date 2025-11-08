@@ -4,9 +4,8 @@
  * Fetches trending topics related to UPSC CSE using the
  * Google Custom Search JSON API.
  *
- * Requires 2 Environment Variables:
- * 1. GOOGLE_SEARCH_API_KEY - Your Google API key with Custom Search enabled.
- * 2. GOOGLE_CX_ID - Your Google Custom Search Engine ID, configured to search the web.
+ * THIS VERSION ASSUMES THE GOOGLE_CX_ID HAS BEEN CONFIGURED TO
+ * SEARCH *ONLY* SPECIFIC SITES (The Hindu, Indian Express, PIB).
  */
 
 export default async function handler(req, res) {
@@ -31,9 +30,14 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "API configuration error on server." });
     }
 
-    const searchQuery = "trending topics UPSC CSE OR popular UPSC current affairs";
+    // *** UPDATED SEARCH QUERY ***
+    // This query is now sent to your *curated* list of sites.
+    // It prioritizes "Explainer" and "Editorial" articles.
+    const searchQuery = "UPSC editorial OR UPSC explainer OR PIB";
     const numResults = 5;
-    const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_CX_ID}&q=${encodeURIComponent(searchQuery)}&num=${numResults}`;
+    
+    // We add 'sort=date' to get the most recent articles
+    const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_CX_ID}&q=${encodeURIComponent(searchQuery)}&num=${numResults}&sort=date`;
 
     try {
         const searchResponse = await fetch(searchUrl);
@@ -46,18 +50,39 @@ export default async function handler(req, res) {
         const data = await searchResponse.json();
 
         if (!data.items || data.items.length === 0) {
-            return res.status(200).json({ searches: [] });
+            // If no results, send a default list so it's not empty
+            const defaultTopics = [
+                "Explain the basics of the Indian Constitution",
+                "What is the role of the RBI Monetary Policy?",
+                "Latest Supreme Court judgments"
+            ];
+            return res.status(200).json({ searches: defaultTopics });
         }
 
-        // Clean up the titles (e.g., remove site names)
+        // Clean up the titles (e.g., remove site names and "Explainer:")
         const topics = data.items.map(item => {
-            return item.title.split(' | ')[0].split(' - ')[0].trim();
+            return item.title
+                .split(' | ')[0] // Remove source (e.g., | The Indian Express)
+                .split(' - ')[0] // Remove source (e.g., - The Hindu)
+                .replace(/^Explainer: /i, '') // Remove "Explainer: "
+                .replace(/^Explained: /i, '') // Remove "Explained: "
+                .replace(/^Editorial: /i, '') // Remove "Editorial: "
+                .trim(); // Remove any whitespace
         });
+        
+        // Remove potential duplicates
+        const uniqueTopics = [...new Set(topics)];
 
-        return res.status(200).json({ searches: topics });
+        return res.status(200).json({ searches: uniqueTopics });
 
     } catch (error) {
         console.error("Error in getPopularSearches:", error.message);
-        return res.status(500).json({ error: "Failed to fetch popular topics." });
+        // Fallback for a complete crash
+        const defaultTopics = [
+            "Explain the basics of the Indian Constitution",
+            "What is the role of the RBI Monetary Policy?",
+            "Latest Supreme Court judgments"
+        ];
+        return res.status(200).json({ searches: defaultTopics });
     }
 }
