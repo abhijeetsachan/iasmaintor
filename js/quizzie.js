@@ -237,10 +237,27 @@ Based ONLY on this data, provide a concise, insightful, and encouraging analysis
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        if (!response.ok) { 
-            console.error("AI Feedback API Error:", await response.json());
-            throw new Error(`API request failed with status ${response.status}`); 
+        // A more robust way to handle errors in js/quizzie.js
+if (!response.ok) {
+    let errorMessage = `Request failed (${response.status})`;
+    try {
+        // Check if the response is actually JSON before parsing
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error?.message || errorMessage;
+        } else {
+            // It's not JSON, just get the raw text error
+            errorMessage = await response.text();
         }
+    } catch (e) {
+        // Parsing failed or .text() failed, just use the status
+        console.error("Error parsing error response:", e);
+    }
+    // This will now throw the *actual* server error message
+    // (e.g., "A server error occurred") instead of "Unexpected token 'A'"
+    throw new Error(errorMessage);
+}
 
         // 4. The rest of the parsing logic is the same
         const result = await response.json();
@@ -534,3 +551,4 @@ const handleQuizSubmit = async (e) => {
          if(quizFooter) quizFooter.classList.add('hidden');
     }
 };
+
