@@ -464,6 +464,50 @@ p {
 .dashboard-card .text-blue-600 { color: var(--brand-primary) !important; }
 
 
+/* --- NEW: Dashboard Reminder List Styles (Homepage) --- */
+.dashboard-reminder-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    transition: all 0.2s ease;
+}
+.dashboard-reminder-item:hover {
+    background-color: var(--bg-secondary);
+    transform: translateX(2px);
+}
+.dashboard-reminder-link {
+    color: var(--brand-primary);
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dashboard-reminder-link:hover {
+    text-decoration: underline;
+}
+.dashboard-reminder-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+    color: var(--text-white);
+}
+.dashboard-reminder-badge.status-due {
+    background-color: var(--color-orange-DEFAULT);
+}
+.dashboard-reminder-badge.status-overdue {
+    background-color: var(--color-red-DEFAULT);
+}
+
+
 /* --- New AI Quiz Loader Animation --- */
 .loader-bars { display: flex; justify-content: center; align-items: flex-end; height: 60px; }
 .loader-bars .bar { width: 10px; height: 10px; margin: 0 4px; background-color: var(--brand-primary); border-radius: 4px; animation: bar-wave 1.2s infinite ease-in-out; }
