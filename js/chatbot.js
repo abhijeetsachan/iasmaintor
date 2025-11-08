@@ -114,7 +114,6 @@ async function handleUserMessage(e) {
 
         let friendlyErrorMessage = "My apologies, I have encountered an error. Please try rephrasing your question.";
         
-        // Use the error message if it's not the generic "Failed to fetch"
         if (error.message && !error.message.includes("Failed to fetch")) {
             if (error.message.includes('RECITATION')) {
                 friendlyErrorMessage = "My response was blocked for recitation. Please ask in a different way.";
@@ -122,9 +121,10 @@ async function handleUserMessage(e) {
                 friendlyErrorMessage = "I am sorry, I cannot answer that. My safety filters were triggered.";
             } else if (error.message.includes('API key') || error.message.includes('configuration')) {
                  friendlyErrorMessage = "There appears to be an issue with my configuration. Please alert the site admin!";
-            } else if (!error.message.includes('API request failed')) {
-                // If it's not a generic failure, show the specific message
+            } else if (!error.message.includes('API request failed') && !error.message.includes('invalid response')) {
                 friendlyErrorMessage = error.message;
+            } else if (error.message.includes('invalid response')) {
+                friendlyErrorMessage = "The server returned an invalid response. Please try again.";
             }
         }
         
@@ -133,6 +133,10 @@ async function handleUserMessage(e) {
     }
 }
 
+/**
+ * --- UPDATED FUNCTION ---
+ * Now uses renderSimpleMarkdown() to correctly format the AI's response.
+ */
 function addMessage(sender, text, fromCache = false) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('chat-message', sender);
@@ -140,11 +144,15 @@ function addMessage(sender, text, fromCache = false) {
     const bubble = document.createElement('div');
     bubble.classList.add('chat-bubble');
     
+    // Render the main text first
+    let htmlContent = (sender === 'ai') ? renderSimpleMarkdown(text) : text.replace(/\n/g, '<br>'); // Only render markdown for AI
+
+    // Add "from cache" indicator *after* rendering
     if (fromCache) {
-        text += '<br><em style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8;">(Loaded from cache)</em>';
+        htmlContent += '<br><em style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8;">(Loaded from cache)</em>';
     }
 
-    bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    bubble.innerHTML = htmlContent; // Set the final HTML
     
     messageElement.appendChild(bubble);
     DOMElements.messages.appendChild(messageElement);
@@ -276,7 +284,6 @@ async function callChatAPI(userText) {
     });
 
     // *** ROBUST ERROR HANDLING ***
-    // This will now catch the plain text 500 error
     let result;
     try {
         result = await response.json(); // This is what fails
@@ -306,4 +313,51 @@ async function callChatAPI(userText) {
         text: contentPart.text,
         fromCache: result.fromCache || false
     };
+}
+
+/**
+ * *** NEW HELPER FUNCTION ***
+ * Renders simple Markdown to HTML.
+ * Handles headings (###), bold (**), and lists (* or -).
+ * @param {string} text - The raw markdown text.
+ * @returns {string} - The rendered HTML.
+ */
+function renderSimpleMarkdown(text) {
+    if (!text) return '';
+
+    let html = text;
+
+    // Headings (e.g., ### My Heading)
+    html = html.replace(/^### (.*$)/gm, '<h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 12px; margin-bottom: 4px;">$1</h3>');
+    
+    // Bold (e.g., **my text**)
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // List items (e.g., * item or - item)
+    // We wrap list items in <ul>...</ul> for proper structure
+    html = html.replace(/^\s*[\*\-] (.*$)/gm, '<li>$1</li>');
+    html = html.replace(/<li>(.*?)<\/li>/gs, (match) => {
+        // Find if this <li> is already in a list
+        const precedingText = html.substring(0, html.indexOf(match));
+        const followingText = html.substring(html.indexOf(match) + match.length);
+        
+        let prefix = '';
+        let suffix = '';
+
+        if (!precedingText.endsWith('<ul>') && !precedingText.endsWith('</li>')) {
+            prefix = '<ul style="margin-left: 20px; padding-left: 4px; list-style-type: disc;">';
+        }
+        if (!followingText.startsWith('<li>') && !followingText.startsWith('</ul>')) {
+            suffix = '</ul>';
+        }
+        return prefix + match + suffix;
+    });
+
+    // Newlines (paragraphs)
+    html = html.replace(/\n/g, '<br>');
+    // Clean up <br> tags next to lists or headings
+    html = html.replace(/<br>(<\/?(ul|li|h3)>)/g, '$1');
+    html = html.replace(/(<\/(ul|li|h3)>)<br>/g, '$1');
+
+    return html;
 }
