@@ -466,12 +466,9 @@ p {
 
 /* --- NEW: Dashboard Reminder List Styles (Homepage) --- */
 #revision-reminder-container {
-    /* --- NEW: Added for equal height --- */
     display: flex;
     flex-direction: column;
 }
-
-/* --- MODIFIED: Style for progress bar list --- */
 #dashboard-progress-bars {
     max-height: 450px;
     overflow-y: auto;
@@ -483,12 +480,9 @@ p {
 }
 
 #revision-reminder-list {
-    /* --- NEW: Added for equal height and scrolling --- */
     flex-grow: 1;
     overflow-y: auto;
-    /* --- NEW: Added max-height --- */
     max-height: 450px; 
-    /* --- NEW: Added overflow-x: hidden --- */
     overflow-x: hidden;
 
     /* --- NEW: Firefox Scrollbar --- */
@@ -500,13 +494,12 @@ p {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 12px; /* Increased gap */
     padding: 10px;
     border-radius: 6px;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-primary);
     transition: all 0.2s ease;
-    /* --- NEW: Added for overflow fix --- */
     overflow: hidden;
 }
 .dashboard-reminder-item:hover {
@@ -518,15 +511,26 @@ p {
     font-weight: 500;
     text-decoration: none;
     font-size: 0.9rem;
-    /* --- NEW: Modified for overflow fix --- */
-    white-space: normal;  /* Allow wrapping */
-    overflow: hidden;     /* Hide overflow */
-    display: block;       /* Allow overflow properties */
+    
+    /* --- MODIFIED: Truncation --- */
+    white-space: nowrap;     /* Prevent wrapping */
+    overflow: hidden;        /* Hide overflow */
     text-overflow: ellipsis; /* Add ... */
+    
+    flex-grow: 1; /* Allow link to take available space */
+    min-width: 0; /* Fix for flex truncation */
 }
 .dashboard-reminder-link:hover {
     text-decoration: underline;
 }
+
+/* --- NEW: Badge Grouping --- */
+.dashboard-reminder-badge-group {
+    display: flex;
+    gap: 4px; /* Space between badges */
+    flex-shrink: 0; /* Prevent badges from shrinking */
+}
+
 .dashboard-reminder-badge {
     font-size: 0.75rem;
     font-weight: 600;
