@@ -572,6 +572,10 @@ footer .border-slate-700 {
     background-color: var(--text-primary);
     color: var(--bg-primary);
     z-index: 90;
+    /* --- FIX START: Add base opacity and pointer-events --- */
+    opacity: 0;
+    pointer-events: none;
+    /* --- FIX END --- */
 }
 #notification.bg-red-600 {
     background-color: var(--color-red-DEFAULT) !important;
