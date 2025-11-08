@@ -9,21 +9,23 @@ import admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // --- Initialize Firebase Admin ---
-// Vercel environment variables will be used here
-const serviceAccount = {
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  // Vercel can't handle newlines in env variables, so we must format the key
-  privateKey: process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-    : undefined,
-};
-
-// Initialize app only if it's not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+try {
+    // This is the SAME logic used in your other API files
+    if (process.env.FIREBASE_ADMIN_SDK_JSON && process.env.FIREBASE_DB_URL) {
+        if (!admin.apps.length) {
+            admin.initializeApp({
+                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
+                databaseURL: process.env.FIREBASE_DB_URL,
+            });
+        }
+    } else {
+        // If the variables aren't set, we must throw an error
+        throw new Error("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL) are not set.");
+    }
+} catch (error) {
+    console.error('Firebase admin initialization error', error);
+    // Re-throw to stop the function from running without a DB
+    throw error;
 }
 
 const db = admin.firestore();
