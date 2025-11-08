@@ -577,112 +577,164 @@ footer .border-slate-700 {
 }
 
 /* ==========================================================================
-   ENHANCED CHATBOT "DRONA" STYLES 
+   ENHANCED CHATBOT "DRONA" STYLES V2
 ==========================================================================
 */
 
-/* 1. Make the whole window 'pop' with a stronger shadow and border */
-#chatbot-window {
-    box-shadow: var(--shadow-xl) !important; /* Stronger shadow */
-    border: 1px solid var(--border-primary);
-    border-radius: 0.75rem; /* 12px */
-    overflow: hidden; /* To contain the new header radius */
-    background-color: var(--bg-card); /* Ensure bg is white */
+/* 1. Add pulsing glow animation to the toggle button */
+@keyframes pulse-glow-blue {
+    0%, 100% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 0 22px rgba(59, 130, 246, 0.8); }
+}
+#chatbot-toggle {
+    animation: pulse-glow-blue 2s infinite;
 }
 
-/* 2. Give the header a strong brand color */
-/* Selects the first child div inside the chatbot window */
+/* 2. Style the greeting bubble */
+#chatbot-toggle #chatbot-greeting-bubble {
+    transform-origin: bottom right;
+    animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-top: 4px solid var(--brand-primary); /* Add brand accent */
+    box-shadow: var(--shadow-xl); /* Make it pop */
+    border-radius: 8px;
+}
+
+/* 3. Style the main window */
+#chatbot-window {
+    box-shadow: var(--shadow-xl) !important;
+    border: 1px solid var(--border-primary);
+    border-radius: 0.75rem; 
+    overflow: hidden; 
+    background-color: var(--bg-card);
+}
+
+/* 4. Animated Gradient Header */
 #chatbot-window > div:first-child {
-    background-color: var(--brand-primary);
+    /* Use the same gradient and animation as .ai-gradient */
+    background: linear-gradient(-45deg, #3b82f6, #2563eb, #1d4ed8, #2563eb);
+    background-size: 300% 300%;
+    animation: gradient-animation 4s ease infinite;
     color: var(--text-white);
     border-bottom: 1px solid var(--brand-primary-hover);
 }
 
-/* 3. Make the header title ("Drona") and close button white */
 #chatbot-window > div:first-child h3,
 #chatbot-window > div:first-child button {
     color: var(--text-white);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Add subtle shadow */
 }
-
 #chatbot-window > div:first-child button:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* 4. Change the chat background for better bubble contrast */
+/* 5. Chat background & bubble fade-in animation */
+@keyframes bubble-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 #chatbot-messages {
-    background-color: var(--bg-primary); /* Was white, now slate-50 */
+    background-color: var(--bg-primary);
+    padding: 12px;
+}
+.chat-message {
+    display: flex;
+    flex-direction: column;
+    animation: bubble-fade-in 0.3s ease-out forwards;
 }
 
-/* 5. Make the AI bubbles white to contrast with the new bg */
+/* 6. AI message bubble */
 .chat-message.ai .chat-bubble {
-    background-color: var(--bg-card); /* Was slate-100, now white */
+    background-color: var(--bg-card);
     color: var(--text-primary);
     box-shadow: var(--shadow-sm);
     border-bottom-left-radius: 4px;
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    font-size: 0.9rem;
+}
+.chat-message.ai {
+    align-items: flex-start;
 }
 
-/* 6. Style the User (client) bubble */
+/* 7. User message bubble */
 .chat-message.user .chat-bubble {
     background-color: var(--brand-primary);
     color: var(--text-white);
     border-bottom-right-radius: 4px;
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    font-size: 0.9rem;
+}
+.chat-message.user {
+    align-items: flex-end;
 }
 
-/* 7. Style the 'Send' button */
-#chatbot-form button {
-    color: var(--brand-primary);
-    transition: all 0.2s ease;
+/* 8. Typing indicator */
+.chat-message.ai-typing .chat-bubble {
+    background-color: var(--bg-card);
+    color: var(--text-muted);
+    font-style: italic;
 }
 
-#chatbot-form button:hover {
-    color: var(--brand-primary-hover);
-    transform: scale(1.1);
+/* 9. Chat form, input, and send button */
+#chatbot-form {
+    border-top: 1px solid var(--border-primary);
+    background-color: var(--bg-card);
+    padding: 8px; /* Add some padding */
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* 8. Style the text input and its focus ring */
 #chatbot-form input {
     background-color: var(--bg-card);
     border-color: var(--border-primary);
+    flex-grow: 1; /* Make input take available space */
 }
-
 #chatbot-form input:focus {
     border-color: var(--brand-primary);
     box-shadow: 0 0 0 2px var(--brand-primary);
 }
 
-/* 9. Style the popular search buttons */
+#chatbot-form button {
+    color: var(--text-muted);
+    background-color: transparent;
+    border-radius: 50%;
+    width: 2.25rem; /* 36px */
+    height: 2.25rem; /* 36px */
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+#chatbot-form button:hover {
+    color: var(--text-white);
+    background-color: var(--brand-primary);
+}
+
+/* 10. Popular search buttons */
 .popular-search-btn {
     background-color: var(--bg-card) !important;
-    border-color: var(--border-primary) !important;
+    border: 1px solid var(--border-primary) !important;
     color: var(--brand-primary) !important;
+    transition: all 0.2s ease;
+    transform: scale(1);
 }
 .popular-search-btn:hover {
     background-color: var(--brand-bg-light-hover) !important;
     border-color: var(--brand-primary) !important;
+    transform: scale(1.02); /* Add subtle scale */
 }
 
-/* 10. Fix 'Read More' gradient for new white bubble */
-.read-more-btn {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50px;
-    text-align: center;
-    /* Gradient from transparent to the new bubble color (white) */
-    background: linear-gradient(to bottom, transparent, var(--bg-card) 70%); 
-    padding-top: 20px;
-    cursor: pointer;
-}
-
-.read-more-btn span {
-    color: var(--brand-primary);
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-decoration: underline;
-}
-
-/* 11. Read More logic (unchanged from before) */
+/* 11. Read More logic */
 .chat-message.ai .chat-bubble {
     position: relative;
     max-height: 200px;
@@ -692,6 +744,23 @@ footer .border-slate-700 {
 .chat-message.ai .chat-bubble.expanded {
     max-height: none;
     overflow: visible;
+}
+.read-more-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    text-align: center;
+    background: linear-gradient(to bottom, transparent, var(--bg-card) 70%); 
+    padding-top: 20px;
+    cursor: pointer;
+}
+.read-more-btn span {
+    color: var(--brand-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: underline;
 }
 .chat-message.ai .chat-bubble.expanded .read-more-btn {
     display: none;
