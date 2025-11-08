@@ -121,10 +121,19 @@ window.addEventListener('appinstalled', () => {
 
 function showNotification(message, isError = false) {
     const el = document.getElementById('notification');
+    const chatbotContainer = document.getElementById('chatbot-container'); // Get chatbot
     if (!el) { console.warn("Notification element not found."); return; }
+
     el.textContent = message;
-    el.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transition-opacity duration-300 pointer-events-none z-[60] text-white ${isError ? 'bg-red-600' : 'bg-slate-800'} opacity-100`;
-    setTimeout(() => { if (el) el.classList.remove('opacity-100'); }, 3000);
+    // We remove the z-[60] as it's now handled by style.css
+    el.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transition-opacity duration-300 pointer-events-none text-white ${isError ? 'bg-red-600' : 'bg-slate-800'} opacity-100`;
+    
+    if (chatbotContainer) chatbotContainer.classList.add('chatbot-container-lifted'); // LIFT chatbot
+
+    setTimeout(() => { 
+        if (el) el.classList.remove('opacity-100'); 
+        if (chatbotContainer) chatbotContainer.classList.remove('chatbot-container-lifted'); // LOWER chatbot
+    }, 3000);
 }
 
 // Initialize Chatbot
