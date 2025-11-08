@@ -470,18 +470,8 @@ p {
     align-items: stretch;
 }
 
-#tab-dashboard #dashboard-right-col {
-    /* This makes the right column flex, so its card can be 100% height */
-    display: flex;
-}
-
-#tab-dashboard .dashboard-card.bg-yellow-50 {
-    /* This ensures the revision card stretches to the full height of its grid cell */
-    height: 100%;
-}
-
-/* This sets a fixed, scrolling height for BOTH columns' content */
-#dashboard-left-col,
+/* MODIFIED: Target the new list container for scrolling */
+#dashboard-progress-list,
 #revisions-due-list {
     max-height: 70vh; /* A fixed, generous height. Adjust as needed. */
     overflow-y: auto;
@@ -494,22 +484,23 @@ p {
 }
 
 /* WebKit scrollbar for tracker page dashboard columns */
-#dashboard-left-col::-webkit-scrollbar,
+/* MODIFIED: Target the new list container for scrollbar styling */
+#dashboard-progress-list::-webkit-scrollbar,
 #revisions-due-list::-webkit-scrollbar {
     width: 8px;
 }
-#dashboard-left-col::-webkit-scrollbar-track,
+#dashboard-progress-list::-webkit-scrollbar-track,
 #revisions-due-list::-webkit-scrollbar-track {
     background: var(--bg-secondary);
     border-radius: 10px;
 }
-#dashboard-left-col::-webkit-scrollbar-thumb,
+#dashboard-progress-list::-webkit-scrollbar-thumb,
 #revisions-due-list::-webkit-scrollbar-thumb {
     background-color: var(--brand-primary);
     border-radius: 10px;
     border: 2px solid var(--bg-secondary); 
 }
-#dashboard-left-col::-webkit-scrollbar-thumb:hover,
+#dashboard-progress-list::-webkit-scrollbar-thumb:hover,
 #revisions-due-list::-webkit-scrollbar-thumb:hover {
     background-color: var(--brand-primary-hover);
 }
@@ -603,7 +594,7 @@ p {
 }
 
 
-/* --- NEW: Custom WebKit Scrollbar for Dashboard Lists --- */
+/* --- NEW: Custom WebKit Scrollbar for Dashboard Lists (Homepage) --- */
 #dashboard-progress-bars::-webkit-scrollbar,
 #revision-reminder-list::-webkit-scrollbar {
     width: 8px;
