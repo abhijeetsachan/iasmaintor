@@ -172,7 +172,7 @@ const handleStepNavigation = (stepBtn) => {
  * This prevents them from seeing the same questions again.
  * @param {string[]} questionIds - An array of question document IDs.
  */
-const updateUserSeenQuestions = async (questionIds)_ => {
+const updateUserSeenQuestions = async (questionIds) => {
     const user = getCurrentUser();
     if (!user || !firebaseDB.db || questionIds.length === 0) {
         console.warn("User, DB, or questions missing. Cannot update seen list.");
@@ -524,3 +524,4 @@ const handleQuizSubmit = async (e) => {
          if(quizFooter) quizFooter.classList.add('hidden');
     }
 };
+
