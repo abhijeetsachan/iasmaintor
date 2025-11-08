@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Serverless functions for iasmaintor",
   "dependencies": {
-    "firebase-admin": "^12.0.0"
+    "firebase-admin": "^12.0.0",
+    "@google/generative-ai": "^0.14.1"
   }
 }
