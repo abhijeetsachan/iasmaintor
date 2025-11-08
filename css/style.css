@@ -470,11 +470,16 @@ p {
     display: flex;
     flex-direction: column;
 }
-/* --- NEW: Style for progress bar list --- */
+
+/* --- MODIFIED: Style for progress bar list --- */
 #dashboard-progress-bars {
     max-height: 450px;
     overflow-y: auto;
-    padding-right: 8px; /* Room for scrollbar */
+    overflow-x: hidden; /* Added for consistency */
+    
+    /* --- NEW: Firefox Scrollbar --- */
+    scrollbar-width: thin;
+    scrollbar-color: var(--brand-primary) var(--bg-secondary);
 }
 
 #revision-reminder-list {
@@ -485,7 +490,10 @@ p {
     max-height: 450px; 
     /* --- NEW: Added overflow-x: hidden --- */
     overflow-x: hidden;
-    padding-right: 8px; /* Room for scrollbar */
+
+    /* --- NEW: Firefox Scrollbar --- */
+    scrollbar-width: thin;
+    scrollbar-color: var(--brand-primary) var(--bg-secondary);
 }
 
 .dashboard-reminder-item {
@@ -532,6 +540,32 @@ p {
 }
 .dashboard-reminder-badge.status-overdue {
     background-color: var(--color-red-DEFAULT);
+}
+
+
+/* --- NEW: Custom WebKit Scrollbar for Dashboard Lists --- */
+#dashboard-progress-bars::-webkit-scrollbar,
+#revision-reminder-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+#dashboard-progress-bars::-webkit-scrollbar-track,
+#revision-reminder-list::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+}
+
+#dashboard-progress-bars::-webkit-scrollbar-thumb,
+#revision-reminder-list::-webkit-scrollbar-thumb {
+    background-color: var(--brand-primary);
+    border-radius: 10px;
+    /* Create a small "inset" border effect */
+    border: 2px solid var(--bg-secondary); 
+}
+
+#dashboard-progress-bars::-webkit-scrollbar-thumb:hover,
+#revision-reminder-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--brand-primary-hover);
 }
 
 
