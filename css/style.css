@@ -734,7 +734,7 @@ footer .border-slate-700 {
     transform: scale(1.02); /* Add subtle scale */
 }
 
-/* 11. Read More logic */
+/* 11. Read More logic - STYLES MODIFIED */
 .chat-message.ai .chat-bubble {
     position: relative;
     max-height: 200px;
@@ -745,23 +745,48 @@ footer .border-slate-700 {
     max-height: none;
     overflow: visible;
 }
+.chat-message.ai .chat-bubble.expanded .read-more-btn {
+    display: none;
+}
+
+/* This is the gradient overlay */
 .read-more-btn {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     height: 50px;
-    text-align: center;
     background: linear-gradient(to bottom, transparent, var(--bg-card) 70%); 
-    padding-top: 20px;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 8px;
 }
-.read-more-btn span {
+
+/* This is the new button */
+.read-more-button-inner {
+    /* Reset default button styles */
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    font-family: inherit;
+
+    /* New Button Styles */
+    background-color: var(--bg-card);
     color: var(--brand-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 9999px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
     font-weight: 600;
-    font-size: 0.875rem;
-    text-decoration: underline;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
 }
-.chat-message.ai .chat-bubble.expanded .read-more-btn {
-    display: none;
+
+.read-more-button-inner:hover {
+    background-color: var(--brand-primary);
+    color: var(--text-white);
+    border-color: var(--brand-primary);
 }
