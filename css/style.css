@@ -571,6 +571,7 @@ footer .border-slate-700 {
 #notification {
     background-color: var(--text-primary);
     color: var(--bg-primary);
+    z-index: 110;
 }
 #notification.bg-red-600 {
     background-color: var(--color-red-DEFAULT) !important;
