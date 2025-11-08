@@ -1,1 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mAIntor | UPSC Answer Evaluator</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='15' fill='%233b82f6'/%3E%3Ctext x='50' y='75' font-size='90' font-family='Inter, sans-serif' font-weight='bold' text-anchor='middle' fill='white'%3EA%3C/text%3E%3C/svg%3E">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- START: iasmaintor Color Palette --- */
+        :root {
+            /* Base Backgrounds */
+            --bg-primary: #f8fafc;        /* slate-50 */
+            --bg-secondary: #f1f5f9;      /* slate-100 */
+            --bg-card: #ffffff;           /* white */
+            
+            /* Base Text */
+            --text-primary: #1e293b;      /* slate-800 */
+            --text-secondary: #475569;    /* slate-600 */
+            --text-tertiary: #334155;     /* slate-700 */
+            --text-muted: #64748b;        /* slate-500 */
+            --text-white: #ffffff;        /* white */
+            
+            /* Borders & Dividers */
+            --border-primary: #e2e8f0;    /* slate-200 */
+            --border-secondary: #cbd5e1;  /* slate-300 */
+            
+            /* Brand Colors (Blue) */
+            --brand-primary: #3b82f6;           /* blue-500 */
+            --brand-primary-hover: #2563eb;    /* blue-600 */
+            --brand-text-dark: #1e3a8a;       /* blue-900 */
+            --brand-bg-light: #eff6ff;          /* blue-50 */
+            --brand-bg-light-hover: #dbeafe;   /* blue-100 */
 
+            /* Accent: Green */
+            --color-green-DEFAULT: #22c55e;    /* green-500 */
+            --color-green-dark: #16a34a;       /* green-600 */
+            --color-green-light: #dcfce7;      /* green-100 */
+
+            /* Other */
+            --color-slate-400: #94a3b8;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        /* --- END: iasmaintor Color Palette --- */
+
+
+        /* --- Base Styles --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary); /* MODIFIED */
+            color: var(--text-secondary); /* MODIFIED */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* --- Allow Text Selection in specific areas --- */
+        #output-container, [contenteditable="true"], textarea, pre, code {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
+        /* MODIFIED: Styling for textareas/inputs */
+        textarea, [contenteditable="true"] {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-secondary);
+            color: var(--text-primary);
+        }
+        textarea:focus, [contenteditable="true"]:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 2px var(--brand-primary);
+            outline: none;
+        }
+
+        /* --- Styling for Code Blocks (for diagrams) --- */
+        .prose pre {
+            background-color: var(--bg-secondary); /* MODIFIED */
+            color: var(--text-tertiary); /* MODIFIED */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-primary); /* MODIFIED */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* --- General Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* --- Toast Notification Animations --- */
+        @keyframes toast-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toast-out {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+        .toast-in {
+            animation: toast-in 0.5s cubic-bezier(0.215, 0.610, 0.355, 1.000) forwards;
+        }
+        .toast-out {
+            animation: toast-out 0.5s ease-in forwards;
+        }
+
+        /* --- Custom Radio Toggle Switch --- */
+        .radio-toggle-label {
+            cursor: pointer;
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease-in-out;
+            color: var(--text-secondary); /* MODIFIED */
+            z-index: 1;
+        }
+        .radio-toggle input[type="radio"] {
+            display: none;
+        }
+        .radio-toggle-bg {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background-color: var(--brand-primary); /* MODIFIED */
+            border-radius: 9999px;
+            box-shadow: 0 4px 10px -2px rgba(59, 130, 246, 0.4);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 0;
+        }
+        .radio-toggle input[id="model-eval"]:checked ~ .radio-toggle-bg {
+            transform: translateX(calc(100% + 4px));
+        }
+        .radio-toggle input[type="radio"]:checked + label {
+            color: var(--text-white); /* MODIFIED */
+        }
+        
+        /* --- Placeholder for contenteditable divs --- */
+        [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-muted); /* MODIFIED */
+            pointer-events: none;
+            display: block;
+        }
+
+        /* --- MODIFIED Card Style (from iasmaintor) --- */
+        .modern-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            box-shadow: var(--shadow-lg);
+            transition: all 0.2s ease-in-out;
+        }
+        .modern-card:hover {
+            box-shadow: var(--shadow-xl);
+        }
+        
+        /* --- Drag and Drop State --- */
+        .drag-over {
+            border-style: dashed !important;
+            border-color: var(--brand-primary) !important;
+            background-color: var(--brand-bg-light) !important;
+        }
+
+        /* --- Preloader Styles --- */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-card); /* MODIFIED */
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.75s ease-out, visibility 0.75s ease-out;
+            visibility: visible;
+            opacity: 1;
+        }
+        #preloader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* --- Animated Logo Styles --- */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            font-family: 'Inter', sans-serif; /* MODIFIED */
+            font-weight: 800; /* MODIFIED */
+        }
+        .logo-container span {
+            font-size: 6rem;
+            cursor: default;
+            color: var(--text-primary); /* MODIFIED */
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        /* Staggered animation delays for the main preloader */
+        #preloader .logo-container > span:nth-of-type(1) { animation-delay: 0.2s; } /* m */
+        #preloader .logo-container > span:nth-of-type(4) { animation-delay: 0.8s; } /* n */
+        #preloader .logo-container > span:nth-of-type(5) { animation-delay: 1.0s; } /* t */
+        #preloader .logo-container > span:nth-of-type(6) { animation-delay: 1.2s; } /* o */
+        #preloader .logo-container > span:nth-of-type(7) { animation-delay: 1.4s; } /* r */
+
+        /* MODIFIED: Special styling for "AI" from iasmaintor */
+        .logo-container .ai {
+            background: linear-gradient(-45deg, #3b82f6, #2563eb, #1d4ed8, #2563eb);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient-animation 4s ease infinite, slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        /* ADDED: iasmaintor gradient animation */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #preloader .logo-container > span.ai:nth-of-type(2) { animation-delay: 0.4s; }
+        #preloader .logo-container > span.ai:nth-of-type(3) { animation-delay: 0.6s; }
+
+        /* --- Logo Size Overrides for different contexts --- */
+        .header-logo span { font-size: 1.75rem; }
+        .inline-loader span { font-size: 3rem; }
+        
+        /* --- Evaluation Panel Loader (to match preloader) --- */
+        .inline-loader > span:nth-of-type(1) { animation-delay: 0.2s; }
+        .inline-loader > span.ai:nth-of-type(2) { animation-delay: 0.4s; }
+        .inline-loader > span.ai:nth-of-type(3) { animation-delay: 0.6s; }
+        .inline-loader > span:nth-of-type(4) { animation-delay: 0.8s; }
+        .inline-loader > span:nth-of-type(5) { animation-delay: 1.0s; }
+        .inline-loader > span:nth-of-type(6) { animation-delay: 1.2s; }
+        .inline-loader > span:nth-of-type(7) { animation-delay: 1.4s; }
+
+
+        /* --- Logo Animation Keyframes --- */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* REMOVED: aiReveal and pulseGlow animations, replaced by iasmaintor's */
+
+        /* --- Responsive Typography for Logo --- */
+        @media (max-width: 768px) {
+            .logo-container span { font-size: 4rem; }
+            .header-logo span { font-size: 1.5rem; }
+            .inline-loader span { font-size: 2.5rem; }
+        }
+        @media (max-width: 480px) {
+            .logo-container span { font-size: 3rem; }
+            .header-logo span { font-size: 1.25rem; }
+            .inline-loader span { font-size: 2rem; }
+        }
+        
+        /* MODIFIED: Button Styles */
+        #evaluate-btn {
+            background-color: var(--brand-primary);
+        }
+        #evaluate-btn:hover {
+            background-color: var(--brand-primary-hover);
+        }
+        #generate-btn {
+            background-color: var(--color-green-DEFAULT); /* MODIFIED */
+            color: var(--text-white);
+        }
+        #generate-btn:hover {
+            background-color: var(--color-green-dark); /* MODIFIED */
+        }
+        #clear-all-btn {
+            color: var(--text-secondary);
+        }
+        #clear-all-btn:hover {
+            color: var(--brand-primary);
+        }
+        
+    </style>
+</head>
+
+<body class="text-slate-800"> <div id="preloader">
+        <div class="logo-container">
+            <span>m</span><span class="ai">A</span><span class="ai">I</span><span>n</span><span>t</span><span>o</span><span>r</span>
+        </div>
+    </div>
+
+    <div id="app" class="flex flex-col min-h-screen">
+        <header style="background-color: rgba(248, 250, 252, 0.8); border-bottom-color: var(--border-primary);" class="shadow-sm sticky top-0 z-10 backdrop-blur-md border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                <div class="logo-container header-logo">
+                    <span>m</span><span class="ai">A</span><span class="ai">I</span><span>n</span><span>t</span><span>o</span><span>r</span>
+                </div>
+                <button id="clear-all-btn" class="flex items-center gap-2 text-sm font-medium transition-all duration-300 transform hover:scale-105">
+                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" y2="17"/><line x1="14" y1="11" y2="17"/></svg>
+                    Clear All
+                </button>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex-grow w-full">
+            <div class="grid grid-cols-1 gap-8">
+                
+                <div class="space-y-6">
+                    <div class="modern-card p-4 sm:p-6 rounded-xl fade-in" style="animation-delay: 0.1s;">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-3" style="color: var(--text-tertiary);">
+                            <svg class="w-6 h-6" style="color: var(--brand-primary);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                            UPSC Question
+                        </h2>
+                        <div class="relative">
+                            <textarea id="question-textarea" class="w-full p-3 pr-12 rounded-lg transition duration-200 min-h-[150px] text-base" placeholder="Paste question text here, or drag & drop a file..."></textarea>
+                            <label class="absolute top-2 right-2 p-2 rounded-full hover:bg-slate-200 cursor-pointer transition-all duration-200 transform hover:scale-110">
+                                <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                                <input id="question-file-input" type="file" accept="image/*,application/pdf" class="hidden" />
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="modern-card p-4 sm:p-6 rounded-xl fade-in" style="animation-delay: 0.2s;">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-3" style="color: var(--text-tertiary);">Preferred Evaluation Method</h2>
+                        <div class="relative flex items-center p-1 rounded-full radio-toggle" style="background-color: var(--bg-secondary);">
+                            <input type="radio" name="evaluationType" id="ai-eval" value="ai" checked>
+                            <label for="ai-eval" class="radio-toggle-label w-1/2 text-center">AI Evaluation</label>
+                            
+                            <input type="radio" name="evaluationType" id="model-eval" value="model">
+                            <label for="model-eval" class="radio-toggle-label w-1/2 text-center">Model Answer</label>
+                            
+                            <div class="radio-toggle-bg"></div>
+                        </div>
+                    </div>
+
+                    <div id="model-answer-card" class="modern-card p-4 sm:p-6 rounded-xl hidden">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-3" style="color: var(--text-tertiary);">
+                            <svg class="w-6 h-6" style="color: var(--brand-primary);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                            Model Answer
+                        </h2>
+                        <div class="relative">
+                             <div id="model-answer-editor" contenteditable="true" 
+                                  class="w-full p-3 rounded-lg transition duration-200 min-h-[150px] text-base overflow-y-auto" 
+                                  data-placeholder="Paste formatted model answer here, or drag & drop a file..."></div>
+                            <label class="absolute top-2 right-2 p-2 rounded-full hover:bg-slate-200 cursor-pointer transition-all duration-200 transform hover:scale-110">
+                                <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                                <input id="model-answer-file-input" type="file" accept="image/*,application/pdf" class="hidden" />
+                            </label>
+                        </div>
+                        <p class="text-xs mt-2" style="color: var(--text-muted);">For text-based PDFs, paste content directly for best results. For image-based PDFs, upload will only OCR the first page.</p>
+                    </div>
+
+                    <div class="modern-card p-4 sm:p-6 rounded-xl fade-in" style="animation-delay: 0.3s;">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-3" style="color: var(--text-tertiary);">
+                            <svg class="w-6 h-6" style="color: var(--brand-primary);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                            Your Answer
+                        </h2>
+                        <div class="relative">
+                            <textarea id="answer-textarea" class="w-full p-3 pr-12 rounded-lg transition duration-200 min-h-[120px] text-base" placeholder="Paste answer text here, or drag & drop images..."></textarea>
+                            <label class="absolute top-2 right-2 p-2 rounded-full hover:bg-slate-200 cursor-pointer transition-all duration-200 transform hover:scale-110">
+                                <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                                <input id="answer-file-input" type="file" accept="image/*" multiple class="hidden" />
+                            </label>
+                        </div>
+                        <div id="answer-files-container" class="mt-4 space-y-2"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 fade-in" style="animation-delay: 0.4s;">
+                        <button id="evaluate-btn" class="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-semibold rounded-lg shadow-lg disabled:bg-slate-400 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+                            Evaluate Answer
+                        </button>
+                        <button id="generate-btn" class="w-full flex items-center justify-center gap-2 px-4 py-3 font-semibold rounded-lg shadow-lg disabled:bg-slate-400 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8-5.8 1.9 5.8 1.9L12 18l1.9-5.8 5.8-1.9-5.8-1.9L12 3z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                            Generate Model Answer
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="modern-card p-4 sm:p-6 rounded-xl min-h-[600px] fade-in" style="animation-delay: 0.5s;">
+                        <div class="flex justify-between items-start mb-4">
+                            <h2 class="text-xl font-semibold flex items-center gap-3" style="color: var(--text-tertiary);">
+                                <svg class="w-6 h-6" style="color: var(--brand-primary);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                                Evaluation Panel
+                            </h2>
+                            <button id="copy-output-btn" class="hidden flex-shrink-0 items-center gap-2 text-sm font-medium transition-all duration-300 transform hover:scale-105 p-2 rounded-lg hover:bg-slate-100" style="color: var(--text-secondary);">
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                                Copy
+                            </button>
+                        </div>
+                        <div id="output-container">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center py-6 text-sm border-t" style="color: var(--text-muted); border-color: var(--border-primary); background-color: var(--bg-secondary);">
+            <p>Created with ❤️ by Poindexter</p>
+        </footer>
+    </div>
+    
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 w-full max-w-xs space-y-3"></div>
+
+<script>
+    // --- Application Logic ---
+    // Wrapped in an Immediately Invoked Function Expression (IIFE) to avoid polluting the global scope.
+    (function() {
+        /**
+         * IMPORTANT: SECURITY & API USAGE
+         * This application is now configured to use a backend proxy.
+         * All API calls are sent to the `PROXY_API_URL` endpoint.
+         * Your backend server at that endpoint is responsible for securely attaching the API key
+         * and forwarding the request to the Google AI API.
+         */
+        const PROXY_API_URL = '/api/proxy'; // The proxy endpoint from the original code.
+
+        // --- 1. STATE MANAGEMENT ---
+        // A single source of truth for the application's state.
+        const state = {
+            questionText: '',
+            answerText: '',
+            modelAnswerText: '',
+            answerFiles: [], // Array of { id, file } objects
+            loading: { 
+                ocrQuestion: false, 
+                ocrModelAnswer: false, 
+                evaluate: false, 
+                generate: false 
+            },
+            currentResult: null, // Can be evaluation or generated answer
+            currentResultType: null, // 'evaluation' or 'modelAnswer'
+            currentMessage: '',
+            evaluationType: 'ai', // 'ai' or 'model'
+        };
+
+        // --- 2. DOM ELEMENT CACHE ---
+        // Caching DOM elements for performance.
+        const dom = {};
+
+        // --- 3. CORE APPLICATION LOGIC (app object) ---
+        // Modularizing the code into logical units.
+        const app = {
+            /**
+             * Initializes the application, caches DOM elements, and sets up event listeners.
+             */
+            init() {
+                this.cacheDom();
+                this.bindEvents();
+                this.ui.update(); // Initial render based on default state.
+                this.utils.hidePreloader();
+            },
+
+            /**
+             * Caches frequently accessed DOM elements into the `dom` object.
+             */
+            cacheDom() {
+                dom.questionTextarea = document.getElementById('question-textarea');
+                dom.questionFileInput = document.getElementById('question-file-input');
+                dom.answerTextarea = document.getElementById('answer-textarea');
+                dom.answerFileInput = document.getElementById('answer-file-input');
+                dom.answerFilesContainer = document.getElementById('answer-files-container');
+                dom.evaluateBtn = document.getElementById('evaluate-btn');
+                dom.generateBtn = document.getElementById('generate-btn');
+                dom.outputContainer = document.getElementById('output-container');
+                dom.modelAnswerCard = document.getElementById('model-answer-card');
+                dom.modelAnswerEditor = document.getElementById('model-answer-editor');
+                dom.modelAnswerFileInput = document.getElementById('model-answer-file-input');
+                dom.evaluationTypeRadios = document.querySelectorAll('input[name="evaluationType"]');
+                dom.clearAllBtn = document.getElementById('clear-all-btn');
+                dom.copyOutputBtn = document.getElementById('copy-output-btn');
+            },
+
+            /**
+             * Binds all necessary event listeners.
+             */
+            bindEvents() {
+                // Text input listeners
+                dom.questionTextarea.addEventListener('input', e => this.state.setQuestionText(e.target.value));
+                dom.answerTextarea.addEventListener('input', e => this.state.setAnswerText(e.target.value));
+                dom.modelAnswerEditor.addEventListener('input', e => this.state.setModelAnswerText(e.target.innerHTML));
+
+                // File input listeners
+                dom.questionFileInput.addEventListener('change', e => this.handlers.handleFileUpload(e, 'question'));
+                dom.answerFileInput.addEventListener('change', this.handlers.handleAnswerImageUpload);
+                dom.modelAnswerFileInput.addEventListener('change', e => this.handlers.handleFileUpload(e, 'modelAnswer'));
+
+                // Radio button listeners
+                dom.evaluationTypeRadios.forEach(radio => {
+                    radio.addEventListener('change', e => this.state.setEvaluationType(e.target.value));
+                });
+                
+                // Button click listeners
+                dom.evaluateBtn.addEventListener('click', this.handlers.evaluate);
+                dom.generateBtn.addEventListener('click', this.handlers.generate);
+                dom.clearAllBtn.addEventListener('click', this.handlers.clearAll);
+                dom.copyOutputBtn.addEventListener('click', this.utils.copyOutputToClipboard);
+
+                // Setup Drag & Drop for input areas
+                this.utils.setupDragAndDrop(dom.questionTextarea.closest('.modern-card'), dom.questionTextarea, e => this.handlers.handleFileUpload(e, 'question'));
+                this.utils.setupDragAndDrop(dom.answerTextarea.closest('.modern-card'), dom.answerTextarea, this.handlers.handleAnswerImageUpload);
+                this.utils.setupDragAndDrop(dom.modelAnswerEditor.closest('.modern-card'), dom.modelAnswerEditor, e => this.handlers.handleFileUpload(e, 'modelAnswer'));
+            },
+
+            // --- 3a. State Mutations ---
+            // Centralized functions for updating state to ensure consistency.
+            state: {
+                setLoading(key, value) {
+                    state.loading[key] = value;
+                    app.ui.update();
+                },
+                setQuestionText(text) {
+                    state.questionText = text;
+                    app.ui.updateButtons();
+                },
+                setAnswerText(text) {
+                    state.answerText = text;
+                    app.ui.updateButtons();
+                },
+                setModelAnswerText(html) {
+                    state.modelAnswerText = html;
+                    app.ui.updateButtons();
+                },
+                addAnswerFiles(files) {
+                    const sortedFiles = Array.from(files).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+                    const newFilesWithIds = sortedFiles.map(file => ({ id: crypto.randomUUID(), file }));
+                    state.answerFiles = [...state.answerFiles, ...newFilesWithIds];
+                    state.answerText = ''; // Clear text if files are added
+                    state.currentResult = null;
+                    app.ui.update();
+                },
+                removeAnswerFile(id) {
+                    state.answerFiles = state.answerFiles.filter(f => f.id !== id);
+                    app.ui.update();
+                },
+                setEvaluationType(type) {
+                    state.evaluationType = type;
+                    app.ui.update();
+                },
+                setResult(result, type) {
+                    state.currentResult = result;
+                    state.currentResultType = type;
+                    app.ui.update();
+                },
+                clearAll() {
+                    state.questionText = '';
+                    state.answerText = '';
+                    state.modelAnswerText = '';
+                    state.answerFiles = [];
+                    state.currentResult = null;
+                    state.currentResultType = null;
+                    state.evaluationType = 'ai';
+                    
+                    // Reset file inputs
+                    if(dom.questionFileInput) dom.questionFileInput.value = '';
+                    if(dom.answerFileInput) dom.answerFileInput.value = '';
+                    if(dom.modelAnswerFileInput) dom.modelAnswerFileInput.value = '';
+                    
+                    if(document.getElementById('ai-eval')) {
+                        document.getElementById('ai-eval').checked = true;
+                    }
+                    app.ui.update();
+                },
+            },
+
+            // --- 3b. Event Handlers ---
+            handlers: {
+                async handleFileUpload(event, type) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const ocrKey = `ocr${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                    app.state.setLoading(ocrKey, true);
+                    app.ui.showToast(`Performing OCR on ${type} file...`);
+
+                    try {
+                        const ocrText = await app.api.performOcr(file);
+                        if (type === 'question') {
+                            app.state.setQuestionText(ocrText);
+                        } else if (type === 'modelAnswer') {
+                            // Since modelAnswerEditor is contenteditable, we set its innerHTML
+                            // and update state. A simple sanitizer is used.
+                            const sanitizedText = app.utils.sanitizeHtml(ocrText);
+                            dom.modelAnswerEditor.innerHTML = sanitizedText;
+                            app.state.setModelAnswerText(sanitizedText);
+                        }
+                        app.ui.showToast(`OCR for ${type} successful.`);
+                    } catch (error) {
+                        console.error(`OCR Error for ${type}:`, error);
+                        app.ui.showToast(error.message, true);
+                    } finally {
+                        app.state.setLoading(ocrKey, false);
+                    }
+                },
+
+                handleAnswerImageUpload(event) {
+                    const files = event.target.files;
+                    if (!files || files.length === 0) return;
+
+                    if (state.answerFiles.length + files.length > 10) {
+                        app.ui.showToast('Maximum of 10 images allowed.', true);
+                        return;
+                    }
+                    app.state.addAnswerFiles(files);
+                    app.ui.showToast(`Added ${files.length} image(s).`);
+                },
+                
+                async evaluate() {
+                    app.state.setResult(null, null); // Clear previous results
+                    app.state.setLoading('evaluate', true);
+                    
+                    try {
+                        let result;
+                        if (state.evaluationType === 'ai') {
+                            app.ui.showToast('Performing comprehensive AI evaluation...');
+                            result = await app.api.evaluateWithAI();
+                        } else {
+                            app.ui.showToast('Evaluating based on model answer...');
+                            result = await app.api.evaluateWithModelAnswer();
+                        }
+                        
+                        if (result) {
+                            app.state.setResult(result, 'evaluation');
+                            app.ui.showToast('Evaluation complete!');
+                        } else {
+                            throw new Error('Could not get a valid AI evaluation.');
+                        }
+                    } catch (error) {
+                        console.error('Evaluation Error:', error);
+                        app.ui.showToast(error.message, true);
+                    } finally {
+                        app.state.setLoading('evaluate', false);
+                    }
+                },
+                
+                async generate() {
+                    app.state.setResult(null, null); // Clear previous results
+                    app.state.setLoading('generate', true);
+                    app.ui.showToast('Generating comprehensive model answer...');
+
+                    try {
+                        const result = await app.api.generateFullModelAnswer();
+                        if (result) {
+                           app.state.setResult(result, 'modelAnswer');
+                           app.ui.showToast('Model answer generation complete!');
+                        } else {
+                            throw new Error('Could not generate a model answer.');
+                        }
+                    } catch (error) {
+                        console.error('Generation Error:', error);
+                        app.ui.showToast(error.message, true);
+                    } finally {
+                        app.state.setLoading('generate', false);
+                    }
+                },
+
+                clearAll() {
+                    app.state.clearAll();
+                    app.ui.showToast('All fields cleared.');
+                },
+            },
+
+            // --- 3c. API Interaction ---
+            api: {
+                async performOcr(file) {
+                    const base64Image = await app.utils.fileToBase64(file);
+                    const prompt = "Extract all text from this image or PDF page, including handwritten text, in its original language (English or Hindi). Provide only the extracted text as plain text without any conversational filler or formatting.";
+                    
+                    const payload = {
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: file.type, data: base64Image } }
+                            ]
+                        }]
+                    };
+                    
+                    const result = await this._fetchFromProxy({ mode: 'ocr', payload: payload });
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!text) throw new Error('Could not extract text from file.');
+                    return text;
+                },
+
+                async evaluateWithAI() {
+                    if (!state.questionText.trim() || (!state.answerText.trim() && state.answerFiles.length === 0)) {
+                        throw new Error('Please provide a question and an answer.');
+                    }
+                    const { prompt, payloadParts } = await this._buildEvaluationPayload('ai');
+                    const systemInstruction = { parts: [{ text: "You are a helpful and encouraging UPSC exam mentor. Address the user directly as 'you' and provide constructive, detailed feedback in a conversational tone. Never refer to the user as 'the candidate'." }]};
+                    return await this._callEvaluationApiWithSchema(prompt, systemInstruction, payloadParts);
+                },
+
+                async evaluateWithModelAnswer() {
+                     if (!state.modelAnswerText.trim()) throw new Error('Please provide the model answer.');
+                     const { prompt, payloadParts } = await this._buildEvaluationPayload('model');
+                     const systemInstruction = { parts: [{ text: "You are an analytical UPSC exam mentor. Compare the user's answer against the provided model answer meticulously. Address the user directly as 'you' and provide feedback based on the comparison." }]};
+                     return await this._callEvaluationApiWithSchema(prompt, systemInstruction, payloadParts);
+                },
+
+                async generateFullModelAnswer() {
+                    if (!state.questionText.trim()) throw new Error('Please provide a question.');
+                    const { inferredWordLimit } = app.utils.getInferredLimits(state.questionText);
+                    const language = app.utils.detectLanguage(state.questionText);
+                    const isHindi = language === 'hi';
+                    
+                    const targetWordCount = (inferredWordLimit === '150 words') ? (isHindi ? '४५०-५०० शब्दों' : '450-500 words') : (isHindi ? '६५०-७०० शब्दों' : '650-700 words');
+                    const prompt = `Write a comprehensive, well-structured model answer for the following UPSC question. This answer is for a detailed study resource, so it should be more in-depth than a standard exam answer, targeting a word count of ${targetWordCount}. Structure the answer with a clear Introduction, Body, and Conclusion. Use Markdown for formatting: '##' for main headings, '###' for subheadings, and bullet points ('* ' or '- '). **Throughout the body of the answer, incorporate simple text-based arrow diagrams or flowcharts (using characters like ->, |, etc.) where they can help explain processes, timelines, or relationships. Please wrap these diagrams in Markdown code blocks (\`\`\`) for clear formatting.** The content must be accurate, relevant, and cover all aspects of the question in detail. The tone should be formal and academic. The question is: "${state.questionText}"`;
+
+                    const systemInstruction = { parts: [{ text: `You are a UPSC subject matter expert creating a detailed study resource in ${isHindi ? 'Hindi' : 'English'}.` }]};
+                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }], systemInstruction };
+                    
+                    const result = await this._fetchFromProxy({ mode: 'generate', payload: payload });
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!text) throw new Error('Failed to generate model answer.');
+                    return text;
+                },
+                
+                async _buildEvaluationPayload(evalType) {
+                    const { inferredMaxMarks } = app.utils.getInferredLimits(state.questionText);
+                    const language = app.utils.detectLanguage(state.questionText);
+                    const isHindi = language === 'hi';
+                    
+                    let answerContentPrompt = state.answerFiles.length > 0
+                        ? (isHindi ? "मेरा उत्तर निम्नलिखित छवियों में है। कृपया इन छवियों से सीधे हस्तलिखित पाठ और किसी भी आरेख का विश्लेषण करें।" : "My answer is in the following images. Please analyze the handwritten text and any diagrams directly from these images.")
+                        : (isHindi ? `मेरा उत्तर है: "${state.answerText}"` : `My answer is: "${state.answerText}"`);
+
+                    // Convert model answer HTML to plain text for the prompt
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = state.modelAnswerText;
+                    const modelAnswerPlainText = tempDiv.textContent || tempDiv.innerText || "";
+
+                    const promptTemplate = {
+                        question: isHindi ? `प्रश्न: "${state.questionText}"` : `Question: "${state.questionText}"`,
+                        answer: answerContentPrompt,
+                        modelAnswer: evalType === 'model' ? (isHindi ? `मॉडल उत्तर: "${modelAnswerPlainText}"` : `Model Answer: "${modelAnswerPlainText}"`) : '',
+                        maxMarks: isHindi ? `अधिकतम अंक: ${inferredMaxMarks}` : `Maximum Marks: ${inferredMaxMarks}`,
+                        instruction: isHindi 
+                            ? "कृपया अपनी प्रतिक्रिया **केवल** JSON प्रारूप में प्रदान करें। यह महत्वपूर्ण है कि आप दिए गए उत्तर का सावधानीपूर्वक विश्लेषण करें। **अपने 'suggestions' और 'suggestions_for_improvement' फ़ील्ड में, जहाँ भी किसी प्रक्रिया या प्रवाह को स्पष्ट किया जा सकता है, अपनी बात को स्पष्ट करने के लिए एक सरल टेक्स्ट-आधारित तीर आरेख (जैसे, `अवधारणा A -> अवधारणा B`) प्रदान करें।** सभी फ़ीडबैक फ़ील्ड में संवादात्मक, मेंटर जैसी टोन का उपयोग करें।"
+                            : "Please provide your response **ONLY** in JSON format. It is crucial that you meticulously analyze the entire answer provided. **In your 'suggestions' and 'suggestions_for_improvement' fields, wherever a process or flow can be clarified, provide a simple text-based arrow diagram (e.g., `Concept A -> Concept B`) to illustrate your point.** Use a conversational, mentor-like tone in all feedback fields. Use markdown bullet points (* or -) for feedback."
+                    };
+
+                    const prompt = `${promptTemplate.question}\n${promptTemplate.answer}\n${promptTemplate.modelAnswer}\n${promptTemplate.maxMarks}\n\n${promptTemplate.instruction}`;
+                    
+                    const payloadParts = [{ text: prompt }];
+                    if (state.answerFiles.length > 0) {
+                        for (const item of state.answerFiles) {
+                            const base64Image = await app.utils.fileToBase64(item.file);
+                            payloadParts.push({ inlineData: { mimeType: item.file.type, data: base64Image } });
+                        }
+                    }
+                    return { prompt, payloadParts };
+                },
+
+                async _callEvaluationApiWithSchema(prompt, systemInstruction, payloadParts) {
+                     const payload = {
+                          contents: [{ role: "user", parts: payloadParts }],
+                          systemInstruction,
+                          generationConfig: {
+                              responseMimeType: "application/json",
+                              responseSchema: { type: "OBJECT", properties: { "score": { "type": "NUMBER" }, "maxMarks": { "type": "NUMBER" }, "introduction_evaluation": { type: "OBJECT", properties: { "strengths": { "type": "STRING" }, "weaknesses": { "type": "STRING" }, "suggestions": { "type": "STRING" } } }, "body_paragraphs_evaluation": { type: "ARRAY", items: { type: "OBJECT", properties: { "paragraph_start": { "type": "STRING" }, "strengths": { "type": "STRING" }, "weaknesses": { "type": "STRING" }, "suggestions_for_improvement": { "type": "STRING" } } } }, "conclusion_evaluation": { type: "OBJECT", properties: { "strengths": { "type": "STRING" }, "weaknesses": { "type": "STRING" }, "suggestions": { "type": "STRING" } } }, "overall_feedback": { "type": "STRING" } } }
+                          },
+                     };
+                     const result = await this._fetchFromProxy({ mode: 'evaluate', payload: payload });
+                     const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                     if (!jsonText) return null;
+                     return JSON.parse(jsonText);
+                },
+
+                async _fetchFromProxy(body, retries = 3) {
+                    for (let i = 0; i < retries; i++) {
+                        try {
+                            const response = await fetch(PROXY_API_URL, { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify(body) 
+                            });
+
+                            if (response.status === 429) { // Too Many Requests
+                                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                                await new Promise(res => setTimeout(res, delay));
+                                continue;
+                            }
+                            
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: 'An unknown API error occurred.' }));
+                                throw new Error(`API Error: ${response.status} - ${errorData.error?.message || JSON.stringify(errorData)}`);
+                            }
+                            return await response.json();
+                        } catch (error) {
+                            if (i === retries - 1) throw error;
+                            const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                            await new Promise(res => setTimeout(res, delay));
+                        }
+                    }
+                },
+            },
+
+            // --- 3d. UI Rendering & Updates ---
+            ui: {
+                update() {
+                    // Sync inputs with state
+                    dom.questionTextarea.value = state.questionText;
+                    dom.answerTextarea.value = state.answerText;
+                    if (document.activeElement !== dom.modelAnswerEditor) {
+                        dom.modelAnswerEditor.innerHTML = state.modelAnswerText;
+                    }
+                    dom.answerTextarea.readOnly = state.answerFiles.length > 0;
+                    
+                    // Toggle model answer card visibility
+                    if (state.evaluationType === 'model') {
+                        dom.modelAnswerCard.classList.remove('hidden');
+                        dom.modelAnswerCard.classList.add('fade-in');
+                    } else {
+                        dom.modelAnswerCard.classList.add('hidden');
+                    }
+
+                    this.renderAnswerFiles();
+                    this.renderOutput();
+                    this.updateButtons();
+                },
+
+                updateButtons() {
+                    const isAnyLoading = Object.values(state.loading).some(Boolean);
+                    let isEvaluateDisabled = isAnyLoading || !state.questionText.trim() || (!state.answerText.trim() && state.answerFiles.length === 0);
+                    if (state.evaluationType === 'model' && !state.modelAnswerText.trim()) {
+                        isEvaluateDisabled = true;
+                    }
+                    dom.evaluateBtn.disabled = isEvaluateDisabled;
+                    dom.generateBtn.disabled = isAnyLoading || !state.questionText.trim();
+                },
+
+                renderAnswerFiles() {
+                    dom.answerFilesContainer.innerHTML = '';
+                    state.answerFiles.forEach(item => {
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = "flex items-center justify-between p-2 rounded-md text-sm";
+                        fileDiv.style.backgroundColor = 'var(--bg-secondary)'; // MODIFIED
+                        fileDiv.innerHTML = `
+                            <span class="truncate" style="color: var(--text-tertiary);">${item.file.name}</span>
+                            <button data-file-id="${item.id}" class="remove-file-btn p-1 transition-colors" style="color: var(--text-muted);">
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" y2="17"/><line x1="14" y1="11" y2="17"/></svg>
+                            </button>
+                        `;
+                        // Add hover effect via JS
+                        const btn = fileDiv.querySelector('.remove-file-btn');
+                        btn.onmouseenter = () => btn.style.color = '#ef4444'; // red-500
+                        btn.onmouseleave = () => btn.style.color = 'var(--text-muted)';
+                        btn.onclick = () => app.state.removeAnswerFile(item.id);
+                        
+                        dom.answerFilesContainer.appendChild(fileDiv);
+                    });
+                },
+
+                renderOutput() {
+                    const isAnyLoading = Object.values(state.loading).some(Boolean);
+                    dom.copyOutputBtn.classList.toggle('hidden', isAnyLoading || !state.currentResult);
+
+                    if (isAnyLoading) {
+                        const loadingMessage = state.loading.evaluate ? 'Evaluating...' : state.loading.generate ? 'Generating...' : 'Processing...';
+                        dom.outputContainer.innerHTML = this._getLoadingHtml(loadingMessage);
+                    } else if (state.currentResult) {
+                        if (state.currentResultType === 'evaluation') {
+                            dom.outputContainer.innerHTML = this._getEvaluationHtml(state.currentResult);
+                        } else if (state.currentResultType === 'modelAnswer') {
+                            dom.outputContainer.innerHTML = this._getModelAnswerHtml(state.currentResult);
+                        }
+                    } else {
+                        dom.outputContainer.innerHTML = this._getPlaceholderHtml();
+                    }
+                },
+                
+                showToast(message, isError = false, duration = 4000) {
+                    const toastContainer = document.getElementById('toast-container');
+                    if (!toastContainer || !message) return;
+                    
+                    const toast = document.createElement('div');
+                    const baseClasses = 'p-4 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium w-full';
+                    // MODIFIED: Toast colors to match iasmaintor
+                    const typeClasses = isError 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-white text-slate-800 border';
+                    toast.className = `${baseClasses} ${typeClasses} toast-in`;
+                    if (!isError) toast.style.borderColor = 'var(--border-primary)';
+                    
+                    const icon = isError 
+                        ? `<svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+                        : `<svg class="w-6 h-6 flex-shrink-0" style="color: var(--brand-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                    
+                    toast.innerHTML = `${icon}<span style="color: var(--text-primary);">${message}</span>`;
+                    toastContainer.appendChild(toast);
+
+                    setTimeout(() => {
+                        toast.classList.remove('toast-in');
+                        toast.classList.add('toast-out');
+                        toast.addEventListener('animationend', () => toast.remove());
+                    }, duration);
+                },
+
+                // --- HTML Template Helpers for renderOutput ---
+                _getLoadingHtml(message) {
+                    return `
+                        <div class="flex flex-col items-center justify-center h-96">
+                            <div class="logo-container inline-loader">
+                                <span>m</span><span class="ai">A</span><span class="ai">I</span><span>n</span><span>t</span><span>o</span><span>r</span>
+                            </div>
+                            <p class="mt-4 font-medium" style="color: var(--text-secondary);">${message}</p>
+                        </div>`;
+                },
+                _getPlaceholderHtml() {
+                    return `
+                        <div class="flex flex-col items-center justify-center h-96 text-center">
+                            <svg class="w-16 h-16" style="color: var(--border-secondary);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                            <p class="mt-4" style="color: var(--text-secondary);">Your evaluation report will appear here.</p>
+                            <p class="text-sm" style="color: var(--text-muted);">Enter a question and answer, then click "Evaluate".</p>
+                        </div>`;
+                },
+                _getModelAnswerHtml(content) {
+                    return `
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-2" style="color: var(--text-tertiary);">Model Answer:</h3>
+                                <div class="prose prose-sm max-w-none">${app.utils.renderMarkdown(content)}</div>
+                            </div>
+                        </div>`;
+                },
+                _getEvaluationHtml(result) {
+                    // MODIFIED: All text and backgrounds use iasmaintor variables
+                    const renderSection = (title, data) => `
+                        <div style="background-color: var(--bg-primary);" class="p-4 rounded-lg">
+                            <h4 class="font-semibold mb-2" style="color: var(--text-tertiary);">${title}</h4>
+                            <div class="prose prose-sm max-w-none space-y-3" style="color: var(--text-secondary);">
+                                <div><p class="font-semibold" style="color: var(--text-secondary);">Strengths:</p>${app.utils.renderMarkdown(data?.strengths)}</div>
+                                <div><p class="font-semibold" style="color: var(--text-secondary);">Weaknesses:</p>${app.utils.renderMarkdown(data?.weaknesses)}</div>
+                                <div><p class="font-semibold" style="color: var(--text-secondary);">Suggestions for Improvement:</p>${app.utils.renderMarkdown(data?.suggestions)}</div>
+                            </div>
+                        </div>`;
+
+                    const bodyHtml = (result.body_paragraphs_evaluation || []).map((index, para) => `
+                        <div class="pt-4">
+                            <h5 class="font-semibold" style="color: var(--text-tertiary);">Paragraph ${index + 1}: <span class="font-normal italic" style="color: var(--text-muted);">"${para.paragraph_start || ''}..."</span></h5>
+                            <div class="prose prose-sm max-w-none mt-2 space-y-3" style="color: var(--text-secondary);">
+                                <div><p class="font-semibold" style="color: var(--text-secondary);">Strengths:</p>${app.utils.renderMarkdown(para.strengths)}</div>
+                                <div><p class="font-semibold" style="color: var(--text-secondary);">Weaknesses:</p>${app.utils.renderMarkdown(para.weaknesses)}</div>
+                                <div><p class="font-semibold" style="color: var(--text-secondary);">Suggestions for Improvement:</p>${app.utils.renderMarkdown(para.suggestions_for_improvement)}</div>
+                            </div>
+                        </div>`).join('<hr class="my-4" style="border-color: var(--border-primary);">');
+
+                    return `
+                        <div class="space-y-6">
+                            <div class="text-center p-4 rounded-lg" style="background-color: var(--bg-secondary);">
+                                <h3 class="text-sm font-medium" style="color: var(--text-secondary);">Score</h3>
+                                <p class="text-4xl font-bold mt-1 tracking-tight" style="color: var(--brand-primary);">${result.score} / ${result.maxMarks}</p>
+                            </div>
+                            <div class="space-y-4">
+                                <h3 class="text-xl font-semibold border-b pb-2" style="color: var(--text-primary); border-color: var(--border-primary);">Detailed Evaluation</h3>
+                                ${renderSection('A. Introduction Evaluation', result.introduction_evaluation)}
+                                <div style="background-color: var(--bg-primary);" class="p-4 rounded-lg">
+                                    <h4 class="font-semibold mb-2" style="color: var(--text-tertiary);">B. Body Paragraphs Evaluation</h4>
+                                    ${bodyHtml}
+                                </div>
+                                ${renderSection('C. Conclusion Evaluation', result.conclusion_evaluation)}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold mb-2" style="color: var(--text-tertiary);">Overall Feedback:</h3>
+                                <div class="prose prose-sm max-w-none">${app.utils.renderMarkdown(result.overall_feedback)}</div>
+                            </div>
+                        </div>`;
+                }
+            },
+            
+            // --- 3e. Utility Functions ---
+            utils: {
+                hidePreloader() {
+                    const preloader = document.getElementById('preloader');
+                    if (preloader) {
+                        setTimeout(() => preloader.classList.add('hidden'), 2000); // Let animation play out
+                    }
+                },
+                getInferredLimits(questionText) {
+                    let inferredMaxMarks = 10;
+                    let inferredWordLimit = '150 words';
+                    const lowerCaseText = questionText.toLowerCase();
+                    if (lowerCaseText.includes('250 words') || questionText.includes('२५० शब्दों')) {
+                        inferredMaxMarks = 15;
+                        inferredWordLimit = '250 words';
+                    }
+                    return { inferredMaxMarks, inferredWordLimit };
+                },
+                detectLanguage(text) {
+                    return /[\u0900-\u097F]/.test(text) ? 'hi' : 'en';
+                },
+                fileToBase64(file) {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.onerror = error => reject(error);
+                    });
+                },
+                setupDragAndDrop(containerElem, inputElem, fileHandler) {
+                    if (!containerElem || !inputElem) return;
+                    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                        containerElem.addEventListener(eventName, e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }, false);
+                    });
+                    ['dragenter', 'dragover'].forEach(eventName => containerElem.addEventListener(eventName, () => containerElem.classList.add('drag-over'), false));
+                    ['dragleave', 'drop'].forEach(eventName => containerElem.addEventListener(eventName, () => containerElem.classList.remove('drag-over'), false));
+                    containerElem.addEventListener('drop', e => {
+                        const files = e.dataTransfer.files;
+                        if (files && files.length) fileHandler({ target: { files } });
+                    }, false);
+                    inputElem.addEventListener('paste', e => {
+                        const files = e.clipboardData.files;
+                        if (files && files.length > 0) {
+                            e.preventDefault();
+                            fileHandler({ target: { files } });
+                        }
+                    });
+                },
+                // Basic HTML sanitizer to prevent XSS from pasted content in contenteditable.
+                // For a real app, a more robust library like DOMPurify would be better.
+                sanitizeHtml(htmlString) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.textContent = htmlString;
+                    return tempDiv.innerHTML;
+                },
+                copyOutputToClipboard() {
+                    if (!dom.outputContainer || !dom.outputContainer.innerText.trim()) return;
+                    
+                    const textToCopy = dom.outputContainer.innerText;
+                    // Using a temporary textarea is a robust way to copy text,
+                    // especially in environments that might restrict the newer Clipboard API.
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        app.ui.showToast('Content copied to clipboard!');
+                    } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                        app.ui.showToast('Could not copy to clipboard.', true);
+                    }
+                    document.body.removeChild(textArea);
+                },
+                /**
+                 * An improved Markdown to HTML renderer.
+                 * Supports headings, bold, italics, lists, and code blocks for diagrams.
+                 */
+                renderMarkdown(markdownText) {
+                    if (!markdownText) return '';
+
+                    // Sanitize to prevent HTML injection, but keep line breaks for processing
+                    const sanitizedText = markdownText.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                    let html = sanitizedText
+                        // Process code blocks first to prevent inner markdown from rendering
+                        .replace(/```([\s\S]*?)```/g, (match, code) => `<pre><code>${code.trim()}</code></pre>`)
+                        // MODIFIED: Headings to use iasmaintor text colors
+                        .replace(/^## (.*$)/g, '<h2 class="text-xl font-bold mt-6 mb-3" style="color: var(--text-primary);">$1</h2>')
+                        .replace(/^### (.*$)/g, '<h3 class="text-lg font-semibold mt-4 mb-2" style="color: var(--text-tertiary);">$1</h3>')
+                        // Process bold and italics
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+                    // Process list items line-by-line
+                    const lines = html.split('\n');
+                    let inList = false;
+                    html = '';
+
+                    for (const line of lines) {
+                        if (line.trim().startsWith('&lt;pre&gt;')) {
+                            if (inList) { html += '</ul>\n'; inList = false; }
+                             html += line + '\n';
+                             continue;
+                        }
+
+                        const trimmedLine = line.trim();
+                        if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+                            if (!inList) {
+                                html += '<ul class="list-disc pl-5 space-y-1">\n';
+                                inList = true;
+                            }
+                            html += `  <li>${trimmedLine.substring(2)}</li>\n`;
+                        } else {
+                            if (inList) {
+                                html += '</ul>\n';
+                                inList = false;
+                            }
+                             if (trimmedLine) {
+                                // Don't wrap headings or existing blocks in <p>
+                                if (!trimmedLine.startsWith('<h') && !trimmedLine.startsWith('<pre>')) {
+                                     html += `<p>${trimmedLine}</p>\n`;
+                                } else {
+                                     html += trimmedLine + '\n';
+                                }
+                            }
+                        }
+                    }
+                    if (inList) {
+                        html += '</ul>\n';
+                    }
+
+                    return html;
+                }
+            }
+        };
+
+        // --- 4. APP INITIALIZATION ---
+        // Start the application once the DOM is fully loaded.
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    })();
+</script>
+
+</body>
+</html>
