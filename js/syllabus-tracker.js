@@ -125,13 +125,13 @@ function showNotification(message, isError = false) {
     if (!el) { console.warn("Notification element not found."); return; }
 
     el.textContent = message;
-    // We remove the z-[60] as it's now handled by style.css
+    // We removed z-[60] from the class string here
     el.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transition-opacity duration-300 pointer-events-none text-white ${isError ? 'bg-red-600' : 'bg-slate-800'} opacity-100`;
-    
+
     if (chatbotContainer) chatbotContainer.classList.add('chatbot-container-lifted'); // LIFT chatbot
 
-    setTimeout(() => { 
-        if (el) el.classList.remove('opacity-100'); 
+    setTimeout(() => {
+        if (el) el.classList.remove('opacity-100');
         if (chatbotContainer) chatbotContainer.classList.remove('chatbot-container-lifted'); // LOWER chatbot
     }, 3000);
 }
