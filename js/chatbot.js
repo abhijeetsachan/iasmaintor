@@ -1,4 +1,4 @@
-// js/chatbot.js (FIXED & RENAMED)
+// js/chatbot.js (FIXED, RENAMED & DYNAMIC)
 
 // Import the new API endpoint, NOT the key
 import { GEMINI_API_ENDPOINT } from './firebase-config.js';
@@ -19,7 +19,6 @@ const GREETINGS = [
     "Greetings, aspirant. I am Drona, here to help you navigate your UPSC journey."
 ];
 
-// *** NEW: Word limit for showing "Read More" ***
 const READ_MORE_WORD_LIMIT = 60;
 
 // --- Core Functions ---
@@ -96,9 +95,10 @@ function toggleChatWindow(forceOpen = null) {
         if (greetingTimeout) clearTimeout(greetingTimeout);
         DOMElements.greetingBubble.classList.add('hidden');
         
-        // Add the first AI message if it's not there
+        // *** MODIFIED: Add greeting and popular searches on first open ***
         if (DOMElements.messages.children.length === 0) {
             addMessage('ai', GREETINGS[0]); // Add a default greeting to chat
+            displayPopularSearches(); // *** UPDATED: Now fetches dynamically ***
         }
         DOMElements.input.focus();
     } else {
@@ -129,7 +129,6 @@ async function handleUserMessage(e) {
     showTypingIndicator(true);
 
     try {
-        // *** MODIFICATION: Call our backend, not Google ***
         const aiResponse = await callGeminiAPI(userText);
         
         // Add to history
@@ -247,12 +246,83 @@ function showTypingIndicator(show) {
 }
 
 /**
+ * *** UPDATED FUNCTION ***
+ * Fetches and displays popular search topics from the new API.
+ */
+async function displayPopularSearches() {
+    
+    // 1. Create a "loading" bubble first
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('chat-message', 'ai', 'popular-topics-loading');
+    
+    const bubble = document.createElement('div');
+    bubble.classList.add('chat-bubble', 'expanded'); // Expanded by default
+    bubble.innerHTML = `<strong style="display:block; font-style: italic; color: var(--text-muted, #64748b);">Finding popular topics...</strong>`;
+    messageElement.appendChild(bubble);
+    DOMElements.messages.appendChild(messageElement);
+    DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
+
+    try {
+        // 2. Fetch from our new API endpoint
+        const response = await fetch('/api/getPopularSearches');
+        if (!response.ok) {
+            throw new Error(`API returned ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const popularSearches = data.searches;
+
+        if (!popularSearches || popularSearches.length === 0) {
+            throw new Error("No topics returned from API");
+        }
+
+        // 3. If successful, replace the "loading" bubble's content
+        let htmlContent = `
+            <strong style="display:block; margin-bottom: 8px;">Here are some trending topics:</strong>
+            <div class="popular-searches-container" style="display: flex; flex-direction: column; gap: 8px;">`;
+        
+        popularSearches.forEach(searchText => {
+            htmlContent += `
+                <button class="popular-search-btn" 
+                        data-text="${searchText.replace(/"/g, '&quot;')}"
+                        style="background: rgba(255,255,255,0.5); border: 1px solid var(--border-primary, #e2e8f0); color: var(--brand-primary, #3b82f6); padding: 8px; border-radius: 6px; text-align: left; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; font-weight: 500;">
+                    ${searchText}
+                </button>`;
+        });
+
+        htmlContent += `</div>`;
+        bubble.innerHTML = htmlContent; // Replace "loading" with buttons
+        messageElement.classList.remove('popular-topics-loading'); // Remove loading class
+
+        // 4. Add event listeners to the new buttons
+        messageElement.querySelectorAll('.popular-search-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const queryText = btn.getAttribute('data-text');
+                DOMElements.input.value = queryText;
+                DOMElements.form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            });
+            
+            btn.onmouseenter = () => btn.style.background = 'var(--brand-bg-light-hover, #dbeafe)';
+            btn.onmouseleave = () => btn.style.background = 'rgba(255,255,255,0.5)';
+        });
+
+    } catch (error) {
+        console.error("Failed to load popular searches:", error.message);
+        // 5. If it fails, just remove the "loading" bubble quietly.
+        messageElement.remove();
+    } finally {
+        // Ensure scroll is at the bottom
+        DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
+    }
+}
+
+
+/**
  * Calls OUR backend API, which then calls Gemini.
  * @param {string} userText - The latest user text (for context).
  * @returns {Promise<string>} - The AI's text response.
  */
 async function callGeminiAPI(userText) {
-    // *** THIS FUNCTION IS MODIFIED ***
     
     // 1. Prepare payload (this is what we send to *our* backend)
     const payload = {
