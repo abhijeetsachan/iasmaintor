@@ -75,12 +75,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         DOMElements.notification.textContent = message; 
         DOMElements.notification.classList.toggle('bg-red-600', isError); 
         DOMElements.notification.classList.toggle('bg-slate-800', !isError); 
+        
+        // --- FIX START ---
+        // Explicitly remove classes that hide the notification
+        DOMElements.notification.classList.remove('opacity-0');
+        DOMElements.notification.classList.remove('pointer-events-none');
+        // Add class to show it
         DOMElements.notification.classList.add('opacity-100'); 
+        // --- FIX END ---
         
         if (chatbotContainer) chatbotContainer.classList.add('chatbot-container-lifted'); // LIFT chatbot
 
         setTimeout(() => { 
-            if (DOMElements.notification) DOMElements.notification.classList.remove('opacity-100'); 
+            if (DOMElements.notification) {
+                DOMElements.notification.classList.remove('opacity-100'); 
+                // --- FIX START ---
+                // Add classes back to hide it correctly
+                DOMElements.notification.classList.add('opacity-0');
+                DOMElements.notification.classList.add('pointer-events-none');
+                // --- FIX END ---
+            }
             if (chatbotContainer) chatbotContainer.classList.remove('chatbot-container-lifted'); // LOWER chatbot
         }, 3000); 
     };
