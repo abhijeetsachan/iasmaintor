@@ -66,14 +66,24 @@ export default async function handler(request, response) {
     const seenQuestionIds = await getUserSeenQuestions(userId);
 
     // 4. Find Questions in Database
-    const dbQuery = db.collection('quizzieQuestionBank')
-      .where('subject', '==', subject)
-      .where('difficulty', '==', difficulty)
-      // We also add a filter for 'type' if it's not 'blend'
-      ...((type !== 'blend') ? [admin.firestore.Filter.where('type', '==', type)] : [])
-      // --- FIX: REMOVED 'not-in' QUERY ---
-      // .where(admin.firestore.FieldPath.documentId(), 'not-in', seenQuestionIds.length ? seenQuestionIds : ['_']) // 'not-in' cannot be empty
-      .limit(30); // Fetch a larger batch to filter in backend
+    // This is the corrected code for api/getQuizQuestions.js
+
+// 1. Start building the query
+let dbQuery = db.collection('quizzieQuestionBank')
+  .where('subject', '==', subject)
+  .where('difficulty', '==', difficulty);
+
+// 2. Conditionally add the 'type' filter
+if (type !== 'blend') {
+  dbQuery = dbQuery.where('type', '==', type);
+}
+
+// 3. Add the limit at the end
+dbQuery = dbQuery.limit(30);
+    
+// 4. Now, execute the query
+const snapshot = await dbQuery.get();
+
       
     // --- FIX: MODIFIED LOGIC ---
     const snapshot = await dbQuery.get();
