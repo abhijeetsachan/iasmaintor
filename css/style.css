@@ -464,6 +464,37 @@ p {
 .dashboard-card .text-blue-600 { color: var(--brand-primary) !important; }
 
 
+/* --- MODIFICATION: Added styles for tracker page revision list --- */
+#revisions-due-list {
+    max-height: 500px; /* Or any height you prefer */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 16px; /* Breathing room */
+    
+    /* Firefox scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--brand-primary) var(--bg-secondary);
+}
+
+/* WebKit scrollbar for tracker page revision list */
+#revisions-due-list::-webkit-scrollbar {
+    width: 8px;
+}
+#revisions-due-list::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+}
+#revisions-due-list::-webkit-scrollbar-thumb {
+    background-color: var(--brand-primary);
+    border-radius: 10px;
+    border: 2px solid var(--bg-secondary); 
+}
+#revisions-due-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--brand-primary-hover);
+}
+/* --- END MODIFICATION --- */
+
+
 /* --- NEW: Dashboard Reminder List Styles (Homepage) --- */
 #revision-reminder-container {
     display: flex;
