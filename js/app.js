@@ -5,6 +5,18 @@ import { initAuth } from './auth.js';
 import { initQuizzie, resetQuizzieModal } from './quizzie.js';
 import { initChatbot } from './chatbot.js';
 
+// --- NEW: Imports for Dashboard Revision Module ---
+import { STATUSES, addSRSProperties } from './utils.js';
+import { getPrelimsSyllabus } from './syllabus-prelims-data.js';
+import { getMainsGS1Syllabus } from './syllabus-mains-gs1-data.js';
+import { getMainsGS2Syllabus } from './syllabus-mains-gs2-data.js';
+import { getMainsGS3Syllabus } from './syllabus-mains-gs3-data.js';
+import { getMainsGS4Syllabus } from './syllabus-mains-gs4-data.js';
+import { getOptionalSyllabusById } from './optional-syllabus-data.js';
+
+// --- Global Constants ---
+const REVISION_SCHEDULE = { d1: 1, d3: 3, d7: 7, d21: 21 }; // SRS days
+
 document.addEventListener('DOMContentLoaded', async function() {
     
     // --- State Variables ---
@@ -12,6 +24,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     let unsubscribeDashboardProgress = null;
     let quizzieInitialized = false;
     let authServices = {}; // Will hold { db, auth, firestoreModule, etc. }
+
+    // --- NEW: State for Revision Module ---
+    let syllabusData = [];
+    let optionalSubject = null;
+    let unsubscribeOptional = null;
+
 
     // --- UI Element Refs (Page-Specific + Shared) ---
     const DOMElements = {
@@ -46,6 +64,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         dashboardSection: document.getElementById('dashboard'),
         plansList: document.getElementById('plans-list'), // Specific to index.html
         dashboardProgressBars: document.getElementById('dashboard-progress-bars'), // Specific to index.html
+        revisionReminderList: document.getElementById('revision-reminder-list'), // --- NEW ---
         copyrightYear: document.getElementById('copyright-year'),
         mentorshipModal: document.getElementById('mentorship-modal'),
         mentorshipForm: document.getElementById('mentorship-form'),
@@ -137,6 +156,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             fetchAndDisplayPlans(user.uid, db, firestoreModule);
             listenForDashboardProgress(user.uid, db, firestoreModule);
             
+            // --- NEW: Start revision listener ---
+            listenForRevisionReminders(user.uid, db, firestoreModule, appId);
+            
             // Re-initialize Quizzie if auth is now ready
             if (authServices.db && authServices.getCurrentUser && !quizzieInitialized) {
                 initQuizzieModule();
@@ -149,13 +171,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log("Index Page: onLogout callback triggered.");
             if (unsubscribePlans) { unsubscribePlans(); unsubscribePlans = null; }
             if (unsubscribeDashboardProgress) { unsubscribeDashboardProgress(); unsubscribeDashboardProgress = null; }
+            // --- NEW: Stop revision listener ---
+            if (unsubscribeOptional) { unsubscribeOptional(); unsubscribeOptional = null; }
+
 
             // Only update UI to "logged out" state after initial check
             if (authHasChecked) {
                 if (DOMElements.plansList) { DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see saved plans.</p>`; }
                 if (DOMElements.dashboardProgressBars) { DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Please log in to see your progress.</p>`; }
+                // --- NEW: Update revision list on logout ---
+                if (DOMElements.revisionReminderList) { DOMElements.revisionReminderList.innerHTML = `<p class="text-slate-500">Please log in to see your revision reminders.</p>`; }
             } else {
                 if (DOMElements.dashboardProgressBars) { DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Authenticating...</p>`; }
+                // --- NEW: Update revision list on auth check ---
+                if (DOMElements.revisionReminderList) { DOMElements.revisionReminderList.innerHTML = `<p class="text-slate-500">Authenticating...</p>`; }
             }
         }
     });
@@ -261,6 +290,211 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
          } catch (error) { console.error("Error setting up progress listener:", error); progressContainer.innerHTML = `<p class="text-red-500">Error initializing progress display.</p>`; unsubscribeDashboardProgress = null; }
     }
+
+    // --- ### NEW: REVISION REMINDER LOGIC (from syllabus-tracker.js) ### ---
+    
+    /**
+     * Assembles the full default syllabus structure.
+     */
+    function assembleDefaultSyllabus() {
+        try {
+            const prelimsData = getPrelimsSyllabus();
+            const mainsGS1Data = getMainsGS1Syllabus();
+            const mainsGS2Data = getMainsGS2Syllabus();
+            const mainsGS3Data = getMainsGS3Syllabus();
+            const mainsGS4Data = getMainsGS4Syllabus();
+            const essaySection = addSRSProperties({ id: 'mains-essay', name: 'Essay', status: STATUSES.NOT_STARTED, children: [{ id: 'mains-essay-practice', name: 'Essay Writing Practice', status: STATUSES.NOT_STARTED }]});
+            const optionalPlaceholder1 = addSRSProperties({ id: 'mains-opt1-placeholder', name: 'Select your optional subject', status: STATUSES.NOT_STARTED });
+            const optionalPlaceholder2 = addSRSProperties({ id: 'mains-opt2-placeholder', name: 'Select your optional subject', status: STATUSES.NOT_STARTED });
+            const mainsData = addSRSProperties({
+                id: 'mains', name: 'Mains', status: STATUSES.NOT_STARTED, children: [
+                    essaySection, mainsGS1Data, mainsGS2Data, mainsGS3Data, mainsGS4Data,
+                    { id: 'mains-optional-1', name: 'Optional Subject Paper-I', status: STATUSES.NOT_STARTED, children: [optionalPlaceholder1]},
+                    { id: 'mains-optional-2', name: 'Optional Subject Paper-II', status: STATUSES.NOT_STARTED, children: [optionalPlaceholder2]},
+                ]
+            });
+            return [prelimsData, mainsData].filter(Boolean);
+        } catch (error) {
+            console.error("FATAL: Error assembling default syllabus:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Updates the syllabusData object with the correct optional subject data.
+     */
+    function updateOptionalSyllabusData(syllabusDataRef) {
+        if (!optionalSubject) return;
+        const { paper1, paper2 } = getOptionalSyllabusById(optionalSubject);
+        const mains = syllabusDataRef.find(s => s?.id === 'mains');
+        if (!mains || !mains.children) return;
+        const mainsOpt1 = mains.children.find(p => p?.id === 'mains-optional-1');
+        const mainsOpt2 = mains.children.find(p => p?.id === 'mains-optional-2');
+        if (mainsOpt1 && paper1) {
+            Object.assign(mainsOpt1, paper1);
+            mainsOpt1.name = `Optional (${optionalSubject.toUpperCase()}) P-I`;
+        }
+         if (mainsOpt2 && paper2) {
+            Object.assign(mainsOpt2, paper2);
+            mainsOpt2.name = `Optional (${optionalSubject.toUpperCase()}) P-II`;
+        }
+    }
+
+    /**
+     * Finds a topic item by its ID in the syllabusData tree.
+     */
+    function findItemById(id, nodes) {
+        if (!id || !Array.isArray(nodes)) return null;
+        for (const node of nodes) {
+            if (!node) continue;
+            if (node.id === id) return node;
+            if (Array.isArray(node.children)) {
+                const found = findItemById(id, node.children);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Calculates the status of a specific revision day.
+     */
+    function getRevisionStatus(startDate, days, isDone) {
+        if (!startDate) return { status: 'pending', date: null };
+        if (isDone) return { status: 'done', date: null };
+        try {
+            const start = new Date(startDate + 'T00:00:00');
+            if (isNaN(start)) throw new Error("Invalid start date format");
+            const revisionDate = new Date(start);
+            revisionDate.setDate(start.getDate() + days);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            revisionDate.setHours(0, 0, 0, 0);
+            if (revisionDate > today) return { status: 'pending', date: revisionDate };
+            if (revisionDate.getTime() === today.getTime()) return { status: 'due', date: revisionDate };
+            return { status: 'overdue', date: revisionDate };
+        } catch (e) {
+            console.error("Error calculating revision status:", e, { startDate, days, isDone });
+            return { status: 'pending', date: null };
+        }
+    }
+
+    /**
+     * Traverses the entire syllabusData tree and finds all due revisions.
+     */
+    function getDueRevisions(nodes) {
+        if (!Array.isArray(nodes)) return [];
+        const revisionsDue = [];
+        function traverse(items) {
+            if (!Array.isArray(items)) return;
+            items.forEach(item => {
+                if (!item || !item.id) return;
+                if (!Array.isArray(item.children) || item.children.length === 0) {
+                    if (item.startDate && item.revisions) {
+                        Object.entries(REVISION_SCHEDULE).forEach(([dayKey, days]) => {
+                            const isDone = item.revisions[dayKey] === true;
+                            const { status } = getRevisionStatus(item.startDate, days, isDone);
+                            if (status === 'due' || status === 'overdue') {
+                                revisionsDue.push({ topicName: item.name, id: item.id, days: days, status: status });
+                            }
+                        });
+                    }
+                } else {
+                    traverse(item.children);
+                }
+            });
+        }
+        traverse(nodes);
+        return revisionsDue;
+    }
+
+    /**
+     * Fetches all user progress, calculates due revisions, and renders them.
+     * Also listens for changes to the optional subject.
+     */
+    async function listenForRevisionReminders(userId, db, firestoreModule, appId) {
+        const reminderListEl = DOMElements.revisionReminderList;
+        if (!reminderListEl) return;
+        
+        const { doc, getDoc, collection, getDocs, query, onSnapshot } = firestoreModule;
+
+        // This function does the heavy lifting
+        const refreshRevisions = async () => {
+            try {
+                reminderListEl.innerHTML = `<p class="text-slate-500">Loading full syllabus and progress...</p>`;
+                
+                // 1. Assemble base syllabus
+                let fullSyllabus = assembleDefaultSyllabus();
+                if (fullSyllabus.length === 0) throw new Error("Syllabus assembly failed.");
+
+                // 2. Integrate Optional Subject data
+                if (optionalSubject) {
+                    updateOptionalSyllabusData(fullSyllabus);
+                }
+                
+                // 3. Fetch all topic progress
+                const progressCollectionRef = collection(db, 'users', userId, 'topicProgress');
+                const progressSnapshot = await getDocs(query(progressCollectionRef));
+                
+                // 4. Merge progress into syllabus data
+                if (!progressSnapshot.empty) {
+                    progressSnapshot.forEach(doc => {
+                        const topicId = doc.id;
+                        const progressData = doc.data();
+                        const topicItem = findItemById(topicId, fullSyllabus);
+                        if (topicItem) {
+                            Object.assign(topicItem, progressData); 
+                        }
+                    });
+                }
+                
+                // 5. Calculate due revisions
+                const revisionsDue = getDueRevisions(fullSyllabus).filter(r => r.status === 'due' || r.status === 'overdue');
+                
+                // 6. Render the list
+                if (revisionsDue.length === 0) {
+                    reminderListEl.innerHTML = `<p class="text-green-700 font-semibold text-center py-4">🎉 All caught up! No revisions due today.</p>`;
+                } else {
+                    reminderListEl.innerHTML = revisionsDue.map(r => `
+                        <div class="dashboard-reminder-item">
+                            <a href="tracker.html" class="dashboard-reminder-link">${r.topicName}</a>
+                            <span class="dashboard-reminder-badge status-${r.status}">
+                                D-${r.days} ${r.status === 'overdue' ? 'Overdue' : 'Due'}
+                            </span>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (error) {
+                console.error("Error refreshing revision reminders:", error);
+                reminderListEl.innerHTML = `<p class="text-red-500">Error loading reminders: ${error.message}</p>`;
+            }
+        };
+
+        // Stop any previous listener
+        if (unsubscribeOptional) unsubscribeOptional();
+
+        // Start a new listener for profile changes (e.g., optional subject)
+        const profileDocRef = doc(db, 'artifacts', appId, 'users', userId);
+        unsubscribeOptional = onSnapshot(profileDocRef, (docSnap) => {
+            const newOptional = docSnap.data()?.profile?.optionalSubject || null;
+            if (newOptional !== optionalSubject) {
+                console.log(`Dashboard: Optional subject changed to ${newOptional}. Refreshing revisions.`);
+                optionalSubject = newOptional;
+                refreshRevisions(); // Refresh list if optional changes
+            } else if (!optionalSubject) {
+                 // This handles the initial load
+                 refreshRevisions();
+            }
+        }, (error) => {
+             console.error("Error in optional subject listener (dashboard):", error);
+             reminderListEl.innerHTML = `<p class="text-red-500">Error loading user profile.</p>`;
+        });
+    }
+
+
+    // --- ### END OF NEW REVISION LOGIC ### ---
+
 
     // --- Page-Specific Event Listeners ---
     document.body.addEventListener('click', async (e) => {
