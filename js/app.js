@@ -70,11 +70,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- Utility Functions (Page-Specific) ---
     const showNotification = (message, isError = false) => { 
         if (!DOMElements.notification) return; 
+        const chatbotContainer = document.getElementById('chatbot-container'); // Get chatbot
+
         DOMElements.notification.textContent = message; 
         DOMElements.notification.classList.toggle('bg-red-600', isError); 
         DOMElements.notification.classList.toggle('bg-slate-800', !isError); 
         DOMElements.notification.classList.add('opacity-100'); 
-        setTimeout(() => { if (DOMElements.notification) DOMElements.notification.classList.remove('opacity-100'); }, 3000); 
+        
+        if (chatbotContainer) chatbotContainer.classList.add('chatbot-container-lifted'); // LIFT chatbot
+
+        setTimeout(() => { 
+            if (DOMElements.notification) DOMElements.notification.classList.remove('opacity-100'); 
+            if (chatbotContainer) chatbotContainer.classList.remove('chatbot-container-lifted'); // LOWER chatbot
+        }, 3000); 
     };
     
     // Simple pass-through functions for modals, as auth.js handles the implementation
