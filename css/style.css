@@ -571,10 +571,22 @@ footer .border-slate-700 {
 #notification {
     background-color: var(--text-primary);
     color: var(--bg-primary);
-    z-index: 110;
+    z-index: 90;
 }
 #notification.bg-red-600 {
     background-color: var(--color-red-DEFAULT) !important;
+}
+
+/* --- NEW: Chatbot lift for notification --- */
+#chatbot-container {
+    /* This creates the smooth slide animation */
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateY(0);
+}
+
+#chatbot-container.chatbot-container-lifted {
+    /* Lifts the container up by 80px to clear the notification */
+    transform: translateY(-80px); 
 }
 
 /* ==========================================================================
