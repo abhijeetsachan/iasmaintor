@@ -309,7 +309,7 @@ async function callChatAPI(userText) {
 }
 
 /**
- * *** NEW HELPER FUNCTION (v2) ***
+ * *** UPDATED HELPER FUNCTION (v3) ***
  * Renders simple Markdown to HTML.
  * Handles headings (###, ####), bold (**), and nested lists (* or -).
  * @param {string} text - The raw markdown text.
@@ -330,6 +330,7 @@ function renderSimpleMarkdown(text) {
     let listLevel = -1; // -1 means no list
 
     for (const line of lines) {
+        // Updated regex to find list items (e.g., "* item", "  - item")
         const listMatch = line.match(/^(\s*)([\*\-]) (.*)$/);
 
         if (listMatch) {
@@ -339,12 +340,17 @@ function renderSimpleMarkdown(text) {
 
             if (newLevel > listLevel) {
                 // Start a new nested list
-                finalHtml += '<ul style="margin-left: 20px; padding-left: 4px; list-style-type: disc;">';
+                // *** THIS IS THE FIX for sub-bullet styles ***
+                let listStyle = 'disc';
+                if (newLevel === 1) listStyle = 'circle';
+                if (newLevel >= 2) listStyle = 'square';
+                
+                finalHtml += `<ul style="margin-left: 20px; padding-left: 4px; list-style-type: ${listStyle};">`;
             } else if (newLevel < listLevel) {
                 // End the current list(s)
                 finalHtml += '</li></ul>'.repeat(listLevel - newLevel);
                 finalHtml += '</li>'; // Close the list item from the parent level
-            } else {
+            } else if (listLevel !== -1) {
                 // Same level, just close the previous <li>
                 finalHtml += '</li>';
             }
@@ -364,7 +370,7 @@ function renderSimpleMarkdown(text) {
             if (line.trim().startsWith('<h')) {
                 finalHtml += line;
             } else if (line.trim().length > 0) {
-                finalHtml += `<p>${line}</p>`;
+                finalHtml += `<p style="margin-top: 8px;">${line}</p>`; // Added margin to paragraphs
             }
         }
     }
@@ -373,6 +379,9 @@ function renderSimpleMarkdown(text) {
     if (listLevel > -1) {
         finalHtml += '</li></ul>'.repeat(listLevel + 1);
     }
+
+    // Clean up <p> tags around headings
+    finalHtml = finalHtml.replace(/<p>(<h[34]>.*?<\/h[34]>)<\/p>/g, '$1');
 
     return finalHtml;
 }
