@@ -1,6 +1,5 @@
 // js/chatbot.js (FIXED, RENAMED & DYNAMIC)
 
-// *** THIS IS THE FIX: Importing the correct constant name ***
 import { GET_CHAT_RESPONSE_ENDPOINT } from './firebase-config.js';
 
 // --- Module State ---
@@ -11,7 +10,6 @@ let isChatOpen = false;
 let greetingTimeout;
 let notify; // To store the showNotification function
 
-// UPDATED: Greetings for "Drona"
 const GREETINGS = [
     "Greetings. I am Drona, your AI mentor. How may I assist in your preparation today?",
     "Hello. I am Drona. What strategic questions about your preparation do you have?",
@@ -21,18 +19,12 @@ const GREETINGS = [
 
 const READ_MORE_WORD_LIMIT = 60;
 
-// *** NEW: Keyword list for "Triage" ***
 const GENERAL_QUERY_KEYWORDS = [
     'hello', 'hi', 'hey', 'thanks', 'thank you', 'who are you',
     'what is your name', 'bye', 'goodbye', 'how are you', 'what can you do'
 ];
 
 // --- Core Functions ---
-
-/**
- * Initializes the chatbot, finds DOM elements, and sets up listeners.
- * @param {function} showNotification - The app's global notification function.
- */
 export function initChatbot(showNotification) {
     if (isChatbotInitialized) return;
 
@@ -106,7 +98,7 @@ async function handleUserMessage(e) {
     showTypingIndicator(true);
 
     try {
-        const aiResponse = await callChatAPI(userText); // MODIFIED
+        const aiResponse = await callChatAPI(userText);
         
         conversationHistory.push({
             role: "model",
@@ -114,21 +106,26 @@ async function handleUserMessage(e) {
         });
         
         showTypingIndicator(false);
-        addMessage('ai', aiResponse.text, aiResponse.fromCache); // Pass cache status
+        addMessage('ai', aiResponse.text, aiResponse.fromCache);
 
     } catch (error) {
         console.error("Chatbot API error:", error);
         showTypingIndicator(false);
 
         let friendlyErrorMessage = "My apologies, I have encountered an error. Please try rephrasing your question.";
-        if (error.message.includes('RECITATION')) {
-            friendlyErrorMessage = "My response was blocked for recitation. Please ask in a different way.";
-        } else if (error.message.includes('blocked:')) {
-            friendlyErrorMessage = "I am sorry, I cannot answer that. My safety filters were triggered.";
-        } else if (error.message.includes('API key')) {
-             friendlyErrorMessage = "There appears to be an issue with my configuration. Please alert the site admin!";
-        } else if (error.message.includes('API request failed')) {
-             friendlyErrorMessage = "I am having trouble connecting. Please try again in a moment.";
+        
+        // Use the error message if it's not the generic "Failed to fetch"
+        if (error.message && !error.message.includes("Failed to fetch")) {
+            if (error.message.includes('RECITATION')) {
+                friendlyErrorMessage = "My response was blocked for recitation. Please ask in a different way.";
+            } else if (error.message.includes('blocked:')) {
+                friendlyErrorMessage = "I am sorry, I cannot answer that. My safety filters were triggered.";
+            } else if (error.message.includes('API key') || error.message.includes('configuration')) {
+                 friendlyErrorMessage = "There appears to be an issue with my configuration. Please alert the site admin!";
+            } else if (!error.message.includes('API request failed')) {
+                // If it's not a generic failure, show the specific message
+                friendlyErrorMessage = error.message;
+            }
         }
         
         addMessage('ai', friendlyErrorMessage);
@@ -143,7 +140,6 @@ function addMessage(sender, text, fromCache = false) {
     const bubble = document.createElement('div');
     bubble.classList.add('chat-bubble');
     
-    // Add a small "from cache" indicator if needed
     if (fromCache) {
         text += '<br><em style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8;">(Loaded from cache)</em>';
     }
@@ -220,7 +216,7 @@ async function displayPopularSearches() {
     DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
 
     try {
-        const response = await fetch('/api/getPopularSearches'); // This file is now smarter
+        const response = await fetch('/api/getPopularSearches');
         if (!response.ok) throw new Error(`API returned ${response.status}`);
         const data = await response.json();
         const popularSearches = data.searches;
@@ -257,9 +253,6 @@ async function displayPopularSearches() {
     }
 }
 
-/**
- * *** UPDATED: This function now calls the new cache-first API ***
- */
 async function callChatAPI(userText) {
     
     const queryType = getQueryType(userText);
@@ -276,20 +269,28 @@ async function callChatAPI(userText) {
         conversationHistory = [...conversationHistory.slice(-10)];
     }
 
-    // *** MODIFICATION: Call the new endpoint ***
     const response = await fetch(GET_CHAT_RESPONSE_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
 
-    if (!response.ok) {
-        const errorBody = await response.json();
-        console.error("Backend API Error:", errorBody);
-        throw new Error(errorBody.error?.message || `API request failed with status ${response.status}`);
+    // *** ROBUST ERROR HANDLING ***
+    // This will now catch the plain text 500 error
+    let result;
+    try {
+        result = await response.json(); // This is what fails
+    } catch (e) {
+        // The server sent plain text or was unreachable
+        console.error("Failed to parse JSON response:", e);
+        throw new Error(`The server returned an invalid response (Status: ${response.status}). Please try again.`);
     }
 
-    const result = await response.json();
+    if (!response.ok) {
+        console.error("Backend API Error:", result);
+        throw new Error(result.error?.message || `API request failed with status ${response.status}`);
+    }
+    // *** END ROBUST ERROR HANDLING ***
 
     const candidate = result.candidates?.[0];
     const contentPart = candidate?.content?.parts?.[0];
@@ -301,9 +302,8 @@ async function callChatAPI(userText) {
         throw new Error(`AI returned no valid content. Finish Reason: ${candidate?.finishReason || 'Unknown'}`);
     }
 
-    // Return both the text and the cache status
     return {
         text: contentPart.text,
-        fromCache: result.fromCache || false // Add the cache status
+        fromCache: result.fromCache || false
     };
 }
