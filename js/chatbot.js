@@ -1,8 +1,7 @@
 // js/chatbot.js (FIXED, RENAMED & DYNAMIC)
 
-// *** MODIFICATION: Import the NEW API endpoint ***
-import { GET_CHAT_RESPONSE_ENDPOINT } from './firebase-config.js'; // You will need to add this to your config
-// (Or just hardcode the path '/api/getChatResponse' in the fetch call below)
+// *** THIS IS THE FIX: Importing the correct constant name ***
+import { GET_CHAT_RESPONSE_ENDPOINT } from './firebase-config.js';
 
 // --- Module State ---
 let DOMElements = {};
@@ -12,20 +11,28 @@ let isChatOpen = false;
 let greetingTimeout;
 let notify; // To store the showNotification function
 
-// ... (GREETINGS, READ_MORE_WORD_LIMIT, GENERAL_QUERY_KEYWORDS... all the same as before) ...
+// UPDATED: Greetings for "Drona"
 const GREETINGS = [
     "Greetings. I am Drona, your AI mentor. How may I assist in your preparation today?",
     "Hello. I am Drona. What strategic questions about your preparation do you have?",
     "I am Drona, your guide for the Civil Services Exam. Please ask your questions.",
     "Greetings, aspirant. I am Drona, here to help you navigate your UPSC journey."
 ];
+
 const READ_MORE_WORD_LIMIT = 60;
+
+// *** NEW: Keyword list for "Triage" ***
 const GENERAL_QUERY_KEYWORDS = [
     'hello', 'hi', 'hey', 'thanks', 'thank you', 'who are you',
     'what is your name', 'bye', 'goodbye', 'how are you', 'what can you do'
 ];
 
 // --- Core Functions ---
+
+/**
+ * Initializes the chatbot, finds DOM elements, and sets up listeners.
+ * @param {function} showNotification - The app's global notification function.
+ */
 export function initChatbot(showNotification) {
     if (isChatbotInitialized) return;
 
@@ -270,8 +277,7 @@ async function callChatAPI(userText) {
     }
 
     // *** MODIFICATION: Call the new endpoint ***
-    // Use the imported constant or hardcode '/api/getChatResponse'
-    const response = await fetch(GET_CHAT_RESPONSE_ENDPOINT || '/api/getChatResponse', {
+    const response = await fetch(GET_CHAT_RESPONSE_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
