@@ -473,7 +473,6 @@ p {
     max-height: 450px;
     overflow-y: auto;
     overflow-x: hidden; 
-    /* --- MODIFIED: Added padding --- */
     padding-right: 16px; 
     
     /* --- NEW: Firefox Scrollbar --- */
@@ -486,7 +485,6 @@ p {
     overflow-y: auto;
     max-height: 450px; 
     overflow-x: hidden;
-    /* --- MODIFIED: Added padding --- */
     padding-right: 16px;
 
     /* --- NEW: Firefox Scrollbar --- */
