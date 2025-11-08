@@ -9,39 +9,30 @@
 import admin from 'firebase-admin';
 
 // --- Firebase Admin SDK Initialization ---
-// We must check if it's already initialized, as Vercel can reuse instances.
-if (!admin.apps.length) {
-    try {
+try {
+    if (!admin.apps.length) {
         admin.initializeApp({
             credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
             databaseURL: process.env.FIREBASE_DB_URL,
         });
-    } catch (error) {
-        console.error('Firebase admin initialization error', error);
     }
+} catch (error) {
+    console.error('Firebase admin initialization error', error);
 }
 
 const db = admin.database();
 const cacheRef = db.ref('chatCache');
 
 // --- Drona's "Brains" (System Prompts) ---
-
-// Brain #1: The General Assistant
 const generalPrompt = `You are Drona, a helpful and professional AI assistant for the iasmAIntor website. Your role is to handle general, conversational queries. Be friendly, concise, and professional.`;
 
-// Brain #2: The Academic Guru
 const academicPrompt = `You are Drona, an expert UPSC mentor. Your personality is that of a master strategist and guide.
-
 When a user asks an academic question, you MUST follow this framework:
-
 1.  **Analyze Query:** First, silently determine if the question is for 'Prelims' (factual, objective) or 'Mains' (analytical, structured).
-
 2.  **Provide Structured Response:**
     * For **MAINS** questions: Provide a comprehensive, well-structured analysis. Use sections like "Introduction," "Key Provisions," "Impacts," "Challenges," and a "Way Forward" or "Conclusion."
     * For **PRELIMS** questions: Provide the key facts, dates, articles, or definitions clearly. Use bullet points for easy memorization.
-
 3.  **Cite Evidence (Crucial):** Back up your points with real data, statistics, relevant Supreme Court judgments (e.g., *Kesavananda Bharati v. State of Kerala*), or committee recommendations (e.g., *Sarkaria Commission*).
-
 4.  **Formatting:** Always use Markdown for clear formatting (**bolding** for key terms, bullet points for lists).`;
 
 
@@ -55,15 +46,14 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: { message: `Method ${req.method} Not Allowed` } });
 
-    const { GEMINI_API_KEY } = process.env;
-    if (!GEMINI_API_KEY) return res.status(500).json({ error: { message: "API key not configured." } });
+    const { GEMINI_API_KEY, FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL } = process.env;
+    if (!GEMINI_API_KEY) return res.status(500).json({ error: { message: "Gemini API key not configured." } });
+    if (!FIREBASE_ADMIN_SDK_JSON || !FIREBASE_DB_URL) return res.status(500).json({ error: { message: "Firebase Admin configuration is missing." } });
 
     const { contents, queryType } = req.body;
     if (!contents) return res.status(400).json({ error: { message: "Missing 'contents' in request body." } });
 
     const userQuery = contents[contents.length - 1].parts[0].text;
-
-    // Create a simple, repeatable key for the database
     const queryKey = userQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '_');
 
     // --- 1. CACHE-FIRST LOGIC ---
@@ -72,7 +62,6 @@ export default async function handler(req, res) {
         const cachedData = snapshot.val();
 
         if (cachedData && (Date.now() - cachedData.timestamp < 2592000000)) { // 30-day cache
-            // CACHE HIT: Return the saved answer
             return res.status(200).json({
                 candidates: [{
                     content: {
@@ -89,13 +78,9 @@ export default async function handler(req, res) {
     }
     // --- END CACHE LOGIC ---
 
-
     // --- 2. CACHE MISS: CALL GEMINI API ---
-
-    // --- The "Switch": Choose the correct brain ---
     let systemInstructionText = (queryType === 'general') ? generalPrompt : academicPrompt;
-
-    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     const geminiPayload = {
         contents: contents,
@@ -121,9 +106,20 @@ export default async function handler(req, res) {
             body: JSON.stringify(geminiPayload),
         });
 
-        const responseData = await apiResponse.json();
-        if (!apiResponse.ok) throw (responseData);
+        // *** ROBUST ERROR HANDLING ***
+        if (!apiResponse.ok) {
+            // Try to parse the error as JSON, but fall back to text
+            let errorData;
+            try {
+                errorData = await apiResponse.json();
+            } catch (e) {
+                errorData = { error: { message: `API Error: ${apiResponse.statusText}` } };
+            }
+            console.error("Google AI API Error:", errorData);
+            return res.status(apiResponse.status).json(errorData);
+        }
 
+        const responseData = await apiResponse.json();
         const generatedText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (generatedText) {
@@ -145,7 +141,7 @@ export default async function handler(req, res) {
         return res.status(200).json(responseData);
 
     } catch (error) {
-        console.error("Google AI API Error:", error);
-        return res.status(error.status || 500).json(error);
+        console.error("Server-side fetch error:", error);
+        return res.status(500).json({ error: { message: `Internal server error: ${error.message}` } });
     }
 }
