@@ -12,9 +12,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/png" href="favicon.png">
 
-    <!-- PWA Manifest Link -->
     <link rel="manifest" href="/manifest.json">
-    <!-- Theme color for PWA -->
     <meta name="theme-color" content="#3b82f6">
 
 </head>
@@ -29,7 +27,6 @@
                 <a href="#testimonials" class="text-slate-600 hover:text-blue-600 transition-colors">Testimonials</a>
             </nav>
             <div class="flex items-center space-x-4">
-                <!-- PWA Install Button (Desktop) -->
                 <button id="install-pwa-btn-desktop" class="hidden install-pwa-btn bg-purple-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-transform hover:scale-105 shadow-md flex items-center justify-center">
                     <i class="fas fa-download mr-2"></i>Install App
                 </button>
@@ -65,7 +62,6 @@
             <a href="#how-it-works" class="block py-2 text-slate-600 hover:text-blue-600">How It Works</a>
             <a href="#testimonials" class="block py-2 text-slate-600 hover:text-blue-600">Testimonials</a>
             <hr class="border-slate-200 my-2">
-            <!-- PWA Install Button (Mobile) -->
             <a href="#" id="install-pwa-btn-mobile" class="hidden install-pwa-btn block bg-purple-600 text-white text-center px-5 py-2 rounded-lg font-semibold hover:bg-purple-700 flex items-center justify-center mb-2">
                 <i class="fas fa-download mr-2"></i>Install App
             </a>
@@ -178,19 +174,30 @@
         <section id="dashboard" class="hidden py-20 bg-slate-50">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                  <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-8 text-center">My Preparation Dashboard</h2>
-                <div class="grid grid-cols-1 gap-8">
-    <div id="saved-data-container" class="bg-white p-8 rounded-xl shadow-lg">
-        <h3 class="text-2xl font-semibold mb-4">My Syllabus Progress</h3>
-        <p class="text-slate-500 mb-6">
-            This is a real-time summary of your progress from the Syllabus Navigator.
-        </p>
-        
-        <div id="dashboard-progress-bars" class="space-y-4">
-            <p class="text-slate-500">Loading progress...</p>
-        </div>
-    </div>
-</div>
-            </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    
+                    <div id="syllabus-progress-container" class="bg-white p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-semibold mb-4">My Syllabus Progress</h3>
+                        <p class="text-slate-500 mb-6">
+                            A real-time summary of your progress from the Syllabus Navigator.
+                        </p>
+                        
+                        <div id="dashboard-progress-bars" class="space-y-4">
+                            <p class="text-slate-500">Loading progress...</p>
+                        </div>
+                    </div>
+
+                    <div id="revision-reminder-container" class="bg-white p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-semibold mb-4">Revision Reminders</h3>
+                        <p class="text-slate-500 mb-6">A light list of topics due for revision. Visit the <a href="tracker.html" target="_blank" class="text-blue-600 hover:underline">Full Tracker</a> for details.</p>
+                        <div id="revision-reminder-list" class="space-y-3 max-h-96 overflow-y-auto">
+                            <p class="text-slate-500">Loading reminders...</p>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
         </section>
 
         <section id="how-it-works" class="py-20 bg-slate-100">
@@ -729,10 +736,3 @@
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
