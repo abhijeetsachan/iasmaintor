@@ -31,7 +31,7 @@ const db = admin.firestore();
 // --- Initialize Google AI (Gemini) ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const geminiModel = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash', // Use your desired model
+  model: 'gemini-1.5-flash', // Use your desired model
 });
 
 // --- Main Handler ---
@@ -54,7 +54,7 @@ export default async function handler(request, response) {
     return response.status(401).json({ error: { message: 'Unauthorized: Invalid token.' } });
   }
 
-  try {
+  try { // <-- Main try block
     // 2. Get Quiz Parameters from client
     const params = request.body;
     const requestedCount = parseInt(params.num_questions || '5', 10);
@@ -66,8 +66,6 @@ export default async function handler(request, response) {
     const seenQuestionIds = await getUserSeenQuestions(userId);
 
     // 4. Find Questions in Database
-    // This is the corrected code for api/getQuizQuestions.js
-
     // 1. Start building the query
     let dbQuery = db.collection('quizzieQuestionBank')
       .where('subject', '==', subject)
@@ -100,7 +98,7 @@ export default async function handler(request, response) {
     // 5. Check if we need to generate new questions
     const neededCount = requestedCount - finalQuestions.length;
 
-    if (neededCount > 0) {
+    if (neededCount > 0) { // <-- IF block starts (Line 108)
       // We need more questions! Call the AI.
       console.log(`DB had ${finalQuestions.length}, generating ${neededCount} new questions...`);
       try {
@@ -138,7 +136,7 @@ export default async function handler(request, response) {
         }
         // else, we'll just return the few we found in the DB
       }
-    } // <-- *** THIS IS THE MISSING BRACE THAT WAS ADDED ***
+    } // <-- *** THIS IS THE CORRECTED, MISSING BRACE ***
 
     // 6. Asynchronously update user's 'seen' list (don't make user wait)
     const allSeenIds = finalQuestions.map(q => q.id);
@@ -151,7 +149,7 @@ export default async function handler(request, response) {
     // 7. Return the final list of questions
     return response.status(200).json({ questions: finalQuestions });
 
-  } catch (error) {
+  } catch (error) { // <-- Main catch block
     console.error("Error in getQuizQuestions handler:", error);
     return response.status(500).json({
       error: {
@@ -269,4 +267,4 @@ For each question, provide a question (string), four options (array of strings),
     throw new Error(`AI generation failed: ${error.message}`);
   }
 }
-// <-- The extra brace at the end of the original file has been removed.
+// <-- No extra braces at the end.
