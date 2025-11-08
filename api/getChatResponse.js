@@ -4,24 +4,10 @@
  * This is the new CORE API for Drona. It features:
  * 1. A "dual-brain" for General vs. Academic queries.
  * 2. A cache-first logic using Firebase Realtime Database to save API calls.
+ * 3. Robust checks for environment variables.
  */
 
 import admin from 'firebase-admin';
-
-// --- Firebase Admin SDK Initialization ---
-try {
-    if (!admin.apps.length) {
-        admin.initializeApp({
-            credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
-            databaseURL: process.env.FIREBASE_DB_URL,
-        });
-    }
-} catch (error) {
-    console.error('Firebase admin initialization error', error);
-}
-
-const db = admin.database();
-const cacheRef = db.ref('chatCache');
 
 // --- Drona's "Brains" (System Prompts) ---
 const generalPrompt = `You are Drona, a helpful and professional AI assistant for the iasmAIntor website. Your role is to handle general, conversational queries. Be friendly, concise, and professional.`;
@@ -36,6 +22,29 @@ When a user asks an academic question, you MUST follow this framework:
 4.  **Formatting:** Always use Markdown for clear formatting (**bolding** for key terms, bullet points for lists).`;
 
 
+// --- Firebase Admin SDK Initialization ---
+let db;
+let cacheRef;
+try {
+    // Check if all required Firebase variables are present
+    if (process.env.FIREBASE_ADMIN_SDK_JSON && process.env.FIREBASE_DB_URL) {
+        if (!admin.apps.length) {
+            admin.initializeApp({
+                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
+                databaseURL: process.env.FIREBASE_DB_URL,
+            });
+        }
+        db = admin.database();
+        cacheRef = db.ref('chatCache');
+    } else {
+        console.warn("Firebase Admin environment variables not set. Cache will be disabled.");
+    }
+} catch (error) {
+    console.error('Firebase admin initialization error', error);
+    // If init fails, db and cacheRef will be undefined, and the cache logic will be skipped.
+}
+
+
 // --- Main API Handler ---
 export default async function handler(req, res) {
     // Set CORS headers
@@ -46,9 +55,15 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: { message: `Method ${req.method} Not Allowed` } });
 
+    // *** NEW: Check for all required variables ***
     const { GEMINI_API_KEY, FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL } = process.env;
     if (!GEMINI_API_KEY) return res.status(500).json({ error: { message: "Gemini API key not configured." } });
-    if (!FIREBASE_ADMIN_SDK_JSON || !FIREBASE_DB_URL) return res.status(500).json({ error: { message: "Firebase Admin configuration is missing." } });
+    
+    // Check if Firebase is configured. If not, we can still proceed, but caching will be skipped.
+    const isCacheEnabled = admin.apps.length > 0 && db && cacheRef;
+    if (!isCacheEnabled) {
+        console.warn("Firebase not initialized. Proceeding without cache.");
+    }
 
     const { contents, queryType } = req.body;
     if (!contents) return res.status(400).json({ error: { message: "Missing 'contents' in request body." } });
@@ -57,24 +72,26 @@ export default async function handler(req, res) {
     const queryKey = userQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '_');
 
     // --- 1. CACHE-FIRST LOGIC ---
-    try {
-        const snapshot = await cacheRef.child(queryKey).once('value');
-        const cachedData = snapshot.val();
+    if (isCacheEnabled) {
+        try {
+            const snapshot = await cacheRef.child(queryKey).once('value');
+            const cachedData = snapshot.val();
 
-        if (cachedData && (Date.now() - cachedData.timestamp < 2592000000)) { // 30-day cache
-            return res.status(200).json({
-                candidates: [{
-                    content: {
-                        parts: [{ text: cachedData.answer }],
-                        role: "model"
-                    }
-                }],
-                fromCache: true
-            });
+            if (cachedData && (Date.now() - cachedData.timestamp < 2592000000)) { // 30-day cache
+                return res.status(200).json({
+                    candidates: [{
+                        content: {
+                            parts: [{ text: cachedData.answer }],
+                            role: "model"
+                        }
+                    }],
+                    fromCache: true
+                });
+            }
+        } catch (dbError) {
+            console.error("Database read error:", dbError);
+            // Don't stop; just proceed to fetch from API
         }
-    } catch (dbError) {
-        console.error("Database read error:", dbError);
-        // Don't stop; just proceed to fetch from API
     }
     // --- END CACHE LOGIC ---
 
@@ -108,7 +125,6 @@ export default async function handler(req, res) {
 
         // *** ROBUST ERROR HANDLING ***
         if (!apiResponse.ok) {
-            // Try to parse the error as JSON, but fall back to text
             let errorData;
             try {
                 errorData = await apiResponse.json();
@@ -122,7 +138,7 @@ export default async function handler(req, res) {
         const responseData = await apiResponse.json();
         const generatedText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (generatedText) {
+        if (generatedText && isCacheEnabled) {
             // --- 3. SAVE TO CACHE ---
             try {
                 await cacheRef.child(queryKey).set({
