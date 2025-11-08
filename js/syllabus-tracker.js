@@ -18,7 +18,7 @@ const REVISION_SCHEDULE = { d1: 1, d3: 3, d7: 7, d21: 21 }; // SRS days
 // --- State Variables (Module Scope) ---
 let syllabusData = [];
 let optionalSubject = null;
-let isSyllabusLoading = true;
+let isSyllabusLoading = false;
 let srsModalContext = {};
 let deferredPrompt = null;
 let authServices = {}; // Will hold { db, auth, firestoreModule, etc. }
@@ -89,6 +89,12 @@ const DOMElements = {
     aiTopicName: document.getElementById('ai-topic-name'),
     aiResponseContent: document.getElementById('ai-response-content'),
     copyrightYear: document.getElementById('copyright-year'),
+    
+    // --- NEW: Dashboard Progress List for the updated UI ---
+    dashboardProgressList: document.getElementById('dashboard-progress-list'),
+    
+    // --- NEW: Overall Progress Circle (from the updated UI) ---
+    overallProgressCircle: document.querySelector('.progress-circle.overall'),
 };
 
 // --- PWA: Handle Install Prompt ---
@@ -101,12 +107,12 @@ window.addEventListener('beforeinstallprompt', (e) => {
   if (DOMElements.installPwaBtnMobile) {
     DOMElements.installPwaBtnMobile.classList.remove('hidden');
   }
-  console.log('PWA: beforeinstallprompt event fired.');
+  console.log("PWA: beforeinstallprompt event fired.");
 });
 
 // --- PWA: Handle App Installed ---
 window.addEventListener('appinstalled', () => {
-  console.log('PWA was installed');
+  console.log("PWA was installed");
   if (DOMElements.installPwaBtnDesktop) {
     DOMElements.installPwaBtnDesktop.classList.add('hidden');
   }
@@ -530,21 +536,43 @@ function getDueRevisions(nodes) {
     return revisionsDue;
 }
 
+/**
+ * Helper function to generate the progress bar HTML.
+ */
+function renderProgressBar(label, value, colorClass) {
+    const val = (typeof value === 'number' && !isNaN(value)) ? Math.max(0, Math.min(100, Math.round(value))) : 0;
+    return `
+        <div>
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-base font-medium text-slate-700">${label}</span>
+                <span class="text-base font-bold ${val === 100 ? 'text-green-600' : 'text-blue-600'}">${val}%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill ${colorClass}" style="width: ${val}%;"></div>
+            </div>
+        </div>`;
+}
+
 function updateTrackerDashboard() {
-    console.log("Updating tracker dashboard (Creative)...");
+    console.log("Updating tracker dashboard (Revised UI)...");
     if (!Array.isArray(syllabusData) || syllabusData.length === 0) {
         console.warn("Syllabus data not available for dashboard update.");
         return;
     }
+    
+    // --- 1. Calculate All Progress Values ---
     const prelimsNode = syllabusData.find(s => s?.id === 'prelims');
     const mainsNode = syllabusData.find(s => s?.id === 'mains');
     const prelimsChildren = Array.isArray(prelimsNode?.children) ? prelimsNode.children : [];
     const mainsChildren = Array.isArray(mainsNode?.children) ? mainsNode.children : [];
+    
     const overallProgress = calculateOverallProgress(syllabusData);
+    
     const prelimsGSNode = prelimsChildren.find(p => p?.id === 'prelims-gs1');
     const prelimsGS = calculateOverallProgress(prelimsGSNode?.children);
     const prelimsCSATNode = prelimsChildren.find(p => p?.id === 'prelims-csat');
     const prelimsCSAT = calculateOverallProgress(prelimsCSATNode?.children);
+    
     const mainsGS1Node = mainsChildren.find(p => p?.id === 'mains-gs1');
     const mainsGS1 = calculateOverallProgress(mainsGS1Node?.children);
     const mainsGS2Node = mainsChildren.find(p => p?.id === 'mains-gs2');
@@ -553,10 +581,13 @@ function updateTrackerDashboard() {
     const mainsGS3 = calculateOverallProgress(mainsGS3Node?.children);
     const mainsGS4Node = mainsChildren.find(p => p?.id === 'mains-gs4');
     const mainsGS4 = calculateOverallProgress(mainsGS4Node?.children);
+    
     const optionalP1Node = mainsChildren.find(p => p?.id === 'mains-optional-1');
     const optionalP1 = calculateOverallProgress(optionalP1Node?.children);
     const optionalP2Node = mainsChildren.find(p => p?.id === 'mains-optional-2');
     const optionalP2 = calculateOverallProgress(optionalP2Node?.children);
+
+    // --- 2. Update Overall Progress Circle (Column 1) ---
     const updateCircle = (circleElement, value) => {
         const val = (typeof value === 'number' && !isNaN(value)) ? Math.max(0, Math.min(100, Math.round(value))) : 0;
         if (circleElement) {
@@ -565,33 +596,31 @@ function updateTrackerDashboard() {
             if (valueSpan) valueSpan.textContent = `${val}%`;
         }
     };
-    const dashboard = document.getElementById('tab-dashboard');
-    if (!dashboard) {
-        console.error("Dashboard tab container not found!");
-        return;
+    updateCircle(DOMElements.overallProgressCircle, overallProgress);
+
+
+    // --- 3. Render Progress Bar List (Column 2) ---
+    let progressListHTML = `
+        ${renderProgressBar('Prelims (GS)', prelimsGS, 'bg-orange-500')}
+        ${renderProgressBar('Prelims (CSAT)', prelimsCSAT, 'bg-orange-500')}
+        ${renderProgressBar('Mains GS Paper 1', mainsGS1, 'bg-indigo-500')}
+        ${renderProgressBar('Mains GS Paper 2', mainsGS2, 'bg-indigo-500')}
+        ${renderProgressBar('Mains GS Paper 3', mainsGS3, 'bg-indigo-500')}
+        ${renderProgressBar('Mains GS Paper 4', mainsGS4, 'bg-indigo-500')}
+    `;
+    
+    if (optionalSubject) {
+        const optName = optionalSubject.toUpperCase();
+        progressListHTML += renderProgressBar(`Optional ${optName} P-I`, optionalP1, 'bg-pink-600');
+        progressListHTML += renderProgressBar(`Optional ${optName} P-II`, optionalP2, 'bg-pink-600');
     }
-    updateCircle(dashboard.querySelector('.progress-circle.overall'), overallProgress);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(1) .progress-circle'), prelimsGS);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(2) .progress-circle'), prelimsCSAT);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(3) .progress-circle'), mainsGS1);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(4) .progress-circle'), mainsGS2);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(5) .progress-circle'), mainsGS3);
-    updateCircle(dashboard.querySelector('.dashboard-card:nth-of-type(6) .progress-circle'), mainsGS4);
-    const optP1Card = dashboard.querySelector('#optional-p1-card');
-    const optP2Card = dashboard.querySelector('#optional-p2-card');
-    const optSubjectNameP1 = dashboard.querySelector('#optional-subject-name-p1');
-    const optSubjectNameP2 = dashboard.querySelector('#optional-subject-name-p2');
-    if (optionalSubject && optP1Card && optP2Card) {
-        optP1Card.classList.remove('hidden');
-        optP2Card.classList.remove('hidden');
-        if (optSubjectNameP1) optSubjectNameP1.textContent = optionalSubject.toUpperCase();
-        if (optSubjectNameP2) optSubjectNameP2.textContent = optionalSubject.toUpperCase();
-        updateCircle(optP1Card.querySelector('.progress-circle'), optionalP1);
-        updateCircle(optP2Card.querySelector('.progress-circle'), optionalP1);
-    } else if (optP1Card && optP2Card) {
-        optP1Card.classList.add('hidden');
-        optP2Card.classList.add('hidden');
+    
+    if (DOMElements.dashboardProgressList) {
+        DOMElements.dashboardProgressList.innerHTML = progressListHTML;
     }
+
+
+    // --- 4. Update Revisions Due List (Column 3) ---
     const revisionsDue = getDueRevisions(syllabusData).filter(r => r.status === 'due' || r.status === 'overdue');
     if (DOMElements.reminderCount) DOMElements.reminderCount.textContent = revisionsDue.length;
     if (DOMElements.revisionsDueList) {
@@ -621,6 +650,7 @@ function updateTrackerDashboard() {
         console.error("Revisions due list container not found!");
     }
 
+    // --- 5. Save Summary to Firestore (Unchanged) ---
     const user = authServices.getCurrentUser();
     const { db, firestoreModule } = authServices;
     if (user && db && firestoreModule?.doc && firestoreModule?.setDoc && firestoreModule?.serverTimestamp) {
