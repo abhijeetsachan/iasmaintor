@@ -464,10 +464,21 @@ p {
 .dashboard-card .text-blue-600 { color: var(--brand-primary) !important; }
 
 
-/* --- MODIFICATION: Added styles for tracker page revision list --- */
+/* --- MODIFICATION: Added styles for tracker page dashboard columns --- */
+#tab-dashboard .grid {
+    /* This makes the grid cells (and the cards inside) stretch to be equal height */
+    align-items: stretch;
+}
+
+#tab-dashboard .dashboard-card.bg-yellow-50 {
+    /* This ensures the revision card stretches to the full height of its grid cell */
+    height: 100%;
+}
+
+/* This sets a fixed, scrolling height for BOTH columns' content */
+#dashboard-left-col,
 #revisions-due-list {
-    /* --- MODIFIED: Reduced height and added custom scroll --- */
-    max-height: 400px; /* Reduced height */
+    max-height: 70vh; /* A fixed, generous height. Adjust as needed. */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 16px; /* Breathing room */
@@ -477,19 +488,23 @@ p {
     scrollbar-color: var(--brand-primary) var(--bg-secondary);
 }
 
-/* WebKit scrollbar for tracker page revision list */
+/* WebKit scrollbar for tracker page dashboard columns */
+#dashboard-left-col::-webkit-scrollbar,
 #revisions-due-list::-webkit-scrollbar {
     width: 8px;
 }
+#dashboard-left-col::-webkit-scrollbar-track,
 #revisions-due-list::-webkit-scrollbar-track {
     background: var(--bg-secondary);
     border-radius: 10px;
 }
+#dashboard-left-col::-webkit-scrollbar-thumb,
 #revisions-due-list::-webkit-scrollbar-thumb {
     background-color: var(--brand-primary);
     border-radius: 10px;
     border: 2px solid var(--bg-secondary); 
 }
+#dashboard-left-col::-webkit-scrollbar-thumb:hover,
 #revisions-due-list::-webkit-scrollbar-thumb:hover {
     background-color: var(--brand-primary-hover);
 }
