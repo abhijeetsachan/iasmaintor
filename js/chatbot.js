@@ -10,7 +10,6 @@ let isChatbotInitialized = false;
 let isChatOpen = false;
 let greetingTimeout;
 let notify; // To store the showNotification function
-// REMOVED: const API_URL = ... (This is no longer needed)
 
 // UPDATED: Greetings for "Drona"
 const GREETINGS = [
@@ -19,6 +18,9 @@ const GREETINGS = [
     "I am Drona, your guide for the Civil Services Exam. Please ask your questions.",
     "Greetings, aspirant. I am Drona, here to help you navigate your UPSC journey."
 ];
+
+// *** NEW: Word limit for showing "Read More" ***
+const READ_MORE_WORD_LIMIT = 60;
 
 // --- Core Functions ---
 
@@ -160,7 +162,7 @@ async function handleUserMessage(e) {
         addMessage('ai', friendlyErrorMessage);
         // --- END UPDATED ERROR HANDLING ---
         
-        if(notify) notify("Chatbot error: " + error.message, true); // The developer still sees the full error
+        if(notify) notify("Chatbot error: ".concat(error.message), true); // The developer still sees the full error
     }
 }
 
@@ -183,25 +185,37 @@ function addMessage(sender, text) {
     
     // --- "READ MORE" LOGIC (MODIFIED) ---
     if (sender === 'ai') {
-        requestAnimationFrame(() => {
-            // *** FIX: Check if overflow is more than 1px to avoid rounding errors ***
-            const isOverflowing = (bubble.scrollHeight - bubble.clientHeight) > 1;
-        
-            if (isOverflowing) {
-                const readMoreBtn = document.createElement('div');
-                readMoreBtn.className = 'read-more-btn';
-                readMoreBtn.innerHTML = '<span>Read More...</span>';
-                
-                readMoreBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
+        const wordCount = text.split(/\s+/).length;
+
+        // If the message is SHORT, just expand it by default and do nothing else.
+        if (wordCount <= READ_MORE_WORD_LIMIT) {
+            bubble.classList.add('expanded');
+        } else {
+            // If the message is LONG, check if it *actually* overflows before adding the button.
+            requestAnimationFrame(() => {
+                const isOverflowing = (bubble.scrollHeight - bubble.clientHeight) > 1;
+            
+                if (isOverflowing) {
+                    // It's long AND overflowing, so add the button.
+                    const readMoreBtn = document.createElement('div');
+                    readMoreBtn.className = 'read-more-btn';
+                    readMoreBtn.innerHTML = '<span>Read More...</span>';
+                    
+                    readMoreBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        bubble.classList.add('expanded');
+                        readMoreBtn.remove();
+                        DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
+                    });
+                    
+                    bubble.appendChild(readMoreBtn);
+                } else {
+                    // It's a long message, but the container is wide enough.
+                    // We MUST add 'expanded' otherwise it will be cut off by the default max-height.
                     bubble.classList.add('expanded');
-                    readMoreBtn.remove();
-                    DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
-                });
-                
-                bubble.appendChild(readMoreBtn);
-            }
-        });
+                }
+            });
+        }
     }
     // --- END "READ MORE" LOGIC ---
     
