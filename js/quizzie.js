@@ -373,9 +373,12 @@ const calculateAndShowResults = async () => {
          }
 
          const userAnswerIndex = userAnswers[index];
+         // --- Fix: Find the index of the correct answer string in the options array ---
+         const correctAnswerIndex = q.options.findIndex(opt => opt === q.answer);
+
          if (userAnswerIndex === undefined || userAnswerIndex === null) {
              unansweredCount++;
-         } else if (userAnswerIndex === q.answerIndex) {
+         } else if (userAnswerIndex === correctAnswerIndex) { // Compare index to index
              correctCount++;
              score += 2;
          } else {
@@ -416,13 +419,16 @@ const calculateAndShowResults = async () => {
     `;
     resultHTML += quizQuestions.map((q, index) => {
          const userAnswerIndex = userAnswers[index];
+         // --- Fix: Find the index of the correct answer string in the options array ---
+         const correctAnswerIndex = q.options.findIndex(opt => opt === q.answer);
+
          const optionsReview = q.options.map((opt, optIndex) => {
              let classes = 'p-3 border rounded-lg flex items-center text-left text-sm';
              let icon = '';
-             if(optIndex === q.answerIndex) {
+             if(optIndex === correctAnswerIndex) { // Compare index to index
                  classes += ' option-correct';
                  icon = `<i class="fas fa-check-circle text-green-500 mr-2 text-base"></i>`;
-             } else if (userAnswerIndex === optIndex && userAnswerIndex !== q.answerIndex) {
+             } else if (userAnswerIndex === optIndex && userAnswerIndex !== correctAnswerIndex) { // Compare index to index
                  classes += ' option-incorrect';
                  icon = `<i class="fas fa-times-circle text-red-500 mr-2 text-base"></i>`;
              } else {
@@ -435,7 +441,7 @@ const calculateAndShowResults = async () => {
              <div class="mb-6 border-b pb-6">
                  <p class="font-semibold mb-3 text-slate-800 whitespace-pre-wrap">Q ${index + 1}: ${q.question.replace(/\\n/g, '\n')}</p>
                  <div class="space-y-2">${optionsReview}</div>
-                 <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm text-slate-700 whitespace-pre-wrap"> <p><strong>Explanation:</strong> ${q.explanation.replace(/\\n/g, '\n')}</p> When</div>
+                 <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm text-slate-700 whitespace-pre-wrap"> <p><strong>Explanation:</strong> ${q.explanation.replace(/\\n/g, '\n')}</p></div>
              </div>`;
     }).join('');
     resultHTML += `<div class="mt-8 flex justify-end items-center"><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
@@ -509,7 +515,11 @@ const handleQuizSubmit = async (e) => {
         const { questions } = await response.json();
         
         // Store questions and user answers
-        quizQuestions = questions; // These now have IDs: { id, question, ... }
+        // --- Fix: Store the index of the correct answer for easier comparison ---
+        quizQuestions = questions.map(q => ({
+            ...q,
+            answerIndex: q.options.findIndex(opt => opt === q.answer)
+        }));
         userAnswers = new Array(quizQuestions.length);
 
         if (quizQuestions.length > 0) {
@@ -524,4 +534,3 @@ const handleQuizSubmit = async (e) => {
          if(quizFooter) quizFooter.classList.add('hidden');
     }
 };
-
