@@ -97,7 +97,7 @@ export default async function handler(req, res) {
 
     // --- 2. CACHE MISS: CALL GEMINI API ---
     let systemInstructionText = (queryType === 'general') ? generalPrompt : academicPrompt;
-    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     const geminiPayload = {
         contents: contents,
