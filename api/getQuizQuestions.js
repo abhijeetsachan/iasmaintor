@@ -80,10 +80,6 @@ if (type !== 'blend') {
 
 // 3. Add the limit at the end
 dbQuery = dbQuery.limit(30);
-    
-// 4. Now, execute the query
-const snapshot = await dbQuery.get();
-
       
     // --- FIX: MODIFIED LOGIC ---
     const snapshot = await dbQuery.get();
@@ -142,7 +138,7 @@ const snapshot = await dbQuery.get();
         }
         // else, we'll just return the few we found in the DB
       }
-    }
+    
 
     // 6. Asynchronously update user's 'seen' list (don't make user wait)
     const allSeenIds = finalQuestions.map(q => q.id);
