@@ -470,11 +470,22 @@ p {
     display: flex;
     flex-direction: column;
 }
+/* --- NEW: Style for progress bar list --- */
+#dashboard-progress-bars {
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 8px; /* Room for scrollbar */
+}
+
 #revision-reminder-list {
     /* --- NEW: Added for equal height and scrolling --- */
     flex-grow: 1;
     overflow-y: auto;
-    min-height: 200px; /* Give it a minimum height */
+    /* --- NEW: Added max-height --- */
+    max-height: 450px; 
+    /* --- NEW: Added overflow-x: hidden --- */
+    overflow-x: hidden;
+    padding-right: 8px; /* Room for scrollbar */
 }
 
 .dashboard-reminder-item {
