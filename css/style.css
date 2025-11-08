@@ -472,7 +472,9 @@ p {
 #dashboard-progress-bars {
     max-height: 450px;
     overflow-y: auto;
-    overflow-x: hidden; /* Added for consistency */
+    overflow-x: hidden; 
+    /* --- MODIFIED: Added padding --- */
+    padding-right: 16px; 
     
     /* --- NEW: Firefox Scrollbar --- */
     scrollbar-width: thin;
@@ -484,6 +486,8 @@ p {
     overflow-y: auto;
     max-height: 450px; 
     overflow-x: hidden;
+    /* --- MODIFIED: Added padding --- */
+    padding-right: 16px;
 
     /* --- NEW: Firefox Scrollbar --- */
     scrollbar-width: thin;
@@ -524,9 +528,10 @@ p {
     text-decoration: underline;
 }
 
-/* --- NEW: Badge Grouping --- */
+/* --- MODIFIED: Badge Grouping --- */
 .dashboard-reminder-badge-group {
     display: flex;
+    flex-wrap: nowrap; /* Keep badges on one line */
     gap: 4px; /* Space between badges */
     flex-shrink: 0; /* Prevent badges from shrinking */
 }
@@ -538,6 +543,7 @@ p {
     border-radius: 9999px;
     flex-shrink: 0;
     color: var(--text-white);
+    white-space: nowrap; /* Ensure badge text doesn't wrap */
 }
 .dashboard-reminder-badge.status-due {
     background-color: var(--color-orange-DEFAULT);
