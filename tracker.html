@@ -12,9 +12,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/png" href="favicon.png">
     
-    <!-- PWA Manifest Link -->
     <link rel="manifest" href="/manifest.json">
-    <!-- Theme color for PWA -->
     <meta name="theme-color" content="#3b82f6">
 
     <style>
@@ -66,17 +64,15 @@
             <a href="index.html" class="logo-container text-2xl font-bold text-slate-900">iasm<span class="ai-gradient">AI</span>ntor</a>
             
             <div class="flex items-center space-x-2 sm:space-x-4">
-                 <!-- PWA Install Button (Desktop) -->
                  <button id="install-pwa-btn-desktop" class="hidden install-pwa-btn bg-purple-600 text-white p-2 md:px-5 md:py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center">
                     <i class="fas fa-download md:mr-2"></i>
                     <span class="hidden md:inline">Install App</span>
                  </button>
                  
-                 <button id="save-syllabus-btn" class="bg-green-600 text-white p-2 md:px-5 md:py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center disabled:opacity-50" disabled>
-                     <i class="fas fa-save md:mr-2"></i>
-                     <span class="hidden md:inline">Save Progress</span>
-                 </button>
-
+                 <div id="save-status-indicator" class="text-sm text-slate-500 flex items-center gap-2 transition-all duration-300" style="display: none;">
+                    <i id="save-status-icon" class="fas fa-spinner fa-spin"></i>
+                    <span id="save-status-text">Saving...</span>
+                 </div>
                  <div id="auth-links" class="flex items-center space-x-4">
                     <a href="#" id="login-btn" class="bg-blue-600 text-white p-2 md:px-5 md:py-2 rounded-lg font-semibold hover:bg-blue-700 transition-transform hover:scale-105 shadow-md flex items-center justify-center">
                         <i class="fas fa-right-to-bracket md:mr-2"></i>
@@ -109,7 +105,6 @@
 
             <div id="mobile-menu" class="hidden md:hidden pb-4 space-y-2 w-full">
                 <hr class="border-slate-200 my-2">
-                <!-- PWA Install Button (Mobile) -->
                 <a href="#" id="install-pwa-btn-mobile" class="hidden install-pwa-btn block bg-purple-600 text-white text-center px-5 py-2 rounded-lg font-semibold hover:bg-purple-700 flex items-center justify-center mb-2">
                     <i class="fas fa-download mr-2"></i>Install App
                 </a>
@@ -138,7 +133,7 @@
                         <button class="tab-button p-2 md:p-4 text-slate-600 hover:text-blue-600 transition-colors flex-shrink-0" data-tab="mains">Mains (GS)</button>
                         <button class="tab-button p-2 md:p-4 text-slate-600 hover:text-blue-600 transition-colors flex-shrink-0" data-tab="optional">Optional</button>
                     </div>
-                </div>
+                    </div>
 
                 <div id="syllabus-content-wrapper" class="p-4 md:p-8 relative min-h-[60vh] max-h-[calc(100vh-10rem)] overflow-y-auto">
 
