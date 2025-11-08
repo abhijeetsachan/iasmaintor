@@ -54,8 +54,8 @@ export default async function handler(req, res) {
     }
 
     // *** THIS IS THE FIX ***
-    // Using the standard 'gemini-pro' model
-    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+    // Using the latest 'gemini-1.5-pro' model
+    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${GEMINI_API_KEY}`;
 
     try {
         const { contents, queryType } = req.body;
