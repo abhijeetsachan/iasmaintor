@@ -380,32 +380,55 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     /**
+     * --- ### MODIFIED: getDueRevisions ### ---
      * Traverses the entire syllabusData tree and finds all due revisions.
+     * It now groups due revisions by topic to avoid duplicates.
      */
     function getDueRevisions(nodes) {
         if (!Array.isArray(nodes)) return [];
-        const revisionsDue = [];
+        const revisionsDue = []; // This will now hold one object per *topic*
+    
         function traverse(items) {
             if (!Array.isArray(items)) return;
+    
             items.forEach(item => {
                 if (!item || !item.id) return;
+    
                 if (!Array.isArray(item.children) || item.children.length === 0) {
+                    // This is a micro-topic
                     if (item.startDate && item.revisions) {
+                        let topicDueRevisions = []; // Array for this topic's due days
+    
                         Object.entries(REVISION_SCHEDULE).forEach(([dayKey, days]) => {
                             const isDone = item.revisions[dayKey] === true;
                             const { status } = getRevisionStatus(item.startDate, days, isDone);
+    
                             if (status === 'due' || status === 'overdue') {
-                                revisionsDue.push({ topicName: item.name, id: item.id, days: days, status: status });
+                                topicDueRevisions.push({
+                                    day: dayKey.toUpperCase(), // "D1", "D3", "D7"
+                                    status: status // "due" or "overdue"
+                                });
                             }
                         });
+    
+                        // If we found any due revisions for this topic, add it ONCE
+                        if (topicDueRevisions.length > 0) {
+                            revisionsDue.push({
+                                topicName: item.name,
+                                id: item.id,
+                                dueRevisions: topicDueRevisions // The array of due days
+                            });
+                        }
                     }
                 } else {
+                    // This is a parent, traverse children
                     traverse(item.children);
                 }
             });
         }
+    
         traverse(nodes);
-        return revisionsDue;
+        return revisionsDue; // Returns the new, de-duplicated structure
     }
 
     /**
@@ -448,21 +471,30 @@ document.addEventListener('DOMContentLoaded', async function() {
                     });
                 }
                 
-                // 5. Calculate due revisions
-                const revisionsDue = getDueRevisions(fullSyllabus).filter(r => r.status === 'due' || r.status === 'overdue');
+                // 5. Calculate due revisions (using the new de-duplicating function)
+                const revisionsDue = getDueRevisions(fullSyllabus);
                 
-                // 6. Render the list
+                // 6. --- MODIFIED: Render the new de-duplicated list ---
                 if (revisionsDue.length === 0) {
                     reminderListEl.innerHTML = `<p class="text-green-700 font-semibold text-center py-4">🎉 All caught up! No revisions due today.</p>`;
                 } else {
-                    reminderListEl.innerHTML = revisionsDue.map(r => `
+                    reminderListEl.innerHTML = revisionsDue.map(r => {
+                        // Create the HTML for the badges
+                        const badgesHTML = r.dueRevisions.map(dueDay => {
+                            return `<span class="dashboard-reminder-badge status-${dueDay.status}">
+                                        ${dueDay.day} ${dueDay.status === 'overdue' ? 'Overdue' : 'Due'}
+                                    </span>`;
+                        }).join(''); // Join all badges for this topic
+                
+                        return `
                         <div class="dashboard-reminder-item">
                             <a href="tracker.html" class="dashboard-reminder-link">${r.topicName}</a>
-                            <span class="dashboard-reminder-badge status-${r.status}">
-                                D-${r.days} ${r.status === 'overdue' ? 'Overdue' : 'Due'}
-                            </span>
+                            <div class="dashboard-reminder-badge-group">
+                                ${badgesHTML}
+                            </div>
                         </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
 
             } catch (error) {
@@ -482,7 +514,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.log(`Dashboard: Optional subject changed to ${newOptional}. Refreshing revisions.`);
                 optionalSubject = newOptional;
                 refreshRevisions(); // Refresh list if optional changes
-            } else if (!optionalSubject) {
+            } else if (optionalSubject === null) { // --- MODIFIED: Handle initial load correctly
                  // This handles the initial load
                  refreshRevisions();
             }
@@ -490,6 +522,11 @@ document.addEventListener('DOMContentLoaded', async function() {
              console.error("Error in optional subject listener (dashboard):", error);
              reminderListEl.innerHTML = `<p class="text-red-500">Error loading user profile.</p>`;
         });
+        
+        // Also refresh revisions if the user is already logged in but the optional subject was already set
+        if(optionalSubject) {
+            refreshRevisions();
+        }
     }
 
 
