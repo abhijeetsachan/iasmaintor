@@ -470,6 +470,11 @@ p {
     align-items: stretch;
 }
 
+#tab-dashboard #dashboard-right-col {
+    /* This makes the right column flex, so its card can be 100% height */
+    display: flex;
+}
+
 #tab-dashboard .dashboard-card.bg-yellow-50 {
     /* This ensures the revision card stretches to the full height of its grid cell */
     height: 100%;
