@@ -1,4 +1,4 @@
-// js/chatbot.js (FIXED)
+// js/chatbot.js (FIXED & RENAMED)
 
 // Import the new API endpoint, NOT the key
 import { GEMINI_API_ENDPOINT } from './firebase-config.js';
@@ -12,11 +12,12 @@ let greetingTimeout;
 let notify; // To store the showNotification function
 // REMOVED: const API_URL = ... (This is no longer needed)
 
+// UPDATED: Greetings for "Drona"
 const GREETINGS = [
-    "Hi! My name is Chinki. How may I assist you today?",
-    "Hello there! I'm Chinki, your AI assistant. What's on your mind?",
-    "Meow! I'm Chinki. Do you have any questions about your UPSC prep?",
-    "Greetings, aspirant! Chinki here, ready to help. What can I do for you?"
+    "Greetings. I am Drona, your AI mentor. How may I assist in your preparation today?",
+    "Hello. I am Drona. What strategic questions about your preparation do you have?",
+    "I am Drona, your guide for the Civil Services Exam. Please ask your questions.",
+    "Greetings, aspirant. I am Drona, here to help you navigate your UPSC journey."
 ];
 
 // --- Core Functions ---
@@ -50,17 +51,17 @@ export function initChatbot(showNotification) {
     DOMElements.closeButton.addEventListener('click', () => toggleChatWindow(false));
     DOMElements.form.addEventListener('submit', handleUserMessage);
 
-    // --- System Prompt ---
+    // --- UPDATED: System Prompt ---
     conversationHistory.push({
         role: "system",
-        parts: [{ text: "You are Chinki, a friendly and helpful AI chatbot assistant for the iasmAIntor website. Your personality is like a knowledgeable and encouraging cat. You are here to help UPSC aspirants with their questions about the exam, study strategies, or any general queries. Keep your answers concise and helpful." }]
+        parts: [{ text: "You are Drona, a wise and authoritative AI mentor for the iasmAIntor website, named after the legendary teacher. Your personality is that of a master strategist and guide. You are here to help UPSC aspirants with deep questions about the exam, study strategies, and complex topics. Your answers should be precise, insightful, and professional. Keep your answers concise but thorough." }]
     });
 
     // --- Show Initial Greeting ---
     showGreetingBubble();
     
     isChatbotInitialized = true;
-    console.log("Chatbot 'Chinki' initialized.");
+    console.log("Chatbot 'Drona' initialized."); // UPDATED
 }
 
 /**
@@ -143,17 +144,17 @@ async function handleUserMessage(e) {
         console.error("Chatbot API error:", error);
         showTypingIndicator(false);
 
-        // --- UPDATED ERROR HANDLING ---
-        let friendlyErrorMessage = "Meow... I'm sorry, I ran into an error. Please try rephrasing your question.";
+        // --- UPDATED ERROR HANDLING (Removed "Meow") ---
+        let friendlyErrorMessage = "My apologies, I have encountered an error. Please try rephrasing your question.";
         
         if (error.message.includes('RECITATION')) {
-            friendlyErrorMessage = "Meow... My response was blocked because it was too similar to a source. Could you please ask in a different way?";
+            friendlyErrorMessage = "My response was blocked for recitation. Please ask in a different way.";
         } else if (error.message.includes('blocked:')) {
-            friendlyErrorMessage = "Meow... I'm sorry, I can't answer that. My safety filters were triggered.";
+            friendlyErrorMessage = "I am sorry, I cannot answer that. My safety filters were triggered.";
         } else if (error.message.includes('API key')) {
-             friendlyErrorMessage = "Meow... There seems to be an issue with my API configuration. Please alert the site admin!";
+             friendlyErrorMessage = "There appears to be an issue with my configuration. Please alert the site admin!";
         } else if (error.message.includes('API request failed')) {
-             friendlyErrorMessage = "Meow... I'm having trouble connecting to my brain. Please try again in a moment.";
+             friendlyErrorMessage = "I am having trouble connecting. Please try again in a moment.";
         }
         
         addMessage('ai', friendlyErrorMessage);
@@ -210,7 +211,7 @@ function addMessage(sender, text) {
 
 
 /**
- * Shows or hides the "Chinki is typing..." indicator.
+ * Shows or hides the typing indicator.
  * @param {boolean} show - Whether to show or hide.
  */
 function showTypingIndicator(show) {
@@ -219,7 +220,8 @@ function showTypingIndicator(show) {
         if (!typingEl) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('chat-message', 'ai', 'ai-typing');
-            messageElement.innerHTML = `<div class="chat-bubble">Chinki is typing...</div>`;
+            // UPDATED: "Drona is thinking..."
+            messageElement.innerHTML = `<div class="chat-bubble">Drona is thinking...</div>`;
             DOMElements.messages.appendChild(messageElement);
             DOMElements.messages.scrollTop = DOMElements.messages.scrollHeight;
         }
