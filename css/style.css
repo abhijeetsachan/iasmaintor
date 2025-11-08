@@ -466,7 +466,8 @@ p {
 
 /* --- MODIFICATION: Added styles for tracker page revision list --- */
 #revisions-due-list {
-    max-height: 500px; /* Or any height you prefer */
+    /* --- MODIFIED: Reduced height and added custom scroll --- */
+    max-height: 400px; /* Reduced height */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 16px; /* Breathing room */
