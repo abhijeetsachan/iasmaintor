@@ -31,7 +31,7 @@ const db = admin.firestore();
 // --- Initialize Google AI (Gemini) ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const geminiModel = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash', // Use your desired model
+  model: 'gemini-2.5-flash', // Use your desired model
 });
 
 // --- Main Handler ---
