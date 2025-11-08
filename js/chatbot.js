@@ -203,7 +203,10 @@ function addMessage(sender, text) {
                     // It's long AND overflowing, so add the button.
                     const readMoreBtn = document.createElement('div');
                     readMoreBtn.className = 'read-more-btn';
-                    readMoreBtn.innerHTML = '<span>Read More...</span>';
+                    
+                    // *** THIS IS THE CHANGE ***
+                    // We are using a <button> element for better styling
+                    readMoreBtn.innerHTML = '<button class="read-more-button-inner">Read More</button>';
                     
                     readMoreBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
