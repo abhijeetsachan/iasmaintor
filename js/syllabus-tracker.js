@@ -125,13 +125,30 @@ function showNotification(message, isError = false) {
     if (!el) { console.warn("Notification element not found."); return; }
 
     el.textContent = message;
-    // We removed z-[60] from the class string here
-    el.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transition-opacity duration-300 pointer-events-none text-white ${isError ? 'bg-red-600' : 'bg-slate-800'} opacity-100`;
+    
+    // --- FIX START ---
+    // Use classList.toggle instead of replacing className
+    el.classList.toggle('bg-red-600', isError);
+    el.classList.toggle('bg-slate-800', !isError);
+    
+    // Explicitly remove classes that hide the notification
+    el.classList.remove('opacity-0');
+    el.classList.remove('pointer-events-none');
+    // Add class to show it
+    el.classList.add('opacity-100');
+    // --- FIX END ---
 
     if (chatbotContainer) chatbotContainer.classList.add('chatbot-container-lifted'); // LIFT chatbot
 
     setTimeout(() => {
-        if (el) el.classList.remove('opacity-100');
+        if (el) {
+            el.classList.remove('opacity-100');
+            // --- FIX START ---
+            // Add classes back to hide it correctly
+            el.classList.add('opacity-0');
+            el.classList.add('pointer-events-none');
+            // --- FIX END ---
+        }
         if (chatbotContainer) chatbotContainer.classList.remove('chatbot-container-lifted'); // LOWER chatbot
     }, 3000);
 }
