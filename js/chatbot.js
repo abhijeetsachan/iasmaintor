@@ -21,6 +21,12 @@ const GREETINGS = [
 
 const READ_MORE_WORD_LIMIT = 60;
 
+// *** NEW: Keyword list for "Triage" ***
+const GENERAL_QUERY_KEYWORDS = [
+    'hello', 'hi', 'hey', 'thanks', 'thank you', 'who are you',
+    'what is your name', 'bye', 'goodbye', 'how are you', 'what can you do'
+];
+
 // --- Core Functions ---
 
 /**
@@ -52,17 +58,14 @@ export function initChatbot(showNotification) {
     DOMElements.closeButton.addEventListener('click', () => toggleChatWindow(false));
     DOMElements.form.addEventListener('submit', handleUserMessage);
 
-    // --- UPDATED: System Prompt ---
-    conversationHistory.push({
-        role: "system",
-        parts: [{ text: "You are Drona, a wise and authoritative AI mentor for the iasmAIntor website, named after the legendary teacher. Your personality is that of a master strategist and guide. You are here to help UPSC aspirants with deep questions about the exam, study strategies, and complex topics. Your answers should be precise, insightful, and professional. Keep your answers concise but thorough." }]
-    });
+    // --- *** MODIFICATION: System Prompt is REMOVED from the client *** ---
+    // The server (api/gemini.js) now handles the system prompt.
 
     // --- Show Initial Greeting ---
     showGreetingBubble();
     
     isChatbotInitialized = true;
-    console.log("Chatbot 'Drona' initialized."); // UPDATED
+    console.log("Chatbot 'Drona' initialized (Dynamic Prompting)."); // UPDATED
 }
 
 /**
@@ -129,6 +132,7 @@ async function handleUserMessage(e) {
     showTypingIndicator(true);
 
     try {
+        // *** MODIFIED: Pass userText to callGeminiAPI for triage ***
         const aiResponse = await callGeminiAPI(userText);
         
         // Add to history
@@ -148,6 +152,7 @@ async function handleUserMessage(e) {
         // --- UPDATED ERROR HANDLING (Removed "Meow") ---
         let friendlyErrorMessage = "My apologies, I have encountered an error. Please try rephrasing your question.";
         
+        // Check for specific error messages from the backend
         if (error.message.includes('RECITATION')) {
             friendlyErrorMessage = "My response was blocked for recitation. Please ask in a different way.";
         } else if (error.message.includes('blocked:')) {
@@ -246,6 +251,30 @@ function showTypingIndicator(show) {
 }
 
 /**
+ * *** NEW FUNCTION ***
+ * Performs "triage" on the user's message to decide which "brain" to use.
+ * @param {string} userText - The user's message.
+ * @returns {'general' | 'academic'}
+ */
+function getQueryType(userText) {
+    const lowerText = userText.toLowerCase().trim();
+    const wordCount = lowerText.split(/\s+/).length;
+
+    // Check 1: Is it a short conversational query?
+    if (wordCount <= 4) {
+        return 'general';
+    }
+
+    // Check 2: Does it contain common conversational keywords?
+    if (GENERAL_QUERY_KEYWORDS.some(keyword => lowerText.startsWith(keyword))) {
+        return 'general';
+    }
+
+    // Default: Assume it's an academic question
+    return 'academic';
+}
+
+/**
  * *** UPDATED FUNCTION ***
  * Fetches and displays popular search topics from the new API.
  */
@@ -324,35 +353,33 @@ async function displayPopularSearches() {
  */
 async function callGeminiAPI(userText) {
     
-    // 1. Prepare payload (this is what we send to *our* backend)
+    // 1. *** NEW: Perform "Triage" ***
+    const queryType = getQueryType(userText);
+    
+    // 2. Prepare payload (this is what we send to *our* backend)
     const payload = {
         // Construct the full conversation history for the API
         contents: conversationHistory.map(item => ({
-            role: item.role === 'system' ? 'user' : item.role, // API uses 'user' for system prompt
+            role: item.role,
             parts: item.parts
         })),
-        generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1000,
-        }
+        queryType: queryType, // *** NEW: Send the query type to the backend ***
     };
     
-    // 2. Clean up history
+    // 3. Clean up history
     if (conversationHistory.length > 12) {
-        conversationHistory = [
-            conversationHistory[0], // Keep system prompt
-            ...conversationHistory.slice(-10) // Keep last 10 messages
-        ];
+        // Keep the last 10 messages (user/model pairs)
+        conversationHistory = [...conversationHistory.slice(-10)];
     }
 
-    // 3. Call our *own* backend endpoint using the imported constant
+    // 4. Call our *own* backend endpoint using the imported constant
     const response = await fetch(GEMINI_API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload) // Send the payload to our serverless function
     });
 
-    // 4. Handle response from *our* backend
+    // 5. Handle response from *our* backend
     if (!response.ok) {
         const errorBody = await response.json(); // Our backend sends JSON errors
         console.error("Backend API Error:", errorBody);
@@ -362,7 +389,7 @@ async function callGeminiAPI(userText) {
 
     const result = await response.json(); // This is the response from Google, forwarded by our backend
 
-    // --- 5. FIXED CHECK (remains the same) ---
+    // --- 6. FIXED CHECK (remains the same) ---
     // Safely access the candidate and content part
     const candidate = result.candidates?.[0];
     const contentPart = candidate?.content?.parts?.[0];
