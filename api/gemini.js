@@ -53,8 +53,9 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: { message: "API key not configured." } });
     }
 
-    // Use the gemini-1.5-flash model from your original file
-    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    // *** THIS IS THE FIX ***
+    // Using the standard 'gemini-pro' model
+    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
 
     try {
         const { contents, queryType } = req.body;
