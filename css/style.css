@@ -551,9 +551,13 @@ p {
     transition: max-height 0.3s ease-in-out;
 }
 
+/* === MODIFICATION START === */
+/* This is the fix. 'max-height: none' allows full expansion. */
 .chat-message.ai .chat-bubble.expanded {
-    max-height: 1500px;
+    max-height: none;
+    overflow: visible;
 }
+/* === MODIFICATION END === */
 
 .read-more-btn {
     position: absolute;
@@ -662,4 +666,5 @@ footer .border-slate-700 {
     color: var(--bg-primary);
 }
 #notification.bg-red-600 {
-    background-color: var(--color-red-DEFAULT) !impor
+    background-color: var(--color-red-DEFAULT) !important;
+}
