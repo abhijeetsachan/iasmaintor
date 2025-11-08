@@ -465,6 +465,18 @@ p {
 
 
 /* --- NEW: Dashboard Reminder List Styles (Homepage) --- */
+#revision-reminder-container {
+    /* --- NEW: Added for equal height --- */
+    display: flex;
+    flex-direction: column;
+}
+#revision-reminder-list {
+    /* --- NEW: Added for equal height and scrolling --- */
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 200px; /* Give it a minimum height */
+}
+
 .dashboard-reminder-item {
     display: flex;
     justify-content: space-between;
@@ -475,6 +487,8 @@ p {
     background-color: var(--bg-primary);
     border: 1px solid var(--border-primary);
     transition: all 0.2s ease;
+    /* --- NEW: Added for overflow fix --- */
+    overflow: hidden;
 }
 .dashboard-reminder-item:hover {
     background-color: var(--bg-secondary);
@@ -485,9 +499,11 @@ p {
     font-weight: 500;
     text-decoration: none;
     font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* --- NEW: Modified for overflow fix --- */
+    white-space: normal;  /* Allow wrapping */
+    overflow: hidden;     /* Hide overflow */
+    display: block;       /* Allow overflow properties */
+    text-overflow: ellipsis; /* Add ... */
 }
 .dashboard-reminder-link:hover {
     text-decoration: underline;
