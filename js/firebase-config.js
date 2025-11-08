@@ -2,8 +2,6 @@
 
 // --- Firebase Configuration ---
 // This is your web app's public Firebase configuration.
-// It is safe to be in client-side code and is necessary
-// for the app to connect to your Firebase project.
 const firebaseConfig = {
   apiKey: "AIzaSyBwUfBVI5ApoasTN4nG8H-PA4F_cRMn30s",
   authDomain: "iasmaintor.firebaseapp.com",
@@ -15,17 +13,16 @@ const firebaseConfig = {
   measurementId: "G-GJNCMRNWGM"
 };
 
-// --- Google AI (Gemini) API Endpoint ---
-// This correctly points to your Vercel serverless function (api/gemini.js)
-// which securely uses your *secret* GEMINI_API_KEY.
-const GEMINI_API_ENDPOINT = '/api/gemini';
+// --- Drona Chatbot API Endpoint ---
+// This now points to your NEW cache-first serverless function.
+const GET_CHAT_RESPONSE_ENDPOINT = '/api/getChatResponse';
 
 
 // --- Exports ---
-export { firebaseConfig, GEMINI_API_ENDPOINT };
+// We now export the new endpoint constant
+export { firebaseConfig, GET_CHAT_RESPONSE_ENDPOINT };
 
 // --- Basic Validation (Optional, for developer feedback) ---
-// This check will now pass, and the error will no longer appear in the console.
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_ACTUAL_API_KEY") {
     console.error("Firebase config is MISSING. Please edit js/firebase-config.js and replace the placeholder values with your actual Firebase project keys.");
 }
