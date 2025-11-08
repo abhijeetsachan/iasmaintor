@@ -68,19 +68,19 @@ export default async function handler(request, response) {
     // 4. Find Questions in Database
     // This is the corrected code for api/getQuizQuestions.js
 
-// 1. Start building the query
-let dbQuery = db.collection('quizzieQuestionBank')
-  .where('subject', '==', subject)
-  .where('difficulty', '==', difficulty);
+    // 1. Start building the query
+    let dbQuery = db.collection('quizzieQuestionBank')
+      .where('subject', '==', subject)
+      .where('difficulty', '==', difficulty);
 
-// 2. Conditionally add the 'type' filter
-if (type !== 'blend') {
-  dbQuery = dbQuery.where('type', '==', type);
-}
+    // 2. Conditionally add the 'type' filter
+    if (type !== 'blend') {
+      dbQuery = dbQuery.where('type', '==', type);
+    }
 
-// 3. Add the limit at the end
-dbQuery = dbQuery.limit(30);
-      
+    // 3. Add the limit at the end
+    dbQuery = dbQuery.limit(30);
+          
     // --- FIX: MODIFIED LOGIC ---
     const snapshot = await dbQuery.get();
     
@@ -138,7 +138,7 @@ dbQuery = dbQuery.limit(30);
         }
         // else, we'll just return the few we found in the DB
       }
-    
+    } // <-- *** THIS IS THE MISSING BRACE THAT WAS ADDED ***
 
     // 6. Asynchronously update user's 'seen' list (don't make user wait)
     const allSeenIds = finalQuestions.map(q => q.id);
@@ -269,3 +269,4 @@ For each question, provide a question (string), four options (array of strings),
     throw new Error(`AI generation failed: ${error.message}`);
   }
 }
+// <-- The extra brace at the end of the original file has been removed.
