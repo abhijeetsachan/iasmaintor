@@ -133,10 +133,6 @@ async function handleUserMessage(e) {
     }
 }
 
-/**
- * --- UPDATED FUNCTION ---
- * Now uses renderSimpleMarkdown() to correctly format the AI's response.
- */
 function addMessage(sender, text, fromCache = false) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('chat-message', sender);
@@ -283,12 +279,10 @@ async function callChatAPI(userText) {
         body: JSON.stringify(payload)
     });
 
-    // *** ROBUST ERROR HANDLING ***
     let result;
     try {
-        result = await response.json(); // This is what fails
+        result = await response.json();
     } catch (e) {
-        // The server sent plain text or was unreachable
         console.error("Failed to parse JSON response:", e);
         throw new Error(`The server returned an invalid response (Status: ${response.status}). Please try again.`);
     }
@@ -297,7 +291,6 @@ async function callChatAPI(userText) {
         console.error("Backend API Error:", result);
         throw new Error(result.error?.message || `API request failed with status ${response.status}`);
     }
-    // *** END ROBUST ERROR HANDLING ***
 
     const candidate = result.candidates?.[0];
     const contentPart = candidate?.content?.parts?.[0];
@@ -316,48 +309,70 @@ async function callChatAPI(userText) {
 }
 
 /**
- * *** NEW HELPER FUNCTION ***
+ * *** NEW HELPER FUNCTION (v2) ***
  * Renders simple Markdown to HTML.
- * Handles headings (###), bold (**), and lists (* or -).
+ * Handles headings (###, ####), bold (**), and nested lists (* or -).
  * @param {string} text - The raw markdown text.
  * @returns {string} - The rendered HTML.
  */
 function renderSimpleMarkdown(text) {
     if (!text) return '';
 
-    let html = text;
+    // 1. Do simple, non-structural replacements first
+    let html = text
+        .replace(/^### (.*$)/gm, '<h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 12px; margin-bottom: 4px;">$1</h3>')
+        .replace(/^#### (.*$)/gm, '<h4 style="font-size: 1.0rem; font-weight: 600; margin-top: 10px; margin-bottom: 2px;">$1</h4>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-    // Headings (e.g., ### My Heading)
-    html = html.replace(/^### (.*$)/gm, '<h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 12px; margin-bottom: 4px;">$1</h3>');
-    
-    // Bold (e.g., **my text**)
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // List items (e.g., * item or - item)
-    // We wrap list items in <ul>...</ul> for proper structure
-    html = html.replace(/^\s*[\*\-] (.*$)/gm, '<li>$1</li>');
-    html = html.replace(/<li>(.*?)<\/li>/gs, (match) => {
-        // Find if this <li> is already in a list
-        const precedingText = html.substring(0, html.indexOf(match));
-        const followingText = html.substring(html.indexOf(match) + match.length);
-        
-        let prefix = '';
-        let suffix = '';
+    // 2. Process lists and paragraphs line-by-line
+    const lines = html.split('\n');
+    let finalHtml = '';
+    let listLevel = -1; // -1 means no list
 
-        if (!precedingText.endsWith('<ul>') && !precedingText.endsWith('</li>')) {
-            prefix = '<ul style="margin-left: 20px; padding-left: 4px; list-style-type: disc;">';
+    for (const line of lines) {
+        const listMatch = line.match(/^(\s*)([\*\-]) (.*)$/);
+
+        if (listMatch) {
+            const indent = listMatch[1].length;
+            const newLevel = Math.floor(indent / 2); // 0, 1, 2... (assuming 2-space indents)
+            const content = listMatch[3];
+
+            if (newLevel > listLevel) {
+                // Start a new nested list
+                finalHtml += '<ul style="margin-left: 20px; padding-left: 4px; list-style-type: disc;">';
+            } else if (newLevel < listLevel) {
+                // End the current list(s)
+                finalHtml += '</li></ul>'.repeat(listLevel - newLevel);
+                finalHtml += '</li>'; // Close the list item from the parent level
+            } else {
+                // Same level, just close the previous <li>
+                finalHtml += '</li>';
+            }
+            
+            finalHtml += `<li>${content}`;
+            listLevel = newLevel;
+
+        } else {
+            // Not a list item
+            if (listLevel > -1) {
+                // Close all open lists
+                finalHtml += '</li></ul>'.repeat(listLevel + 1);
+                listLevel = -1;
+            }
+
+            // Add as paragraph or heading (headings were already converted)
+            if (line.trim().startsWith('<h')) {
+                finalHtml += line;
+            } else if (line.trim().length > 0) {
+                finalHtml += `<p>${line}</p>`;
+            }
         }
-        if (!followingText.startsWith('<li>') && !followingText.startsWith('</ul>')) {
-            suffix = '</ul>';
-        }
-        return prefix + match + suffix;
-    });
+    }
 
-    // Newlines (paragraphs)
-    html = html.replace(/\n/g, '<br>');
-    // Clean up <br> tags next to lists or headings
-    html = html.replace(/<br>(<\/?(ul|li|h3)>)/g, '$1');
-    html = html.replace(/(<\/(ul|li|h3)>)<br>/g, '$1');
+    // Close any remaining list
+    if (listLevel > -1) {
+        finalHtml += '</li></ul>'.repeat(listLevel + 1);
+    }
 
-    return html;
+    return finalHtml;
 }
