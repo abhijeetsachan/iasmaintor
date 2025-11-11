@@ -18,7 +18,7 @@ const REVISION_SCHEDULE = { d1: 1, d3: 3, d7: 7, d21: 21 }; // SRS days
 // --- State Variables (Module Scope) ---
 let syllabusData = [];
 let optionalSubject = null;
-let isSyllabusLoading = false;
+let isSyllabusLoading = true;
 let srsModalContext = {};
 let deferredPrompt = null;
 let authServices = {}; // Will hold { db, auth, firestoreModule, etc. }
