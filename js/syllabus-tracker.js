@@ -1,4 +1,4 @@
-// js/syllabus-tracker.js (Refactored to use auth.js module)
+// js/syllabus-tracker.js (Refactored to use auth.js module- new file)
 
 // --- Imports ---
 import { GEMINI_API_ENDPOINT } from './firebase-config.js';
