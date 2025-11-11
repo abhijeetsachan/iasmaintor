@@ -993,7 +993,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- loadSyllabusData (Page-Specific Logic) ---
     async function loadSyllabusData(userId) {
         console.log("loadSyllabusData started for user:", userId);
-        isSyllabusLoading = false;
+        isSyllabusLoading = true;
         DOMElements.loadingIndicator?.classList.remove('hidden');
         DOMElements.contentWrapper?.classList.add('hidden');
         let loadedStaticData = null;
