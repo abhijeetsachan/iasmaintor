@@ -969,7 +969,7 @@ document.addEventListener('DOMContentLoaded', async function() {
          */
         onLogin: (user) => {
             console.log("Tracker Page: onLogin callback triggered.");
-            if (isSyllabusLoading) {
+        
                 console.log("User found, triggering syllabus load.");
                 loadSyllabusData(user.uid); // This will hide the loader
             }
