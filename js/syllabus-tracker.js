@@ -972,7 +972,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
                 console.log("User found, triggering syllabus load.");
                 loadSyllabusData(user.uid); // This will hide the loader
-            }
+            
         },
         /**
          * @param {boolean} authHasChecked - True if this is not the first auth check.
