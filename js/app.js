@@ -17,6 +17,14 @@ import { getOptionalSyllabusById } from './optional-syllabus-data.js';
 // --- Global Constants ---
 const REVISION_SCHEDULE = { d1: 1, d3: 3, d7: 7, d21: 21 }; // SRS days
 
+// --- ### NEW: Theme Toggle Logic ### ---
+function handleThemeToggle() {
+    const htmlEl = document.documentElement;
+    const isDark = htmlEl.classList.toggle('dark');
+    localStorage.setItem('iasmaintor-theme', isDark ? 'dark' : 'light');
+    console.log("Theme toggled, isDark:", isDark);
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     
     // --- State Variables ---
@@ -84,7 +92,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         quizCloseButton: document.getElementById('close-quizzie-modal'),
         installPwaBtnDesktop: document.getElementById('install-pwa-btn-desktop'),
         installPwaBtnMobile: document.getElementById('install-pwa-btn-mobile'),
+        
+        // --- NEW: Theme Toggle Buttons ---
+        themeToggleBtn: document.getElementById('theme-toggle-btn'),
+        themeToggleBtnMobile: document.getElementById('theme-toggle-btn-mobile'),
     };
+    
+    // --- ### NEW: Bind Theme Toggle Events ### ---
+    DOMElements.themeToggleBtn?.addEventListener('click', handleThemeToggle);
+    DOMElements.themeToggleBtnMobile?.addEventListener('click', handleThemeToggle);
+
 
     // --- Utility Functions (Page-Specific) ---
     const showNotification = (message, isError = false) => { 
