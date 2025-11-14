@@ -634,18 +634,18 @@ function updateTrackerDashboard() {
                 if (paperShortName.includes('GS Paper')) paperShortName = paperShortName.split('(')[0].trim();
                 else if (paperShortName.includes('Optional')) paperShortName = paperShortName.split('(')[0].trim() + ` (${optionalSubject?.toUpperCase() || '?'}) ${paperShortName.includes('P-I') ? 'P1' : 'P2'}`;
                 
-                // ### FIXED: Removed bg-white, using CSS variables ###
+                // ### FIXED: Using CSS variables for theme-aware colors ###
                 return `
                 <div class="flex justify-between items-center p-3 rounded shadow-sm transition" style="background-color: var(--bg-primary); border: 1px solid var(--border-primary);">
-                    <span class="font-medium text-slate-800 break-words w-4/5">
-                        <span class="text-xs text-slate-500 italic mr-2">${paperShortName}</span>
-                        <a href="#" data-action="jump-to-topic" data-id="${r.id}" class="text-blue-600 hover:underline">${r.topicName}</a>
+                    <span class="font-medium break-words w-4/5" style="color: var(--text-tertiary);">
+                        <span class="italic mr-2" style="color: var(--text-muted);">${paperShortName}</span>
+                        <a href="#" data-action="jump-to-topic" data-id="${r.id}" style="color: var(--brand-primary);" class="hover:underline">${r.topicName}</a>
                     </span>
                     <span class="text-right flex-shrink-0">
                         <span class="text-xs font-semibold ${r.status === 'due' ? 'text-orange-500' : 'text-red-500'}">
                            ${r.status === 'due' ? 'DUE TODAY' : 'OVERDUE'}
                         </span>
-                        <span class="block text-sm font-bold text-slate-700">D-${r.days}</span>
+                        <span class="block text-sm font-bold" style="color: var(--text-secondary);">D-${r.days}</span>
                     </span>
                 </div>`;
             }).join('');
