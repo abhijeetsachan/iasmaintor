@@ -35,6 +35,8 @@
     /* Accent: Red */
     --color-red-DEFAULT: #ef4444;    /* red-500 */
     --color-red-light: #fee2e2;      /* red-100 */
+    --color-red-dark-text: #7f1d1d; /* red-900 */
+
 
     /* Accent: Amber (for In-Progress) */
     --color-amber-light: #fef3c7;    /* amber-200 */
@@ -65,23 +67,132 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
+/* --- ### NEW: DARK MODE PALETTE ### --- */
+html.dark {
+    /* Backgrounds */
+    --bg-primary: #111827;        /* gray-900 */
+    --bg-secondary: #030712;      /* gray-950 */
+    --bg-card: #1f2937;           /* gray-800 */
+    
+    /* Text */
+    --text-primary: #f3f4f6;      /* gray-100 */
+    --text-secondary: #9ca3af;    /* gray-400 */
+    --text-tertiary: #d1d5db;     /* gray-300 */
+    --text-muted: #6b7280;        /* gray-500 */
+    --text-white: #ffffff;        /* white */
+    
+    /* Borders & Dividers */
+    --border-primary: #374151;    /* gray-700 */
+    --border-secondary: #4b5563;  /* gray-600 */
+    
+    /* Brand (Blue) - Stays vibrant */
+    --brand-primary: #3b82f6;
+    --brand-primary-hover: #2563eb;
+    --brand-text-dark: #60a5fa;       /* blue-400 */
+    --brand-bg-light: #1f2937;        /* gray-800 */
+    --brand-bg-light-hover: #374151;  /* gray-700 */
+
+    /* Accent: Green */
+    --color-green-DEFAULT: #4ade80;    /* green-400 */
+    --color-green-dark: #4ade80;       /* green-400 */
+    --color-green-text-dark: #bbf7d0;  /* green-200 */
+    --color-green-light: #166534;      /* green-800 */
+    --color-green-light-border: #16a34a; /* green-600 */
+    --color-green-bg-faded: #132a1c;   /* dark green */
+
+    /* Accent: Red */
+    --color-red-DEFAULT: #f87171;    /* red-400 */
+    --color-red-light: #3f1212;      /* dark red-bg */
+    --color-red-dark-text: #fee2e2;  /* red-100 */
+
+    /* Accent: Amber (In-Progress) */
+    --color-amber-light: #45330c;    /* dark amber */
+    --color-amber-light-border: #926c15; /* dark amber */
+    --color-amber-dark: #fde68a;     /* amber-200 */
+
+    /* Accent: Orange (Due/Prelims) */
+    --color-orange-DEFAULT: #fb923c;    /* orange-400 */
+    --color-orange-dark: #fb923c;       /* orange-400 */
+    --color-orange-text-dark: #fed7aa;  /* orange-200 */
+    --color-orange-bg-faded: #361e0b;   /* dark orange */
+
+    /* Accent: Indigo (Mains) */
+    --color-indigo-DEFAULT: #818cf8;    /* indigo-400 */
+    --color-indigo-text-dark: #c7d2fe;  /* indigo-200 */
+    --color-indigo-bg-faded: #222549;   /* dark indigo */
+
+    /* Accent: Pink (for Optional) */
+    --color-pink-DEFAULT: #f472b6;    /* pink-400 */
+    --color-pink-text-dark: #fbcfe8;  /* pink-200 */
+    --color-pink-bg-faded: #401026;   /* dark pink */
+    
+    /* Other */
+    --color-slate-400: #6b7280; /* gray-500 */
+    --backdrop-color: rgba(0, 0, 0, 0.7);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+}
+
+/* --- ### REVISED: THEME TOGGLE SWITCH STYLES (v3) ### --- */
+.theme-toggle-btn {
+    color: var(--text-secondary); /* Base icon color */
+    width: 38px; 
+    height: 38px; 
+    border-radius: 0.5rem; /* 8px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: transparent;
+    border: none;
+}
+.theme-toggle-btn:hover {
+    color: var(--brand-primary);
+    background-color: var(--bg-secondary); /* Subtle hover background */
+}
+.theme-toggle-btn .icon-sun {
+    display: none; /* Hidden by default */
+}
+.theme-toggle-btn .icon-moon {
+    display: block; /* Moon shown by default (in light mode) */
+}
+html.dark .theme-toggle-btn .icon-sun {
+    display: block; /* Sun shown in dark mode */
+}
+html.dark .theme-toggle-btn .icon-moon {
+    display: none; /* Moon hidden in dark mode */
+}
+.theme-toggle-btn i {
+     font-size: 1.25rem; /* text-xl */
+     line-height: 1; /* Fix alignment */
+}
+/* --- END: REVISED THEME TOGGLE STYLES --- */
+
+
 /* --- Refactored Body & Base Styles --- */
 
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-secondary);
+    /* --- NEW: Add transition for smooth color changes --- */
+    transition: background-color 0.2s, color 0.2s;
 }
 
 /* --- ### NEW: Theme-aware typography defaults ### --- */
 h1, h2, h3, h4, h5, h6 {
     color: var(--text-primary);
+    transition: color 0.2s;
 }
 p {
     color: var(--text-secondary);
+    transition: color 0.2s;
 }
 
 /* --- ### NEW: Override existing Tailwind classes ### --- */
+/* These overrides are now theme-aware thanks to the CSS variables */
 .text-slate-900 { color: var(--text-primary) !important; }
 .text-slate-800 { color: var(--text-primary) !important; }
 
@@ -89,6 +200,8 @@ p {
 
 .text-slate-600 { color: var(--text-secondary) !important; }
 .text-slate-500 { color: var(--text-muted) !important; }
+
+/* ... (rest of the fade-in, animations, etc.) ... */
 .fade-in-up {
     opacity: 0;
     transform: translateY(20px);
@@ -115,6 +228,8 @@ p {
     transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
     transform: translateY(-20px);
     opacity: 0;
+    /* ### NEW: Apply card background to all modals ### */
+    background-color: var(--bg-card);
 }
 .modal.active .modal-content {
     transform: translateY(0);
@@ -195,6 +310,7 @@ p {
 }
 .radio-card {
     border: 2px solid var(--border-primary); /* slate-200 */
+    background-color: var(--bg-primary); /* ### NEW: Use variable */
     transition: all 0.2s ease-in-out;
 }
 .radio-card-group input[type="radio"]:checked + .radio-card {
@@ -230,10 +346,7 @@ p {
     animation: tick-animation 0.3s ease-in-out 0.5s forwards;
     stroke: var(--color-green-DEFAULT);
 }
-#success-overlay .bg-white {
-    background-color: var(--bg-card);
-}
-/* Note: text-slate-800 and text-slate-500 are handled by overrides above */
+/* #success-overlay .bg-white is now .modal-content */
 
 
 /* --- Syllabus Tracker Styles --- */
@@ -261,10 +374,10 @@ p {
     line-height: 1 !important;
 }
 
-.dot-pending { background-color: var(--color-slate-400); } /* Slate-400 */
-.dot-due { background-color: var(--color-orange-DEFAULT); } /* Orange-500 */
-.dot-overdue { background-color: var(--color-red-DEFAULT); } /* Red-500 */
-.dot-done { background-color: var(--color-green-DEFAULT); } /* Green-500 */
+.dot-pending { background-color: var(--color-slate-400); }
+.dot-due { background-color: var(--color-orange-DEFAULT); }
+.dot-overdue { background-color: var(--color-red-DEFAULT); }
+.dot-done { background-color: var(--color-green-DEFAULT); }
 
 
 .syllabus-list {
@@ -302,12 +415,12 @@ p {
 
 /* Parent Topic Cards */
 .syllabus-item:not(.is-micro-topic) > .syllabus-item-content-wrapper {
-    background-color: var(--bg-primary); /* slate-50 */
-    border: 1px solid var(--border-primary); /* slate-200 */
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
     box-shadow: var(--shadow-sm);
 }
 .syllabus-item:not(.is-micro-topic) > .syllabus-item-content-wrapper:hover {
-    background-color: var(--bg-secondary); /* slate-100 */
+    background-color: var(--bg-secondary);
     box-shadow: var(--shadow-lg);
 }
 /* Micro Topic Rows */
@@ -316,7 +429,7 @@ p {
     background-color: transparent;
 }
 .syllabus-item.is-micro-topic > .syllabus-item-content-wrapper:hover {
-     background-color: var(--bg-primary); /* slate-50 */
+     background-color: var(--bg-primary);
 }
 
 /* Toggle Icon */
@@ -385,13 +498,13 @@ p {
 
  /* Dashboard Progress Bar Styles */
  .progress-bar-bg {
-     background-color: var(--border-primary); /* slate-200 */
+     background-color: var(--border-primary);
      border-radius: 9999px;
      height: 0.75rem; /* h-3 */
      overflow: hidden;
  }
  .progress-bar-fill {
-     background-color: var(--color-green-DEFAULT); /* green-500 */
+     background-color: var(--color-green-DEFAULT);
      height: 100%;
      border-radius: 9999px;
      transition: width 0.5s ease-in-out;
@@ -443,7 +556,7 @@ p {
     border-radius: 0.75rem;
     padding: 1.5rem;
     box-shadow: var(--shadow-lg);
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s;
 }
 .dashboard-card:hover {
     transform: translateY(-4px);
@@ -453,9 +566,11 @@ p {
 .dashboard-card .text-slate-800 { color: var(--text-primary) !important; }
 .dashboard-card .text-slate-700 { color: var(--text-tertiary) !important; }
 .dashboard-card .text-slate-500 { color: var(--text-muted) !important; }
+
+/* --- MODIFIED: Dashboard Revisions Card (was yellow) --- */
 .dashboard-card.bg-yellow-50 {
-    background-color: var(--color-orange-bg-faded);
-    border-color: var(--color-orange-DEFAULT);
+    background-color: #1f2937;
+    
 }
 .dashboard-card .text-yellow-800 { color: var(--color-orange-text-dark) !important; }
 .dashboard-card .text-yellow-700 { color: var(--color-orange-dark) !important; }
@@ -480,7 +595,7 @@ p {
     
     /* Firefox scrollbar */
     scrollbar-width: thin;
-    scrollbar-color: var(--brand-primary) var(--bg-secondary);
+    scrollbar-color: var(--brand-primary) #1f293700;
 }
 
 /* WebKit scrollbar for tracker page dashboard columns */
@@ -520,7 +635,7 @@ p {
     
     /* --- NEW: Firefox Scrollbar --- */
     scrollbar-width: thin;
-    scrollbar-color: var(--brand-primary) var(--bg-secondary);
+    scrollbar-color: var(--brand-primary) #1f2937;
 }
 
 #revision-reminder-list {
@@ -647,8 +762,17 @@ p {
 
 /* --- Header Styles --- */
 #header {
-    background-color: rgba(248, 250, 252, 0.8); /* slate-50/80 */
+    /* MODIFIED: Use CSS variable for theme-aware background */
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-primary);
 }
+html.dark #header {
+     background-color: rgba(3, 7, 18, 0.8); /* gray-950/80 */
+}
+html:not(.dark) #header {
+     background-color: rgba(248, 250, 252, 0.8); /* slate-50/80 */
+}
+
 /* --- ### MODIFIED: More specific selector ### --- */
 /* Target only nav links and the theme button, NOT auth buttons */
 #header nav a {
@@ -668,9 +792,8 @@ p {
 .modal {
     background-color: var(--backdrop-color);
 }
-.modal .modal-content {
-    background-color: var(--bg-card);
-}
+/* .modal .modal-content is now in the base styles */
+
 .modal .modal-content h2,
 .modal .modal-content h3 {
     color: var(--text-primary);
@@ -705,7 +828,7 @@ p {
 }
 .modal .modal-content .bg-red-100 {
     background-color: var(--color-red-light);
-    color: var(--color-red-DEFAULT);
+    color: var(--color-red-dark-text); /* MODIFIED */
 }
 
 /* --- Footer Styles --- */
@@ -735,6 +858,7 @@ footer .border-slate-700 {
 }
 #notification.bg-red-600 {
     background-color: var(--color-red-DEFAULT) !important;
+    color: var(--text-white) !important; /* NEW: Ensure text is readable */
 }
 
 /* --- NEW: Chatbot lift for notification --- */
@@ -750,7 +874,7 @@ footer .border-slate-700 {
 }
 
 /* ==========================================================================
-   ENHANCED CHATBOT "DRONA" STYLES V2
+   ENHANCED CHATBOT "DRONA" STYLES V2 (Now Theme-Aware)
 ==========================================================================
 */
 
@@ -869,6 +993,7 @@ footer .border-slate-700 {
 #chatbot-form input {
     background-color: var(--bg-card);
     border-color: var(--border-primary);
+    color: var(--text-primary); /* NEW: Ensure text is light in dark mode */
     flex-grow: 1; /* Make input take available space */
 }
 #chatbot-form input:focus {
@@ -929,6 +1054,7 @@ footer .border-slate-700 {
     left: 0;
     right: 0;
     height: 50px;
+    /* MODIFIED: Theme-aware gradient */
     background: linear-gradient(to bottom, transparent, var(--bg-card) 70%); 
     cursor: pointer;
     display: flex;
