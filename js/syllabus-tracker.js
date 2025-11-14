@@ -24,6 +24,14 @@ let deferredPrompt = null;
 let authServices = {}; // Will hold { db, auth, firestoreModule, etc. }
 let unsubscribeOptional = null;
 
+// --- ### NEW: Theme Toggle Logic ### ---
+function handleThemeToggle() {
+    const htmlEl = document.documentElement;
+    const isDark = htmlEl.classList.toggle('dark');
+    localStorage.setItem('iasmaintor-theme', isDark ? 'dark' : 'light');
+    console.log("Theme toggled, isDark:", isDark);
+}
+
 // --- DOM Elements ---
 const DOMElements = {
     // --- Shared Auth Elements (for auth.js) ---
@@ -95,6 +103,10 @@ const DOMElements = {
     
     // --- NEW: Overall Progress Circle (from the updated UI) ---
     overallProgressCircle: document.querySelector('.progress-circle.overall'),
+    
+    // --- NEW: Theme Toggle Buttons ---
+    themeToggleBtn: document.getElementById('theme-toggle-btn'),
+    themeToggleBtnMobile: document.getElementById('theme-toggle-btn-mobile'),
 };
 
 // --- PWA: Handle Install Prompt ---
@@ -409,9 +421,9 @@ function createSyllabusItemHTML(item, level) {
             <div class="flex flex-col items-start gap-2 lg:flex-row lg:items-center lg:space-x-3 text-sm flex-shrink-0">
                 ${createSRSBarHTML(item)}
                 <div class="flex flex-wrap gap-1 flex-shrink-0">
-                    <button class="ai-button bg-blue-100 text-blue-800 hover:bg-blue-200" data-id="${itemId}" data-action="ai-plan">AI Plan</button>
-                    <button class="ai-button bg-purple-100 text-purple-800 hover:bg-purple-200" data-id="${itemId}" data-action="ai-resources">Resources</button>
-                    <button class="ai-button bg-rose-100 text-rose-800 hover:bg-rose-200" data-id="${itemId}" data-action="ai-pyq">PYQs</button>
+                    <button class="ai-button" data-id="${itemId}" data-action="ai-plan" style="background-color: var(--brand-bg-light); color: var(--brand-text-dark);">AI Plan</button>
+                    <button class="ai-button" data-id="${itemId}" data-action="ai-resources" style="background-color: var(--color-indigo-bg-faded); color: var(--color-indigo-text-dark);">Resources</button>
+                    <button class="ai-button" data-id="${itemId}" data-action="ai-pyq" style="background-color: var(--color-pink-bg-faded); color: var(--color-pink-text-dark);">PYQs</button>
                 </div>
             </div>`;
     }
@@ -631,8 +643,10 @@ function updateTrackerDashboard() {
                 let paperShortName = r.paper || 'Topic';
                 if (paperShortName.includes('GS Paper')) paperShortName = paperShortName.split('(')[0].trim();
                 else if (paperShortName.includes('Optional')) paperShortName = paperShortName.split('(')[0].trim() + ` (${optionalSubject?.toUpperCase() || '?'}) ${paperShortName.includes('P-I') ? 'P1' : 'P2'}`;
+                
+                // ### FIXED: Removed bg-white, using CSS variables ###
                 return `
-                <div class="flex justify-between items-center p-3 bg-white rounded shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-center p-3 rounded shadow-sm transition" style="background-color: var(--bg-primary); border: 1px solid var(--border-primary);">
                     <span class="font-medium text-slate-800 break-words w-4/5">
                         <span class="text-xs text-slate-500 italic mr-2">${paperShortName}</span>
                         <a href="#" data-action="jump-to-topic" data-id="${r.id}" class="text-blue-600 hover:underline">${r.topicName}</a>
@@ -756,24 +770,26 @@ function renderOptionalTab() {
         const hasPaper1Data = optionalPaper1Node && Array.isArray(optionalPaper1Node.children) && optionalPaper1Node.children.length > 0 && optionalPaper1Node.children[0]?.id !== 'mains-opt1-placeholder';
         const hasPaper2Data = optionalPaper2Node && Array.isArray(optionalPaper2Node.children) && optionalPaper2Node.children.length > 0 && optionalPaper2Node.children[0]?.id !== 'mains-opt2-placeholder';
         if (hasPaper1Data) {
-            const paper1Container = document.createElement('div'); paper1Container.className = 'mb-8 border rounded-lg p-4 bg-slate-50';
+            // ### FIXED: Removed bg-slate-50 ###
+            const paper1Container = document.createElement('div'); paper1Container.className = 'mb-8 border rounded-lg p-4';
             paper1Container.innerHTML = `<h4 class="text-xl font-semibold text-slate-700 mb-4">${optionalPaper1Node.name}</h4>`;
             const listContainer1 = document.createElement('ul'); listContainer1.className = 'syllabus-list space-y-2'; listContainer1.setAttribute('data-target-paper', optionalPaper1Node.id);
             paper1Container.appendChild(listContainer1);
             renderSyllabus(optionalPaper1Node.children, listContainer1, 1);
             container.appendChild(paper1Container);
         } else {
-             container.innerHTML += `<div class="mb-4 p-4 bg-slate-50 rounded border"><h4 class="text-xl font-semibold text-slate-700 mb-2">Optional Paper I</h4><p class="text-slate-500">Syllabus not loaded for ${optionalSubject.toUpperCase()}.</p></div>`;
+             container.innerHTML += `<div class="mb-4 p-4 rounded border"><h4 class="text-xl font-semibold text-slate-700 mb-2">Optional Paper I</h4><p class="text-slate-500">Syllabus not loaded for ${optionalSubject.toUpperCase()}.</p></div>`;
         }
         if (hasPaper2Data) {
-             const paper2Container = document.createElement('div'); paper2Container.className = 'mb-8 border rounded-lg p-4 bg-slate-50';
+            // ### FIXED: Removed bg-slate-50 ###
+             const paper2Container = document.createElement('div'); paper2Container.className = 'mb-8 border rounded-lg p-4';
              paper2Container.innerHTML = `<h4 class="text-xl font-semibold text-slate-700 mb-4">${optionalPaper2Node.name}</h4>`;
              const listContainer2 = document.createElement('ul'); listContainer2.className = 'syllabus-list space-y-2'; listContainer2.setAttribute('data-target-paper', optionalPaper2Node.id);
              paper2Container.appendChild(listContainer2);
              renderSyllabus(optionalPaper2Node.children, listContainer2, 1);
              container.appendChild(paper2Container);
         } else {
-             container.innerHTML += `<div class="mb-4 p-4 bg-slate-50 rounded border"><h4 class="text-xl font-semibold text-slate-700 mb-2">Optional Paper II</h4><p class="text-slate-500">Syllabus not loaded for ${optionalSubject.toUpperCase()}.</p></div>`;
+             container.innerHTML += `<div class="mb-4 p-4 rounded border"><h4 class="text-xl font-semibold text-slate-700 mb-2">Optional Paper II</h4><p class="text-slate-500">Syllabus not loaded for ${optionalSubject.toUpperCase()}.</p></div>`;
         }
          console.log("Optional syllabus rendered.");
     }
@@ -782,7 +798,10 @@ function renderOptionalTab() {
 function renderOptionalSelectionList() {
     if(!DOMElements.optionalListContainer) return;
     DOMElements.optionalListContainer.innerHTML = OPTIONAL_SUBJECT_LIST.map(sub => `
-        <button class="select-optional-btn bg-white border border-blue-400 text-blue-600 px-4 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow"
+        <button class="select-optional-btn border border-blue-400 text-blue-600 px-4 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow"
+            style="background-color: var(--bg-card); border-color: var(--brand-primary); color: var(--brand-primary);"
+            onMouseOver="this.style.backgroundColor='var(--brand-bg-light-hover)'"
+            onMouseOut="this.style.backgroundColor='var(--bg-card)'"
             data-subject-id="${sub.id}">
             ${sub.name}
         </button>
@@ -861,7 +880,8 @@ async function handleAIGenerator(itemId, action, topicName) {
             .replace(/\n/g, '<br>');
          htmlResponse = htmlResponse.replace(/<\/ul>\s*<ul>/g, '');
 
-        if(DOMElements.aiResponseContent) DOMElements.aiResponseContent.innerHTML = `<div class="p-4 bg-slate-50 rounded-lg text-sm">${htmlResponse}</div>`;
+        // ### FIXED: Removed bg-slate-50 ###
+        if(DOMElements.aiResponseContent) DOMElements.aiResponseContent.innerHTML = `<div class="p-4 rounded-lg text-sm" style="background-color: var(--bg-primary);">${htmlResponse}</div>`;
         showNotification(`${action.split('-')[1].toUpperCase()} generated.`);
     } catch (error) {
         console.error(`AI generation failed for ${action}:`, error);
@@ -962,6 +982,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- Auth Initialization ---
     const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
     DOMElements.appContainer.appId = appId; // Store appId for later use
+
+    // --- ### NEW: Bind Theme Toggle Events ### ---
+    DOMElements.themeToggleBtn?.addEventListener('click', handleThemeToggle);
+    DOMElements.themeToggleBtnMobile?.addEventListener('click', handleThemeToggle);
 
     authServices = await initAuth(DOMElements, appId, showNotification, {
         /**
