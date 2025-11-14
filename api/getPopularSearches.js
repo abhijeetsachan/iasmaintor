@@ -4,7 +4,7 @@
  * This function now features a 6-HOUR CACHE using Firebase Realtime Database.
  *
  * 1. Fetches recent editorials from specific UPSC sites (Hindu, IE, TOI, PIB).
- * 2. Uses the Gemini API to intelligently extract the *core topics*.
+ * 2. Uses the Gemini API to intelligently extract the *core topics* as a JSON array.
  * 3. Caches the results in Firebase for 6 hours.
  */
 
@@ -36,27 +36,8 @@ const defaultTopics = [
     "Latest Supreme Court judgments"
 ];
 
-// --- Helper function to call Gemini ---
-async function callGemini(prompt, apiKey) {
-    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const payload = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
-    };
-
-    const response = await fetch(GOOGLE_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-        console.error("Gemini helper call failed:", await response.text());
-        throw new Error("Gemini helper call failed");
-    }
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text;
-}
+// --- *** REMOVED old callGemini helper *** ---
+// We will make the call inline to use specific generationConfig
 
 // --- Main API Handler ---
 export default async function handler(req, res) {
@@ -109,34 +90,71 @@ export default async function handler(req, res) {
         const headlines = data.items.map(item => item.title);
 
         // --- 3. AI-Powered Topic Extraction ---
+        
+        // --- *** MODIFICATION START: Updated Prompt to request JSON *** ---
         const extractionPrompt = `
             You are a UPSC expert. Read the following list of recent news headlines. For each headline, extract the core, searchable UPSC topic.
-            Be very concise. Format the output as a simple list.
-
-            Example Headlines:
-            - "A wider SIR has momentum but it is still a test case | The Hindu"
-            - "PIB Press Release: Cabinet Approves Gaganyaan Mission"
-            - "Explained: What is the new Contempt of Court ruling?"
-
-            Your Output should be:
-            - Special Intensive Revision (SIR)
-            - Gaganyaan Mission
-            - Contempt of Court Act
+            Be very concise.
             
-            Now, process these headlines:
+            Return ONLY a valid JSON object in the format: {"topics": ["Topic 1", "Topic 2", "Topic 3"]}
+            
+            Do not include any other text, preambles, or markdown.
+            
+            Headlines:
             ${headlines.join('\n')}
         `;
+        // --- *** MODIFICATION END *** ---
 
-        const topicsString = await callGemini(extractionPrompt, GEMINI_API_KEY);
-        if (!topicsString) throw new Error('AI topic extraction failed');
+        // --- *** MODIFICATION START: Inline Gemini call with JSON mode *** ---
+        const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const geminiPayload = {
+            contents: [{ parts: [{ text: extractionPrompt }] }],
+            generationConfig: { 
+                temperature: 0.2, 
+                maxOutputTokens: 500,
+                responseMimeType: "application/json" // <-- This enforces JSON output
+            }
+        };
+
+        const geminiResponse = await fetch(GOOGLE_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(geminiPayload),
+        });
+
+        if (!geminiResponse.ok) {
+            console.error("Gemini API call failed:", await geminiResponse.text());
+            throw new Error("Gemini API call failed");
+        }
+
+        const geminiData = await geminiResponse.json();
+        const topicsString = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+        // --- *** MODIFICATION END *** ---
+
+        if (!topicsString) throw new Error('AI topic extraction returned no text');
+
+        // --- *** MODIFICATION START: Parse JSON response *** ---
+        let parsedData;
+        try {
+            parsedData = JSON.parse(topicsString);
+        } catch (e) {
+            console.error("Failed to parse AI JSON response:", topicsString);
+            throw new Error("AI returned invalid JSON.");
+        }
+        
+        const topics = parsedData.topics;
+        if (!Array.isArray(topics)) {
+             throw new Error("AI JSON response did not contain a 'topics' array.");
+        }
 
         const uniqueTopics = [...new Set(
-            topicsString.split('\n')
-                .map(t => t.replace(/^- /, '').trim())
-                .filter(t => t.length > 5)
+            topics
+                .map(t => String(t).trim()) // Ensure it's a string and trim
+                .filter(t => t.length > 3 && t.length < 75) // A more reasonable filter
         )];
+        // --- *** MODIFICATION END *** ---
 
-        if (uniqueTopics.length === 0) throw new Error("AI produced no topics");
+        if (uniqueTopics.length === 0) throw new Error("AI produced no valid topics");
 
         // --- 4. SAVE TO CACHE & RESPOND ---
         try {
