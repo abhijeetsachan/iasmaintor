@@ -508,7 +508,7 @@ const handleQuizSubmit = async (e) => {
 
     try {
         // 1. Get auth token
-        const token = await user.getIdToken();
+        const token = await user.getIdToken(true);
         
         // 2. Get form parameters
         const formData = new FormData(form);
@@ -551,4 +551,5 @@ const handleQuizSubmit = async (e) => {
          if(quizFooter) quizFooter.classList.add('hidden');
     }
 };
+
 
