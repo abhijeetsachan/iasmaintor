@@ -45,7 +45,11 @@ export function initChatbot(showNotification) {
         return;
     }
 
-    DOMElements.toggleButton.addEventListener('click', toggleChatWindow);
+    DOMElements.toggleButton.addEventListener('click', () => {
+        const isCurrentlyHidden = DOMElements.window.classList.contains('hidden');
+        // If it's hidden, force it open. If it's visible, force it closed.
+        toggleChatWindow(isCurrentlyHidden); 
+    });
     DOMElements.closeButton.addEventListener('click', () => toggleChatWindow(false));
     DOMElements.form.addEventListener('submit', handleUserMessage);
 
