@@ -174,17 +174,11 @@ function showNotification(message, isError = false) {
 // Initialize Chatbot
 initChatbot(showNotification);
 
+// ### FIXED: Simplified openModal and closeModal to only use CSS classes ###
 function openModal(modal) {
     if (modal instanceof HTMLElement) {
         modal.classList.remove('hidden');
         modal.classList.add('active');
-        const content = modal.querySelector('.modal-content');
-        if (content) {
-            requestAnimationFrame(() => {
-                content.style.transform = 'translateY(0)';
-                content.style.opacity = '1';
-            });
-        }
     } else {
         console.error("Invalid element passed to openModal:", modal);
     }
@@ -192,13 +186,9 @@ function openModal(modal) {
 
 function closeModal(modal) {
      if (modal instanceof HTMLElement) {
-        const content = modal.querySelector('.modal-content');
-        if (content) {
-            content.style.transform = 'translateY(-20px)';
-            content.style.opacity = '0';
-        }
         modal.classList.remove('active');
-        setTimeout(() => modal.classList.add('hidden'), 300);
+        // Let the CSS transition finish before hiding
+        setTimeout(() => modal.classList.add('hidden'), 300); 
     } else {
         console.error("Invalid element passed to closeModal:", modal);
     }
