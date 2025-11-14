@@ -201,6 +201,11 @@ p {
 .text-slate-600 { color: var(--text-secondary) !important; }
 .text-slate-500 { color: var(--text-muted) !important; }
 
+/* --- ADDED THESE 3 LINES --- */
+.bg-slate-100 { background-color: var(--bg-secondary) !important; }
+.bg-slate-200 { background-color: var(--bg-secondary) !important; }
+.hover\:bg-slate-300:hover { background-color: var(--bg-primary) !important; }
+
 /* ... (rest of the fade-in, animations, etc.) ... */
 .fade-in-up {
     opacity: 0;
