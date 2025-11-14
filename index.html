@@ -10,6 +10,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="css/style.css">
+    
+    <script>
+        (function() {
+            try {
+                const theme = localStorage.getItem('iasmaintor-theme');
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) { /* Ignore */ }
+        })();
+    </script>
+    
     <link rel="icon" type="image/png" href="favicon.png">
 
     <link rel="manifest" href="/manifest.json">
@@ -27,6 +39,12 @@
                 <a href="#testimonials" class="text-slate-600 hover:text-blue-600 transition-colors">Testimonials</a>
             </nav>
             <div class="flex items-center space-x-4">
+                
+                <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle theme">
+                    <i class="fas fa-moon icon-moon"></i>
+                    <i class="fas fa-sun icon-sun"></i>
+                </button>
+                
                 <button id="install-pwa-btn-desktop" class="hidden install-pwa-btn bg-purple-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-transform hover:scale-105 shadow-md flex items-center justify-center">
                     <i class="fas fa-download mr-2"></i>Install App
                 </button>
@@ -45,7 +63,7 @@
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 modal-content rounded-md shadow-lg py-1 z-50">
                         <a href="#dashboard" id="dropdown-dashboard-link" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Dashboard</a>
                         <a href="#" id="my-account-btn" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Account</a>
                         <div class="border-t border-slate-200 my-1"></div>
@@ -62,6 +80,15 @@
             <a href="#how-it-works" class="block py-2 text-slate-600 hover:text-blue-600">How It Works</a>
             <a href="#testimonials" class="block py-2 text-slate-600 hover:text-blue-600">Testimonials</a>
             <hr class="border-slate-200 my-2">
+            
+            <div class="flex justify-between items-center my-2">
+                <span class="text-slate-600">Toggle Theme:</span>
+                <button id="theme-toggle-btn-mobile" class="theme-toggle-btn" title="Toggle theme">
+                    <i class="fas fa-moon icon-moon"></i>
+                    <i class="fas fa-sun icon-sun"></i>
+                </button>
+            </div>
+            
             <a href="#" id="install-pwa-btn-mobile" class="hidden install-pwa-btn block bg-purple-600 text-white text-center px-5 py-2 rounded-lg font-semibold hover:bg-purple-700 flex items-center justify-center mb-2">
                 <i class="fas fa-download mr-2"></i>Install App
             </a>
@@ -79,7 +106,7 @@
     </header>
 
     <main>
-        <section class="pt-32 pb-20 bg-slate-100">
+        <section class="pt-32 pb-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="grid md:grid-cols-2 gap-12 items-center">
                     <div class="text-center md:text-left">
@@ -97,8 +124,8 @@
                          <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-lg mx-auto">
                             <defs>
                                 <linearGradient id="aspirantGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stop-color="#475569"/>
-                                    <stop offset="100%" stop-color="#1e293b"/>
+                                    <stop offset="0%" stop-color="var(--text-secondary)"/>
+                                    <stop offset="100%" stop-color="var(--text-primary)"/>
                                 </linearGradient>
                                 <filter id="glow">
                                     <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
@@ -108,23 +135,23 @@
                                     </feMerge>
                                 </filter>
                             </defs>
-                            <rect x="100" y="250" width="200" height="20" rx="2" fill="#94a3b8"/>
-                            <rect x="105" y="230" width="190" height="20" rx="2" fill="#64748b"/>
-                            <rect x="100" y="210" width="200" height="20" rx="2" fill="#94a3b8"/>
-                            <rect x="110" y="190" width="180" height="20" rx="2" fill="#64748b"/>
-                            <rect x="105" y="170" width="190" height="20" rx="2" fill="#94a3b8"/>
+                            <rect x="100" y="250" width="200" height="20" rx="2" fill="var(--border-secondary)"/>
+                            <rect x="105" y="230" width="190" height="20" rx="2" fill="var(--text-muted)"/>
+                            <rect x="100" y="210" width="200" height="20" rx="2" fill="var(--border-secondary)"/>
+                            <rect x="110" y="190" width="180" height="20" rx="2" fill="var(--text-muted)"/>
+                            <rect x="105" y="170" width="190" height="20" rx="2" fill="var(--border-secondary)"/>
                             <path d="M200 165 C 200 145, 190 140, 180 130 A 15 15 0 1 1 220 130 C 210 140, 200 145, 200 165 Z" fill="url(#aspirantGradient)" transform="translate(0, -55)">
                                 <animateTransform attributeName="transform" type="translate" values="0 -55; 0 -57; 0 -55" dur="3s" repeatCount="indefinite" />
                             </path>
-                            <path d="M350 50 L355.878 67.639 L374.264 67.639 L359.193 78.881 L365.071 96.52 L350 85.278 L334.929 96.52 L340.807 78.881 L325.736 67.639 L344.122 67.639 Z" fill="#3b82f6" filter="url(#glow)">
+                            <path d="M350 50 L355.878 67.639 L374.264 67.639 L359.193 78.881 L365.071 96.52 L350 85.278 L334.929 96.52 L340.807 78.881 L325.736 67.639 L344.122 67.639 Z" fill="var(--brand-primary)" filter="url(#glow)">
                                 <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite" />
                             </path>
-                            <circle cx="80" cy="220" r="10" fill="#cbd5e1" />
-                            <rect x="70" y="230" width="20" height="30" rx="5" fill="#cbd5e1" />
-                            <rect x="50" y="260" width="60" height="10" rx="2" fill="#e2e8f0" />
-                            <circle cx="320" cy="230" r="8" fill="#cbd5e1" />
-                            <rect x="312" y="238" width="16" height="25" rx="4" fill="#cbd5e1" />
-                            <rect x="295" y="263" width="50" height="7" rx="2" fill="#e2e8f0" />
+                            <circle cx="80" cy="220" r="10" fill="var(--border-primary)" />
+                            <rect x="70" y="230" width="20" height="30" rx="5" fill="var(--border-primary)" />
+                            <rect x="50" y="260" width="60" height="10" rx="2" fill="var(--bg-primary)" />
+                            <circle cx="320" cy="230" r="8" fill="var(--border-primary)" />
+                            <rect x="312" y="238" width="16" height="25" rx="4" fill="var(--border-primary)" />
+                            <rect x="295" y="263" width="50" height="7" rx="2" fill="var(--bg-primary)" />
                         </svg>
                     </div>
                 </div>
@@ -136,28 +163,28 @@
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">The Ultimate Toolkit for Success in UPSC CSE</h2>
                 <p class="text-slate-600 max-w-3xl mx-auto mb-12">Stop juggling countless resources. We bring everything you need into one intelligent platform, designed to optimize your preparation.</p>
                 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div id="quizzie-feature-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer">
+                    <div id="quizzie-feature-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer">
                         <div class="bg-rose-100 text-rose-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <i class="fas fa-question text-3xl"></i>
                         </div>
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Quizzie - AI Quiz Module</h3>
                         <p class="text-slate-500">Generate UPSC-style quizzes based on subject, difficulty, and question type.</p>
                     </div>
-                    <a href="/maintor.html" target="_blank" rel="noopener noreferrer" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
+                    <a href="/maintor.html" target="_blank" rel="noopener noreferrer" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
                         <div class="bg-green-100 text-green-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
                         </div>
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Mains Answer Evaluation</h3>
                         <p class="text-slate-500">Get instant, data-driven feedback on your answer structure, content, and relevance.</p>
                     </a>
-                    <div id="current-affairs-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 300ms;">
+                    <div id="current-affairs-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 300ms;">
                         <div class="bg-indigo-100 text-indigo-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6" /></svg>
                         </div>
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Integrated Current Affairs</h3>
                         <p class="text-slate-500">Daily news linked directly to syllabus topics, with notes and revision quizzes.</p>
                     </div>
-                    <a href="tracker.html" target="_blank" id="syllabus-feature-card" class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 450ms;">
+                    <a href="tracker.html" target="_blank" id="syllabus-feature-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 450ms;">
                         <div class="bg-blue-100 text-blue-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A2 2 0 012 15.382V8.618a2 2 0 011.553-1.9l6-3a2 2 0 011.789 0l6 3A2 2 0 0119 8.618v6.764a2 2 0 01-1.553 1.9L12 20.618a2 2 0 01-1.789 0L9 20z" />
@@ -171,13 +198,13 @@
             </div>
         </section>
 
-        <section id="dashboard" class="hidden py-20 bg-slate-50">
+        <section id="dashboard" class="hidden py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                  <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-8 text-center">My Preparation Dashboard</h2>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     
-                    <div id="syllabus-progress-container" class="bg-white p-8 rounded-xl shadow-lg">
+                    <div id="syllabus-progress-container" class="dashboard-card p-8 rounded-xl">
                         <h3 class="text-2xl font-semibold mb-4">My Syllabus Progress</h3>
                         <p class="text-slate-500 mb-6">
                             A real-time summary of your progress from the Syllabus Navigator.
@@ -188,7 +215,7 @@
                         </div>
                     </div>
 
-                    <div id="revision-reminder-container" class="bg-white p-8 rounded-xl shadow-lg">
+                    <div id="revision-reminder-container" class="dashboard-card p-8 rounded-xl">
                         <h3 class="text-2xl font-semibold mb-4">Revision Reminders</h3>
                         <p class="text-slate-500 mb-6">A light list of topics due for revision. Visit the <a href="tracker.html" target="_blank" class="text-blue-600 hover:underline">Full Tracker</a> for details.</p>
                         <div id="revision-reminder-list" class="space-y-3">
@@ -200,14 +227,14 @@
                 </div>
         </section>
 
-        <section id="how-it-works" class="py-20 bg-slate-100">
+        <section id="how-it-works" class="py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Your Path to Success in 3 Simple Steps</h2>
                     <p class="text-slate-600 max-w-2xl mx-auto">We've simplified the journey. Focus on what matters most: learning and improving.</p>
                 </div>
                 <div class="relative">
-                    <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-blue-200 -translate-y-1/2"></div>
+                    <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-blue-200"></div>
                     <div class="grid md:grid-cols-3 gap-16 relative">
                         <div class="text-center fade-in-up">
                              <div class="relative inline-block">
@@ -242,7 +269,7 @@
                     <p class="text-slate-600 max-w-2xl mx-auto">Success stories from those who chose the smarter way.</p>
                 </div>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up">
+                    <div class="dashboard-card rounded-xl p-8 fade-in-up">
                         <p class="text-slate-600 mb-6">"iasmaintor's syllabus tracker is a game-changer. It removed all the guesswork and helped me cover the syllabus in a structured manner. For the first time, I feel in control of my preparation."</p>
                         <div class="flex items-center">
                             <img src="https://placehold.co/48x48/e0e7ff/3730a3?text=PS" alt="Priya Sharma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
@@ -252,7 +279,7 @@
                             </div>
                         </div>
                     </div>
-                     <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up" style="transition-delay: 200ms;">
+                    <div class="dashboard-card rounded-xl p-8 fade-in-up" style="transition-delay: 200ms;">
                         <p class="text-slate-600 mb-6">"The instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure. The AI points out flaws I never would have noticed on my own."</p>
                         <div class="flex items-center">
                              <img src="https://placehold.co/48x48/d1fae5/047857?text=RP" alt="Rajdeep Pandey" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
@@ -262,7 +289,7 @@
                             </div>
                         </div>
                     </div>
-                     <div class="bg-white rounded-xl shadow-lg p-8 fade-in-up" style="transition-delay: 400ms;">
+                    <div class="dashboard-card rounded-xl p-8 fade-in-up" style="transition-delay: 400ms;">
                         <p class="text-slate-600 mb-6">"Finally, a platform that connects current affairs to the static syllabus seamlessly. This has saved me hours of work every single day. Highly recommended!"</p>
                         <div class="flex items-center">
                              <img src="https://placehold.co/48x48/fce7f3/831843?text=AV" alt="Anjali Verma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
@@ -276,22 +303,22 @@
             </div>
         </section>
 
-        <section id="who-we-are" class="py-20 bg-slate-100">
+        <section id="who-we-are" class="py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 text-center">
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Who We Are</h2>
                 <p class="text-slate-600 max-w-3xl mx-auto mb-12">
                     We’re a small team of dreamers behind iasmAIntor — an AI-powered tool built to make your UPSC prep smarter, simpler, and a little more creative. Our journey started with one shared goal: to make UPSC preparation less overwhelming and more effective for every aspirant.
                 </p>
                 <div class="grid md:grid-cols-3 gap-8 text-left">
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
+                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Ashish</h3>
                         <p class="text-slate-500">has appeared in the UPSC Mains four times, is a tech graduate, and has worked with several leading EdTech firms in the UPSC prep space.</p>
                     </div>
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
+                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Abhijeet</h3>
                         <p class="text-slate-500">a tech graduate from Delhi University, brings his expertise from working at a leading EdTech company, where he manages tech and innovation.</p>
                     </div>
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
+                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
                         <h3 class="text-xl font-semibold text-slate-900 mb-2">Rajdeep</h3>
                         <p class="text-slate-500">a St. Stephen’s graduate and fellow UPSC aspirant, works as a Content Strategist in the EdTech space, ensuring what you learn is not just accurate but engaging too.</p>
                     </div>
@@ -312,7 +339,7 @@
     </main>
 
     <div id="mentorship-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+        <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
             <div class="flex justify-between items-start mb-4">
                 <h2 class="text-2xl font-bold text-slate-800">Request 1:1 Mentorship</h2>
                 <button id="close-mentorship-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
@@ -341,7 +368,7 @@
         </div>
     </div>
     <div id="chatbot-container" class="fixed bottom-5 right-5 z-[100]">
-        <div id="chatbot-window" class="hidden absolute bottom-[80px] right-0 w-80 sm:w-96 h-[500px] bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden border border-slate-300">
+        <div id="chatbot-window" class="hidden absolute bottom-[80px] right-0 w-80 sm:w-96 h-[500px] rounded-lg shadow-2xl flex flex-col overflow-hidden border border-slate-300">
             <div class="bg-blue-600 text-white p-3 flex justify-between items-center flex-shrink-0">
                 <h3 class="font-semibold text-lg flex items-center">
                     <i class="fas fa-chess-knight mr-2"></i> Drona
@@ -350,7 +377,7 @@
             </div>
             <div id="chatbot-messages" class="flex-1 p-3 overflow-y-auto space-y-3">
                 </div>
-            <form id="chatbot-form" class="border-t border-slate-200 p-2 flex items-center bg-white flex-shrink-0">
+            <form id="chatbot-form" class="border-t border-slate-200 p-2 flex items-center flex-shrink-0">
                 <input type="text" id="chatbot-input" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask Drona a question..." required>
                 <button type="submit" class="ml-2 bg-blue-600 text-white p-2 rounded-full h-10 w-10 flex-shrink-0 flex items-center justify-center transition-transform hover:scale-110">
                     <i class="fas fa-paper-plane"></i>
@@ -360,7 +387,7 @@
         
         <button id="chatbot-toggle" class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110">
             <i class="fas fa-chess-knight text-3xl"></i>
-            <span id="chatbot-greeting-bubble" class="hidden absolute bottom-14 right-14 w-64 bg-white p-3 rounded-lg shadow-md text-slate-800 text-sm border border-slate-200" style="transform-origin: bottom right;">
+            <span id="chatbot-greeting-bubble" class="hidden absolute bottom-14 right-14 w-64 p-3 rounded-lg shadow-md text-slate-800 text-sm border border-slate-200" style="transform-origin: bottom right;">
                 </span>
         </button>
     </div>
@@ -417,7 +444,7 @@
     </footer>
 
     <div id="auth-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+        <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
             <div class="flex justify-end">
                 <button id="close-auth-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
             </div>
@@ -493,8 +520,8 @@
     </div>
 
     <div id="syllabus-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl modal-content my-8 max-h-[90vh] flex flex-col">
-            <div class="p-6 border-b sticky top-0 bg-white z-10 rounded-t-lg">
+        <div class="rounded-lg shadow-2xl w-full max-w-4xl modal-content my-8 max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b sticky top-0 z-10 rounded-t-lg">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-slate-800">UPSC Syllabus Navigator</h2>
                     <button id="close-syllabus-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
@@ -537,7 +564,7 @@
                 </div>
 
             </div>
-            <div class="p-6 border-t bg-slate-50 sticky bottom-0 z-10 rounded-b-lg">
+            <div class="p-6 border-t sticky bottom-0 z-10 rounded-b-lg">
                 <div class="flex justify-end">
                     <button id="save-syllabus-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center disabled:opacity-50" disabled> <i class="fas fa-save mr-2"></i>Save Progress
                     </button>
@@ -546,8 +573,8 @@
         </div>
     </div>
     <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl modal-content max-h-[90vh] flex flex-col">
-            <div class="p-6 border-b sticky top-0 bg-white z-10">
+        <div class="rounded-lg shadow-2xl w-full max-w-3xl modal-content max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b sticky top-0 z-10">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-slate-800">AI Quiz Module</h2>
                     <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
@@ -564,7 +591,7 @@
                     <div data-step="1" class="active space-y-6">
                         <h3 class="text-xl font-semibold text-slate-700">Choose your Subject</h3>
                         <div>
-                            <select id="quiz-main-subject" name="main_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-lg" required>
+                            <select id="quiz-main-subject" name="main_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-lg" required>
                                 <option value="">-- Select a Subject --</option>
                                 <option value="gs">General Studies (Prelims)</option>
                                 <option value="csat">CSAT (Prelims)</option>
@@ -599,7 +626,7 @@
 
                         <div id="gs-sectional-group" class="quiz-step-group">
                             <label for="gs-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
-                            <select id="gs-subject" name="gs_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-base">
+                            <select id="gs-subject" name="gs_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-base">
                                 <option value="history">History</option>
                                 <option value="geography">Geography</option>
                                 <option value="polity">Polity</option>
@@ -611,7 +638,7 @@
 
                         <div id="csat-sectional-group" class="quiz-step-group">
                             <label for="csat-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
-                            <select id="csat-subject" name="csat_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-base">
+                            <select id="csat-subject" name="csat_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-base">
                                 <option value="quant">Quant</option>
                                 <option value="reasoning">Reasoning</option>
                                 <option value="comprehension">Comprehension</option>
@@ -629,7 +656,7 @@
 
                          <div id="num-questions-group" class="quiz-step-group">
                             <label for="num-questions" class="block text-slate-700 font-semibold mb-2">Number of Questions</label>
-                            <select id="num-questions" name="num_questions" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-base">
+                            <select id="num-questions" name="num_questions" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-base">
                                 <option value="5">5</option>
                                 <option value="10">10</option>
                                 <option value="25">25</option>
@@ -639,9 +666,9 @@
 
                          <div id="question-type-group" class="quiz-step-group">
                             <label class="block text-slate-700 font-semibold mb-2">Nature of Questions</label>
-                            <select name="question_type" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-base">
+                            <select name="question_type" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-base">
                                 <option value="static">Static</option>
-                                <option value->Current Affairs</option>
+                                <option value="current">Current Affairs</option>
                                 <option value="blend">A Blend of Static & Current</option>
                             </select>
                         </div>
@@ -682,7 +709,7 @@
                 <div id="quiz-result" class="hidden"></div>
                 <div id="quiz-active-view" class="hidden"></div>
             </div>
-            <div id="quiz-footer" class="p-6 border-t bg-slate-50 sticky bottom-0 z-10 rounded-b-lg hidden">
+            <div id="quiz-footer" class="p-6 border-t sticky bottom-0 z-10 rounded-b-lg hidden">
                 <div class="flex justify-between">
                     <button id="prev-q-btn" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold hover:bg-slate-300 transition-colors">Previous</button>
                     <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Next</button>
@@ -692,7 +719,7 @@
     </div>
 
     <div id="account-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-white rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+       <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
             <div class="flex justify-between items-start mb-4">
                 <h2 class="text-2xl font-bold text-slate-800">My Account</h2>
                 <button id="close-account-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
@@ -719,7 +746,7 @@
     </div>
 
     <div id="success-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-white rounded-lg shadow-2xl p-8 text-center">
+       <div class="rounded-lg shadow-2xl p-8 text-center modal-content">
             <div class="svg-container w-24 h-24 mx-auto mb-4">
                 <svg class="ft-green-tick" xmlns="http://www.w3.org/2000/svg" height="100" width="100" viewBox="0 0 48 48" aria-hidden="true">
                     <circle class="circle" fill="none" stroke="#22c55e" stroke-width="3" cx="24" cy="24" r="22"/>
@@ -736,4 +763,3 @@
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
-
