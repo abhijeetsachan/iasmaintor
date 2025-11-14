@@ -9,6 +9,7 @@ import admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // --- Initialize Firebase Admin ---
+let db; // Define db at the top level
 try {
     // This is the SAME logic used in your other API files
     if (process.env.FIREBASE_ADMIN_SDK_JSON && process.env.FIREBASE_DB_URL) {
@@ -18,17 +19,15 @@ try {
                 databaseURL: process.env.FIREBASE_DB_URL,
             });
         }
+        db = admin.firestore(); // Initialize db ONLY on success
     } else {
-        // If the variables aren't set, we must throw an error
-        throw new Error("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL) are not set.");
+        // If the variables aren't set, just log a warning.
+        console.warn("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL) are not set. DB features will be disabled.");
     }
 } catch (error) {
     console.error('Firebase admin initialization error', error);
-    // Re-throw to stop the function from running without a DB
-    throw error;
+    // DO NOT re-throw. 'db' will remain undefined, and the handler will catch it.
 }
-
-const db = admin.firestore();
 
 // --- Initialize Google AI (Gemini) ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -55,6 +54,13 @@ export default async function handler(request, response) {
     console.error("Auth verification error:", error);
     return response.status(401).json({ error: { message: 'Unauthorized: Invalid token.' } });
   }
+
+  // --- NEW: Add this check to ensure DB is initialized ---
+  if (!db) {
+    console.error("Firestore (db) is not initialized. Check server logs for init errors.");
+    return response.status(500).json({ error: { message: "Database service is not configured on the server." } });
+  }
+  // --- END NEW CHECK ---
 
   try { // <-- Main try block
     // 2. Get Quiz Parameters from client
@@ -269,4 +275,3 @@ For each question, provide a question (string), four options (array of strings),
     throw new Error(`AI generation failed: ${error.message}`);
   }
 }
-// <-- No extra braces at the end.
