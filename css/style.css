@@ -228,7 +228,7 @@ p {
     transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
     transform: translateY(-20px);
     opacity: 0;
-    /* ### NEW: Apply card background to all modals ### */
+    /* ### FIXED: Apply card background to all modals ### */
     background-color: var(--bg-card);
 }
 .modal.active .modal-content {
@@ -569,8 +569,8 @@ p {
 
 /* --- MODIFIED: Dashboard Revisions Card (was yellow) --- */
 .dashboard-card.bg-yellow-50 {
-    background-color: #1f2937;
-    
+    background-color: var(--color-orange-bg-faded);
+    border-color: var(--color-orange-DEFAULT);
 }
 .dashboard-card .text-yellow-800 { color: var(--color-orange-text-dark) !important; }
 .dashboard-card .text-yellow-700 { color: var(--color-orange-dark) !important; }
@@ -595,7 +595,7 @@ p {
     
     /* Firefox scrollbar */
     scrollbar-width: thin;
-    scrollbar-color: var(--brand-primary) #1f293700;
+    scrollbar-color: var(--brand-primary) var(--bg-secondary);
 }
 
 /* WebKit scrollbar for tracker page dashboard columns */
@@ -635,7 +635,7 @@ p {
     
     /* --- NEW: Firefox Scrollbar --- */
     scrollbar-width: thin;
-    scrollbar-color: var(--brand-primary) #1f2937;
+    scrollbar-color: var(--brand-primary) var(--bg-secondary);
 }
 
 #revision-reminder-list {
@@ -1088,4 +1088,5 @@ footer .border-slate-700 {
     background-color: var(--brand-primary);
     color: var(--text-white);
     border-color: var(--brand-primary);
+}
 }
