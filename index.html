@@ -233,76 +233,94 @@
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Your Path to Success in 3 Simple Steps</h2>
                     <p class="text-slate-600 max-w-2xl mx-auto">We've simplified the journey. Focus on what matters most: learning and improving.</p>
                 </div>
-                <div class="relative">
-                    <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-blue-200"></div>
-                    <div class="grid md:grid-cols-3 gap-16 relative">
-                        <div class="text-center fade-in-up">
-                             <div class="relative inline-block">
-                                <div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200">1</div>
-                            </div>
-                            <h3 class="text-xl font-semibold mt-6 mb-2">Track Your Syllabus</h3>
-                            <p class="text-slate-500">Open the Syllabus Navigator, see the entire official syllabus, and mark your progress topic-by-topic.</p>
-                        </div>
-                        <div class="text-center fade-in-up" style="transition-delay: 200ms;">
-                             <div class="relative inline-block">
-                                <div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200">2</div>
-                            </div>
-                            <h3 class="text-xl font-semibold mt-6 mb-2">Practice & Evaluate</h3>
-                            <p class="text-slate-500">Use the AI Quiz module to test your knowledge and the Mains Evaluator to refine your writing.</p>
-                        </div>
-                        <div class="text-center fade-in-up" style="transition-delay: 400ms;">
-                             <div class="relative inline-block">
-                                <div class="bg-white h-24 w-24 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold shadow-lg border-4 border-blue-200">3</div>
-                            </div>
-                            <h3 class="text-xl font-semibold mt-6 mb-2">Save, Track & Improve</h3>
-                            <p class="text-slate-500">Save your syllabus progress to your dashboard. Monitor your completion and conquer weaknesses.</p>
-                        </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="dashboard-card text-center p-8 fade-in-up">
+                        <div class="step-circle">1</div>
+                        <h3 class="text-xl font-semibold text-slate-900 mt-6 mb-2">Track Your Syllabus</h3>
+                        <p class="text-slate-500">Open the Syllabus Navigator, see the entire official syllabus, and mark your progress topic-by-topic.</p>
+                    </div>
+                    <div class="dashboard-card text-center p-8 fade-in-up" style="transition-delay: 200ms;">
+                        <div class="step-circle">2</div>
+                        <h3 class="text-xl font-semibold text-slate-900 mt-6 mb-2">Practice & Evaluate</h3>
+                        <p class="text-slate-500">Use the AI Quiz module to test your knowledge and the Mains Evaluator to refine your writing.</p>
+                    </div>
+                    <div class="dashboard-card text-center p-8 fade-in-up" style="transition-delay: 400ms;">
+                        <div class="step-circle">3</div>
+                        <h3 class="text-xl font-semibold text-slate-900 mt-6 mb-2">Save, Track & Improve</h3>
+                        <p class="text-slate-500">Save your syllabus progress to your dashboard. Monitor your completion and conquer weaknesses.</p>
                     </div>
                 </div>
             </div>
         </section>
-
         <section id="testimonials" class="py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">What Our Aspirants Say</h2>
                     <p class="text-slate-600 max-w-2xl mx-auto">Success stories from those who chose the smarter way.</p>
                 </div>
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="dashboard-card rounded-xl p-8 fade-in-up">
-                        <p class="text-slate-600 mb-6">"iasmaintor's syllabus tracker is a game-changer. It removed all the guesswork and helped me cover the syllabus in a structured manner. For the first time, I feel in control of my preparation."</p>
-                        <div class="flex items-center">
-                            <img src="https://placehold.co/48x48/e0e7ff/3730a3?text=PS" alt="Priya Sharma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
-                            <div>
-                                <h4 class="font-semibold text-slate-900">Priya Sharma</h4>
-                                <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                
+                <div class="testimonial-carousel-container">
+                    <div class="testimonial-carousel-track-container">
+                        <div id="testimonial-carousel-track" class="testimonial-carousel-track">
+                            
+                            <div class="testimonial-card-wrapper">
+                                <div class="testimonial-card dashboard-card rounded-xl p-8">
+                                    <p class="text-slate-600 mb-6">"iasmaintor's syllabus tracker is a game-changer. It removed all the guesswork and helped me cover the syllabus in a structured manner. For the first time, I feel in control of my preparation."</p>
+                                    <div class="flex items-center">
+                                        <img src="https://placehold.co/48x48/e0e7ff/3730a3?text=PS" alt="Priya Sharma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
+                                        <div>
+                                            <h4 class="font-semibold text-slate-900">Priya Sharma</h4>
+                                            <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+                            
+                            <div class="testimonial-card-wrapper">
+                                <div class="testimonial-card dashboard-card rounded-xl p-8">
+                                    <p class="text-slate-600 mb-6">"The instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure. The AI points out flaws I never would have noticed on my own."</p>
+                                    <div class="flex items-center">
+                                         <img src="https://placehold.co/48x48/d1fae5/047857?text=RP" alt="Rajdeep Pandey" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
+                                        <div>
+                                            <h4 class="font-semibold text-slate-900">Rajdeep Pandey</h4>
+                                            <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="testimonial-card-wrapper">
+                                <div class="testimonial-card dashboard-card rounded-xl p-8">
+                                    <p class="text-slate-600 mb-6">"Finally, a platform that connects current affairs to the static syllabus seamlessly. This has saved me hours of work every single day. Highly recommended!"</p>
+                                    <div class="flex items-center">
+                                         <img src="https://placehold.co/48x48/fce7f3/831843?text=AV" alt="Anjali Verma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https::/placehold.co/48x48?text=User';">
+                                        <div>
+                                            <h4 class="font-semibold text-slate-900">Anjali Verma</h4>
+                                            <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                             <div class="testimonial-card-wrapper">
+                                <div class="testimonial-card dashboard-card rounded-xl p-8">
+                                    <p class="text-slate-600 mb-6">"The Quizzie module is addictive. It's the best way to revise prelims topics. The AI-generated questions are high quality and really test my understanding."</p>
+                                    <div class="flex items-center">
+                                         <img src="https://placehold.co/48x48/fef3c7/854d0e?text=MK" alt="Mohan Kumar" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
+                                        <div>
+                                            <h4 class="font-semibold text-slate-900">Mohan Kumar</h4>
+                                            <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                         </div>
                     </div>
-                    <div class="dashboard-card rounded-xl p-8 fade-in-up" style="transition-delay: 200ms;">
-                        <p class="text-slate-600 mb-6">"The instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure. The AI points out flaws I never would have noticed on my own."</p>
-                        <div class="flex items-center">
-                             <img src="https://placehold.co/48x48/d1fae5/047857?text=RP" alt="Rajdeep Pandey" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
-                            <div>
-                                <h4 class="font-semibold text-slate-900">Rajdeep Pandey</h4>
-                                <p class="text-slate-500 text-sm">UPSC Aspirant</p>
-                            </div>
-                        </div>
+                    
                     </div>
-                    <div class="dashboard-card rounded-xl p-8 fade-in-up" style="transition-delay: 400ms;">
-                        <p class="text-slate-600 mb-6">"Finally, a platform that connects current affairs to the static syllabus seamlessly. This has saved me hours of work every single day. Highly recommended!"</p>
-                        <div class="flex items-center">
-                             <img src="https://placehold.co/48x48/fce7f3/831843?text=AV" alt="Anjali Verma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
-                            <div>
-                                <h4 class="font-semibold text-slate-900">Anjali Verma</h4>
-                                <p class="text-slate-500 text-sm">UPSC Aspirant</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                 </div>
         </section>
-
         <section id="who-we-are" class="py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 text-center">
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Who We Are</h2>
@@ -333,7 +351,7 @@
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-20 text-center">
                 <h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your UPSC Preparation?</h2>
                 <p class="text-slate-300 max-w-2xl mx-auto mb-8">Join thousands of aspirants who are preparing smarter. Your journey to LBSNAA starts here.</p>
-                <a href="#" id="mentorship-final-cta-btn" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-slate-100 transition-transform hover:scale-105 shadow-lg">Request Your Free 1:1 Session</a>
+                <a href="#" id="mentorship-final-cta-btn" class="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-transform hover:scale-105 shadow-lg glowing-button">Request Your Free 1:1 Session</a>
             </div>
         </section>
     </main>
@@ -598,7 +616,7 @@
                             </select>
                         </div>
                         <div class="flex justify-end pt-4">
-                            <button type="button" data-next="2" class="next-step-btn bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-colors">Next</button>
+                            <button type="button" data-next="2" class="next-step-btn btn btn-primary">Next</button>
                         </div>
                     </div>
 
@@ -646,8 +664,8 @@
                         </div>
 
                         <div class="flex justify-between pt-4">
-                            <button type="button" data-prev="1" class="prev-step-btn bg-slate-200 text-slate-800 px-8 py-3 rounded-lg font-semibold text-base hover:bg-slate-300 transition-colors">Back</button>
-                            <button type="button" data-next="3" class="next-step-btn bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-colors">Next</button>
+                            <button type="button" data-prev="1" class="prev-step-btn btn btn-secondary">Back</button>
+                            <button type="button" data-next="3" class="next-step-btn btn btn-primary">Next</button>
                         </div>
                     </div>
 
@@ -674,8 +692,8 @@
                         </div>
 
                         <div class="flex justify-between pt-4">
-                            <button type="button" data-prev="2" class="prev-step-btn bg-slate-200 text-slate-800 px-8 py-3 rounded-lg font-semibold text-base hover:bg-slate-300 transition-colors">Back</button>
-                            <button type="button" data-next="4" class="next-step-btn bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-colors">Next</button>
+                            <button type="button" data-prev="2" class="prev-step-btn btn btn-secondary">Back</button>
+                            <button type="button" data-next="4" class="next-step-btn btn btn-primary">Next</button>
                         </div>
                     </div>
 
@@ -701,8 +719,8 @@
    </div>
 </div>
                         <div class="flex justify-between pt-4">
-                            <button type="button" data-prev="3" class="prev-step-btn bg-slate-200 text-slate-800 px-8 py-3 rounded-lg font-semibold text-base hover:bg-slate-300 transition-colors">Back</button>
-                            <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-green-700 transition-colors">Generate Quiz</button>
+                            <button type="button" data-prev="3" class="prev-step-btn btn btn-secondary">Back</button>
+                            <button type="submit" class="btn btn-success">Generate Quiz</button>
                         </div>
                     </div>
                 </form>
@@ -711,8 +729,8 @@
             </div>
             <div id="quiz-footer" class="p-6 border-t sticky bottom-0 z-10 rounded-b-lg hidden">
                 <div class="flex justify-between">
-                    <button id="prev-q-btn" class="bg-slate-200 text-slate-800 px-6 py-2 rounded-lg font-semibold hover:bg-slate-300 transition-colors">Previous</button>
-                    <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Next</button>
+                    <button id="prev-q-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Previous</button>
+                    <button id="next-q-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Next</button>
                 </div>
             </div>
             </div>
