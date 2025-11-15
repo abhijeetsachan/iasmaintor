@@ -120,18 +120,18 @@ html.dark {
     --color-red-light: #3f1212;      /* dark red-bg */
     --color-red-dark-text: #fee2e2;  /* red-100 */
 
-    /* Accent: Amber (for In-Progress) */
+    /* Accent: Amber (In-Progress) */
     --color-amber-light: #45330c;    /* dark amber */
     --color-amber-light-border: #926c15; /* dark amber */
     --color-amber-dark: #fde68a;     /* amber-200 */
 
-    /* Accent: Orange (for Due/Prelims) */
+    /* Accent: Orange (Due/Prelims) */
     --color-orange-DEFAULT: #fb923c;    /* orange-400 */
     --color-orange-dark: #fb923c;       /* orange-400 */
     --color-orange-text-dark: #fed7aa;  /* orange-200 */
     --color-orange-bg-faded: #361e0b;   /* dark orange */
 
-    /* Accent: Indigo (for Mains) */
+    /* Accent: Indigo (Mains) */
     --color-indigo-DEFAULT: #818cf8;    /* indigo-400 */
     --color-indigo-text-dark: #c7d2fe;  /* indigo-200 */
     --color-indigo-bg-faded: #222549;   /* dark indigo */
@@ -679,7 +679,8 @@ p {
 
 /* MODIFIED: Target the new list container for scrolling */
 #dashboard-progress-list,
-#revisions-due-list {
+#revisions-due-list,
+#reminder-topic-list { /* <-- ADDED #reminder-topic-list */
     max-height: 70vh; /* A fixed, generous height. Adjust as needed. */
     overflow-y: auto;
     overflow-x: hidden;
@@ -694,24 +695,28 @@ p {
 /* WebKit scrollbar for tracker page dashboard columns */
 /* MODIFIED: Target the new list container for scrollbar styling */
 #dashboard-progress-list::-webkit-scrollbar,
-#revisions-due-list::-webkit-scrollbar {
+#revisions-due-list::-webkit-scrollbar,
+#reminder-topic-list::-webkit-scrollbar { /* <-- ADDED #reminder-topic-list */
     width: 8px;
 }
 #dashboard-progress-list::-webkit-scrollbar-track,
-#revisions-due-list::-webkit-scrollbar-track {
+#revisions-due-list::-webkit-scrollbar-track,
+#reminder-topic-list::-webkit-scrollbar-track { /* <-- ADDED #reminder-topic-list */
     /* --- MODIFIED: Set track to transparent --- */
     background: transparent;
     border-radius: 10px;
 }
 #dashboard-progress-list::-webkit-scrollbar-thumb,
-#revisions-due-list::-webkit-scrollbar-thumb {
+#revisions-due-list::-webkit-scrollbar-thumb,
+#reminder-topic-list::-webkit-scrollbar-thumb { /* <-- ADDED #reminder-topic-list */
     background-color: var(--brand-primary);
     border-radius: 10px;
     /* --- MODIFIED: Removed border --- */
     border: none;
 }
 #dashboard-progress-list::-webkit-scrollbar-thumb:hover,
-#revisions-due-list::-webkit-scrollbar-thumb:hover {
+#revisions-due-list::-webkit-scrollbar-thumb:hover,
+#reminder-topic-list::-webkit-scrollbar-thumb:hover { /* <-- ADDED #reminder-topic-list */
     background-color: var(--brand-primary-hover);
 }
 /* --- END MODIFICATION --- */
