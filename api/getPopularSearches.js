@@ -8,26 +8,30 @@
  * 3. Caches the results in Firebase for 6 hours.
  */
 
-import admin from 'firebase-admin';
+// ### THE FIX: Use modern, modular Firebase Admin imports ###
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getDatabase } from 'firebase-admin/database';
+// ### END FIX ###
 
 // --- Firebase Admin SDK Initialization ---
 // (We need this to read/write from the cache)
 let db;
 let cacheRef;
 try {
-    // ### THIS IS THE FIX ###
-    // Check only for the SDK JSON.
+    // ### THE FIX: Check only for the SDK JSON.
     if (process.env.FIREBASE_ADMIN_SDK_JSON) {
-        if (!admin.apps.length) {
+        // Use modular getApps() and initializeApp()
+        if (!getApps().length) {
             // Initialize *without* the databaseURL to avoid service conflicts.
-            admin.initializeApp({
-                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
+            initializeApp({
+                credential: cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
             });
         }
-        db = admin.database(); // Initialize Realtime Database
+        db = getDatabase(); // Initialize Realtime Database
         cacheRef = db.ref('popularTopicsCache');
+        // ### END FIX ###
     } else {
-        console.warn("Firebase Admin environment variables not set. Cache will be disabled.");
+        console.warn("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON) are not set. DB features will be disabled.");
     }
 } catch (error) {
     console.error('Firebase admin initialization error', error);
@@ -43,9 +47,6 @@ const defaultTopics = [
     "What is the role of the RBI Monetary Policy?",
     "Latest Supreme Court judgments"
 ];
-
-// --- *** REMOVED old callGemini helper *** ---
-// We will make the call inline to use specific generationConfig
 
 // --- Main API Handler ---
 export default async function handler(req, res) {
@@ -65,7 +66,7 @@ export default async function handler(req, res) {
 
     // --- 1. CHECK CACHE ---
     let staleData = null;
-    const isCacheEnabled = admin.apps.length > 0 && db && cacheRef;
+    const isCacheEnabled = getApps().length > 0 && db && cacheRef;
 
     if (isCacheEnabled) {
         try {
@@ -105,8 +106,6 @@ export default async function handler(req, res) {
         const headlines = data.items.map(item => item.title);
 
         // --- 3. AI-Powered Topic Extraction ---
-        
-        // --- *** MODIFICATION START: Updated Prompt to request JSON *** ---
         const extractionPrompt = `
             You are a UPSC expert. Read the following list of recent news headlines. For each headline, extract the core, searchable UPSC topic.
             Be very concise.
@@ -118,9 +117,7 @@ export default async function handler(req, res) {
             Headlines:
             ${headlines.join('\n')}
         `;
-        // --- *** MODIFICATION END *** ---
 
-        // --- *** MODIFICATION START: Inline Gemini call with JSON mode *** ---
         const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         const geminiPayload = {
             contents: [{ parts: [{ text: extractionPrompt }] }],
@@ -144,11 +141,9 @@ export default async function handler(req, res) {
 
         const geminiData = await geminiResponse.json();
         const topicsString = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-        // --- *** MODIFICATION END *** ---
 
         if (!topicsString) throw new Error('AI topic extraction returned no text');
 
-        // --- *** MODIFICATION START: Parse JSON response *** ---
         let parsedData;
         try {
             parsedData = JSON.parse(topicsString);
@@ -167,7 +162,6 @@ export default async function handler(req, res) {
                 .map(t => String(t).trim()) // Ensure it's a string and trim
                 .filter(t => t.length > 3 && t.length < 75) // A more reasonable filter
         )];
-        // --- *** MODIFICATION END --- ---
 
         if (uniqueTopics.length === 0) throw new Error("AI produced no valid topics");
 
