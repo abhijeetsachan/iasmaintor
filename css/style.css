@@ -398,14 +398,28 @@ p {
 }
 .radio-card {
     border: 2px solid var(--border-primary); /* slate-200 */
-    background-color: var(--bg-primary); /* ### NEW: Use variable */
+    background-color: var(--bg-primary); 
     transition: all 0.2s ease-in-out;
+}
+
+/* ### NEW: Theme-aware fixes for quiz options ### */
+.radio-card span {
+    color: var(--text-tertiary); /* Theme-aware text */
+    transition: color 0.2s ease-in-out;
+}
+.radio-card:hover {
+    background-color: var(--bg-secondary); /* Theme-aware hover */
+    border-color: var(--border-secondary);
 }
 .radio-card-group input[type="radio"]:checked + .radio-card {
     border-color: var(--brand-primary); /* blue-500 */
     background-color: var(--brand-bg-light); /* blue-50 */
     box-shadow: 0 0 0 2px var(--brand-primary);
 }
+.radio-card-group input[type="radio"]:checked + .radio-card span {
+     color: var(--brand-text-dark); /* Theme-aware *checked* text */
+}
+/* ### END FIX ### */
 
 /* AI Loader Animation */
 @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
