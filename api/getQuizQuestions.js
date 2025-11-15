@@ -6,24 +6,21 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // --- Initialize Firebase Admin ---
 let db;
 try {
-    if (process.env.FIREBASE_ADMIN_SDK_JSON && process.env.FIREBASE_DB_URL) {
+    // ### THIS IS THE FIX ###
+    // Check only for the SDK JSON, not the DB URL.
+    if (process.env.FIREBASE_ADMIN_SDK_JSON) {
         if (!admin.apps.length) {
-            
-            // ### THIS IS THE FIX ###
-            // Revert to parsing the raw JSON string directly from the environment variable.
+            // Initialize *without* the databaseURL to avoid service conflicts.
             admin.initializeApp({
-                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
-                databaseURL: process.env.FIREBASE_DB_URL,
+                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
             });
-            // ### END FIX ###
-
         }
-        db = admin.firestore(); // Initialize db ONLY on success
+        db = admin.firestore(); // Initialize Firestore
     } else {
-        console.warn("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL) are not set. DB features will be disabled.");
+        console.warn("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON) are not set. DB features will be disabled.");
     }
 } catch (error) {
-    // This will now catch any JSON parsing errors
+    // This will now catch any JSON parsing or init errors
     console.error('Firebase admin initialization error', error);
 }
 
@@ -46,6 +43,7 @@ export default async function handler(request, response) {
     if (!token) {
       return response.status(401).json({ error: { message: 'Unauthorized: No token provided.' } });
     }
+    // This call will now succeed because the admin app is correctly initialized
     const decodedToken = await admin.auth().verifyIdToken(token);
     userId = decodedToken.uid;
   } catch (error) {
