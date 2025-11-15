@@ -20,6 +20,8 @@
     /* Brand Colors (Blue) */
     --brand-primary: #3b82f6;           /* blue-500 */
     --brand-primary-hover: #2563eb;    /* blue-600 */
+    /* --- NEW: Add a border variable for the button --- */
+    --brand-primary-border: #3b82f6;   /* blue-500 */
     --brand-text-dark: #1e3a8a;       /* blue-900 */
     --brand-bg-light: #eff6ff;          /* blue-50 */
     --brand-bg-light-hover: #dbeafe;   /* blue-100 */
@@ -31,6 +33,12 @@
     --color-green-light: #dcfce7;      /* green-100 */
     --color-green-light-border: #a7f3d0;/* green-200 */
     --color-green-bg-faded: #f0fdf4;   /* green-50 */
+    
+    /* --- NEW: Yellow/Warning (for AI feedback) --- */
+    --color-yellow-bg-faded: #fefce8;  /* yellow-50 */
+    --color-yellow-border: #fef08a;  /* yellow-200 */
+    --color-yellow-text-dark: #854d0e; /* yellow-800 */
+
 
     /* Accent: Red */
     --color-red-DEFAULT: #ef4444;    /* red-500 */
@@ -88,6 +96,8 @@ html.dark {
     /* Brand (Blue) - Stays vibrant */
     --brand-primary: #3b82f6;
     --brand-primary-hover: #2563eb;
+    /* --- NEW: Add a LIGHTER border for dark mode --- */
+    --brand-primary-border: #60a5fa;   /* blue-400 */
     --brand-text-dark: #60a5fa;       /* blue-400 */
     --brand-bg-light: #1f2937;        /* gray-800 */
     --brand-bg-light-hover: #374151;  /* gray-700 */
@@ -99,24 +109,29 @@ html.dark {
     --color-green-light: #166534;      /* green-800 */
     --color-green-light-border: #16a34a; /* green-600 */
     --color-green-bg-faded: #132a1c;   /* dark green */
+    
+    /* --- NEW: Yellow/Warning (for AI feedback) --- */
+    --color-yellow-bg-faded: #362f0b;  /* dark yellow */
+    --color-yellow-border: #713f12;  /* yellow-700 */
+    --color-yellow-text-dark: #fef08a; /* yellow-200 */
 
     /* Accent: Red */
     --color-red-DEFAULT: #f87171;    /* red-400 */
     --color-red-light: #3f1212;      /* dark red-bg */
     --color-red-dark-text: #fee2e2;  /* red-100 */
 
-    /* Accent: Amber (In-Progress) */
+    /* Accent: Amber (for In-Progress) */
     --color-amber-light: #45330c;    /* dark amber */
     --color-amber-light-border: #926c15; /* dark amber */
     --color-amber-dark: #fde68a;     /* amber-200 */
 
-    /* Accent: Orange (Due/Prelims) */
+    /* Accent: Orange (for Due/Prelims) */
     --color-orange-DEFAULT: #fb923c;    /* orange-400 */
     --color-orange-dark: #fb923c;       /* orange-400 */
     --color-orange-text-dark: #fed7aa;  /* orange-200 */
     --color-orange-bg-faded: #361e0b;   /* dark orange */
 
-    /* Accent: Indigo (Mains) */
+    /* Accent: Indigo (for Mains) */
     --color-indigo-DEFAULT: #818cf8;    /* indigo-400 */
     --color-indigo-text-dark: #c7d2fe;  /* indigo-200 */
     --color-indigo-bg-faded: #222549;   /* dark indigo */
@@ -133,6 +148,52 @@ html.dark {
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
 }
+
+/* --- ### NEW: THEME-AWARE BUTTONS ### --- */
+.btn {
+    padding-left: 1.5rem; /* px-6 */
+    padding-right: 1.5rem; /* px-6 */
+    padding-top: 0.75rem; /* py-3 */
+    padding-bottom: 0.75rem; /* py-3 */
+    border-radius: 0.5rem; /* rounded-lg */
+    font-weight: 600; /* font-semibold */
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+.btn-primary {
+    background-color: var(--brand-primary);
+    color: var(--text-white);
+    /* --- MODIFIED: Use the new border variable --- */
+    border-color: var(--brand-primary-border);
+}
+.btn-primary:hover {
+    background-color: var(--brand-primary-hover);
+    /* --- MODIFIED: Use the new border variable --- */
+    border-color: var(--brand-primary-border);
+}
+/* --- MODIFIED: New definition for btn-secondary --- */
+.btn-secondary {
+    background-color: var(--border-primary); /* LIGHT: slate-200 / DARK: gray-700 */
+    color: var(--text-primary); /* LIGHT: slate-800 / DARK: gray-100 */
+    border: 1px solid var(--border-secondary); /* LIGHT: slate-300 / DARK: gray-600 */
+}
+.btn-secondary:hover {
+    background-color: var(--border-secondary); /* LIGHT: slate-300 / DARK: gray-600 */
+    color: var(--text-primary); /* LIGHT: slate-800 / DARK: gray-100 */
+}
+.btn-success {
+    background-color: var(--color-green-DEFAULT);
+    color: var(--text-white);
+    border-color: var(--color-green-DEFAULT);
+}
+.btn-success:hover {
+    background-color: var(--color-green-dark);
+    border-color: var(--color-green-dark);
+}
+html.dark .btn-success {
+    color: var(--bg-primary); /* Dark text on light green button */
+}
+
 
 /* --- ### REVISED: THEME TOGGLE SWITCH STYLES (v3) ### --- */
 .theme-toggle-btn {
@@ -201,10 +262,16 @@ p {
 .text-slate-600 { color: var(--text-secondary) !important; }
 .text-slate-500 { color: var(--text-muted) !important; }
 
-/* --- ADDED THESE 3 LINES --- */
+/* --- MODIFIED: More aggressive overrides for backgrounds --- */
+.bg-white { background-color: var(--bg-card) !important; }
+.bg-slate-50 { background-color: var(--bg-primary) !important; }
 .bg-slate-100 { background-color: var(--bg-secondary) !important; }
-.bg-slate-200 { background-color: var(--bg-secondary) !important; }
-.hover\:bg-slate-300:hover { background-color: var(--bg-primary) !important; }
+.bg-slate-200 { background-color: var(--border-primary) !important; } /* Was bg-secondary, changed to border for more contrast */
+.hover\:bg-slate-300:hover { background-color: var(--border-secondary) !important; } /* Was bg-primary */
+
+.border-slate-200 { border-color: var(--border-primary) !important; }
+.border-slate-300 { border-color: var(--border-secondary) !important; }
+
 
 /* ... (rest of the fade-in, animations, etc.) ... */
 .fade-in-up {
@@ -274,6 +341,8 @@ p {
 .quiz-question.active {
     display: block;
 }
+
+/* --- MODIFIED: Theme-aware Quiz Styles --- */
 .option-correct {
     background-color: var(--color-green-light) !important;
     border-color: var(--color-green-DEFAULT) !important;
@@ -281,6 +350,20 @@ p {
 .option-incorrect {
     background-color: var(--color-red-light) !important;
     border-color: var(--color-red-DEFAULT) !important;
+}
+/* --- NEW: Theme-aware AI Feedback Box --- */
+#ai-feedback-container {
+    background-color: var(--color-yellow-bg-faded);
+    border-left: 4px solid var(--color-yellow-border); /* MODIFIED from border-l-4 */
+    color: var(--color-yellow-text-dark);
+    border-radius: 0 0.25rem 0.25rem 0; /* rounded-r-lg */
+    padding: 1rem; /* p-4 */
+    margin-top: 1rem; /* mt-4 */
+}
+#ai-feedback-container h4 {
+    color: var(--color-yellow-text-dark);
+    font-weight: 700; /* font-bold */
+    margin-bottom: 0.25rem; /* mb-1 */
 }
 
 #quizzie-content {
@@ -525,6 +608,10 @@ p {
     color: var(--text-secondary);
     border-color: var(--border-primary);
  }
+.gs-chip:hover {
+    background-color: var(--border-primary);
+}
+
 
 /* --- NEW Creative Dashboard Styles --- */
 .progress-circle {
@@ -575,7 +662,7 @@ p {
 /* --- MODIFIED: Dashboard Revisions Card (was yellow) --- */
 .dashboard-card.bg-yellow-50 {
     background-color: var(--color-orange-bg-faded);
-    border-color: var(--color-orange-DEFAULT);
+    border: 1px solid var(--color-orange-DEFAULT); /* Added border */
 }
 .dashboard-card .text-yellow-800 { color: var(--color-orange-text-dark) !important; }
 .dashboard-card .text-yellow-700 { color: var(--color-orange-dark) !important; }
@@ -600,7 +687,8 @@ p {
     
     /* Firefox scrollbar */
     scrollbar-width: thin;
-    scrollbar-color: var(--brand-primary) var(--bg-secondary);
+    /* --- MODIFIED: Set track to transparent --- */
+    scrollbar-color: var(--brand-primary) transparent;
 }
 
 /* WebKit scrollbar for tracker page dashboard columns */
@@ -611,14 +699,16 @@ p {
 }
 #dashboard-progress-list::-webkit-scrollbar-track,
 #revisions-due-list::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
+    /* --- MODIFIED: Set track to transparent --- */
+    background: transparent;
     border-radius: 10px;
 }
 #dashboard-progress-list::-webkit-scrollbar-thumb,
 #revisions-due-list::-webkit-scrollbar-thumb {
     background-color: var(--brand-primary);
     border-radius: 10px;
-    border: 2px solid var(--bg-secondary); 
+    /* --- MODIFIED: Removed border --- */
+    border: none;
 }
 #dashboard-progress-list::-webkit-scrollbar-thumb:hover,
 #revisions-due-list::-webkit-scrollbar-thumb:hover {
@@ -640,7 +730,8 @@ p {
     
     /* --- NEW: Firefox Scrollbar --- */
     scrollbar-width: thin;
-    scrollbar-color: var(--brand-primary) var(--bg-secondary);
+    /* --- MODIFIED: Set track to transparent --- */
+    scrollbar-color: var(--brand-primary) transparent;
 }
 
 #revision-reminder-list {
@@ -652,7 +743,8 @@ p {
 
     /* --- NEW: Firefox Scrollbar --- */
     scrollbar-width: thin;
-    scrollbar-color: var(--brand-primary) var(--bg-secondary);
+    /* --- MODIFIED: Set track to transparent --- */
+    scrollbar-color: var(--brand-primary) transparent;
 }
 
 .dashboard-reminder-item {
@@ -722,7 +814,8 @@ p {
 
 #dashboard-progress-bars::-webkit-scrollbar-track,
 #revision-reminder-list::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
+    /* --- MODIFIED: Set track to transparent --- */
+    background: transparent;
     border-radius: 10px;
 }
 
@@ -730,8 +823,8 @@ p {
 #revision-reminder-list::-webkit-scrollbar-thumb {
     background-color: var(--brand-primary);
     border-radius: 10px;
-    /* Create a small "inset" border effect */
-    border: 2px solid var(--bg-secondary); 
+    /* --- MODIFIED: Removed border --- */
+    border: none;
 }
 
 #dashboard-progress-bars::-webkit-scrollbar-thumb:hover,
@@ -1030,6 +1123,14 @@ footer .border-slate-700 {
     color: var(--brand-primary) !important;
     transition: all 0.2s ease;
     transform: scale(1);
+    
+    /* --- NEW: Copied from chatbot.js to CSS --- */
+    padding: 8px;
+    border-radius: 6px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
 }
 .popular-search-btn:hover {
     background-color: var(--brand-bg-light-hover) !important;
@@ -1094,4 +1195,89 @@ footer .border-slate-700 {
     color: var(--text-white);
     border-color: var(--brand-primary);
 }
+
+/* --- NEW: "How It Works" Step Circle Styles --- */
+.step-circle {
+    width: 4.5rem; /* 72px */
+    height: 4.5rem; /* 72px */
+    border-radius: 9999px; /* rounded-full */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1.5rem; /* mb-6 */
+    font-size: 2.25rem; /* text-4xl */
+    font-weight: 700; /* font-bold */
+    background-color: var(--brand-bg-light);
+    color: var(--brand-text-dark);
+    border: 2px solid var(--brand-primary);
+    box-shadow: var(--shadow-sm);
 }
+
+/* --- NEW: Testimonial Carousel Styles --- */
+.testimonial-carousel-container {
+    position: relative;
+    width: 100%;
+    max-width: 1200px; /* Max width of the carousel */
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden; /* This is the main container */
+    padding: 0 40px; /* Space for the arrows on mobile */
+}
+
+.testimonial-carousel-track-container {
+    width: 100%;
+    overflow: hidden;
+}
+
+.testimonial-carousel-track {
+    display: flex;
+    /* We will set width and transform via JS */
+    transition: transform 0.5s ease;
+    margin-left: 0; /* JS will calculate this */
+}
+
+.testimonial-card-wrapper {
+    flex: 0 0 100%; /* On mobile, 1 card visible */
+    padding: 0 1rem;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+/* The card itself */
+.testimonial-card {
+    width: 100%;
+    max-width: 400px; /* Max width of a single card */
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    transform: scale(0.85); /* Smaller by default */
+    opacity: 0.6;
+    /* Inherit dashboard-card styles */
+}
+
+/* The active, centered card */
+.testimonial-card.is-active {
+    transform: scale(1); /* Pop-up effect */
+    opacity: 1;
+    z-index: 10;
+    box-shadow: var(--shadow-xl); /* More prominent shadow */
+}
+
+/* --- ### MODIFICATION: Removed Carousel Nav Button Styles ### --- */
+
+
+/* --- Media query for desktop --- */
+@media (min-width: 768px) {
+    .testimonial-carousel-container {
+        padding: 0; /* No padding needed on desktop */
+    }
+    
+    .testimonial-card-wrapper {
+        flex: 0 0 33.333%; /* 3 cards visible on desktop */
+        padding: 0 1rem;
+    }
+    
+    /* --- ### MODIFICATION: Removed Nav Button Position Styles ### --- */
+}
+/* --- END: Testimonial Carousel Styles --- */
