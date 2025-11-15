@@ -87,7 +87,7 @@ export default async function handler(request, response) {
           
     const snapshot = await dbQuery.get();
     
-    const seenIdsSet = new Set(seenQuestionIds);
+    const seenIdsSet = new Set(seenIdsSet);
     let dbQuestions = [];
     snapshot.forEach(doc => {
       if (!seenIdsSet.has(doc.id) && dbQuestions.length < requestedCount) {
