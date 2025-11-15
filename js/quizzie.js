@@ -1,4 +1,4 @@
-// js/quizzie.js (Modified for Database-First Approach)
+// js/quizzie.js (Modified for Database-First Approach & Dark Mode Fix)
 
 // Import the new API endpoint
 import { GEMINI_API_ENDPOINT } from './firebase-config.js';
@@ -313,14 +313,19 @@ function renderQuestion() {
         return;
     }
 
+    // ### THIS IS THE FIX (Dark Mode Visibility) ###
+    // We remove the hard-coded Tailwind classes like 'hover:bg-slate-50'
+    // 'border-slate-200', and 'text-slate-700' from the generated HTML.
+    // The styling is now handled by 'radio-card' in css/style.css
     let optionsHTML = q.options.map((opt, index) => `
         <label>
             <input type="radio" name="q${currentQuestionIndex}" value="${index}" class="hidden" ${userAnswers[currentQuestionIndex] == index ? 'checked' : ''}>
-            <div class="p-4 border-2 border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer radio-card">
-                <span class="text-slate-700">${opt}</span>
+            <div class="p-4 border-2 rounded-lg cursor-pointer radio-card">
+                <span>${opt}</span>
             </div>
         </label>
     `).join('');
+    // ### END FIX ###
 
     activeView.innerHTML = `
         <div class="quiz-question active">
@@ -525,8 +530,25 @@ const handleQuizSubmit = async (e) => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || `Request failed (${response.status})`);
+            // ### THIS IS THE FIX for the "A server e..." error ###
+            let errorMessage = `Request failed (${response.status})`;
+            try {
+                // Check if the response is actually JSON before parsing
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error?.message || errorMessage;
+                } else {
+                    // It's not JSON, just get the raw text error
+                    const errorText = await response.text();
+                    errorMessage = errorText || errorMessage;
+                }
+            } catch (e) {
+                // Parsing failed or .text() failed, just use the status
+                console.error("Error parsing error response:", e);
+            }
+            // This will now throw the *actual* server error message
+            throw new Error(errorMessage);
         }
 
         const { questions } = await response.json();
@@ -551,5 +573,3 @@ const handleQuizSubmit = async (e) => {
          if(quizFooter) quizFooter.classList.add('hidden');
     }
 };
-
-
