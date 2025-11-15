@@ -59,12 +59,28 @@
                 gap: 8px;
             }
         }
-        /* Style for GS chip navigation - kept for consistency */
-        .gs-chip.active {
-            background-color: var(--brand-primary) !important; /* Modified */
-            color: var(--text-white) !important; /* Modified */
-            border-color: var(--brand-primary) !important; /* Modified */
+        
+        /* --- MODIFIED: GS Chip styles now use CSS variables --- */
+        .gs-chip {
+             background-color: var(--bg-secondary);
+             color: var(--text-tertiary);
+             border: 1px solid var(--border-primary);
+             padding: 0.5rem 1rem; /* px-4 py-2 */
+             border-radius: 9999px; /* rounded-full */
+             transition: all 0.2s ease;
+             font-weight: 500; /* NEW */
         }
+        .gs-chip:hover {
+            background-color: var(--border-primary);
+            border-color: var(--border-secondary);
+        }
+        .gs-chip.active {
+             background-color: var(--brand-primary) !important;
+             color: var(--text-white) !important;
+             border-color: var(--brand-primary) !important;
+        }
+        /* --- END MODIFICATION --- */
+        
         .scrollbar-hide::-webkit-scrollbar { 
             display: none; 
         }
@@ -224,10 +240,10 @@
                     <div id="tab-mains" class="tab-content hidden" data-tab-content="mains">
                         <h2 class="text-2xl font-bold text-slate-800 mb-4">Mains Examination (General Studies)</h2>
                        <div id="mains-gs-chip-nav" class="flex flex-nowrap gap-2 mb-6 border-b pb-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
-                            <button class="gs-chip bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-full transition-colors active" data-paper="mains-gs1">GS Paper 1</button>
-                            <button class="gs-chip bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-full transition-colors" data-paper="mains-gs2">GS Paper 2</button>
-                            <button class="gs-chip bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-full transition-colors" data-paper="mains-gs3">GS Paper 3</button>
-                            <button class="gs-chip bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-full transition-colors" data-paper="mains-gs4">GS Paper 4</button>
+                            <button class="gs-chip active" data-paper="mains-gs1">GS Paper 1</button>
+                            <button class="gs-chip" data-paper="mains-gs2">GS Paper 2</button>
+                            <button class="gs-chip" data-paper="mains-gs3">GS Paper 3</button>
+                            <button class="gs-chip" data-paper="mains-gs4">GS Paper 4</button>
                         </div>
                         <div id="mains-syllabus-tree-container" class="space-y-4">
                              <ul class="syllabus-list" data-target-paper="mains-gs1"></ul>
@@ -379,32 +395,32 @@
         </div>
     </div>
 
-    <div id="start-date-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
+    <div id="start-date-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
         <div class="rounded-lg shadow-2xl w-full max-w-md p-8 modal-content">
             <h3 class="text-xl font-bold text-slate-800 mb-4">Set Start Date</h3>
             <p class="text-slate-600 mb-6">This date starts your 1-3-7-21 Spaced Repetition schedule for the topic: <strong id="sdate-topic-name"></strong></p>
             <form id="start-date-form">
                 <input type="date" id="start-date-input" class="w-full px-4 py-3 border border-slate-300 rounded-lg mb-6" required>
                 <div class="flex justify-end space-x-4">
-                    <button type="button" id="sdate-cancel-btn" class="bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-semibold">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700">Start Tracking</button>
+                    <button type="button" id="sdate-cancel-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Start Tracking</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="confirm-revision-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
+    <div id="confirm-revision-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
         <div class="rounded-lg shadow-2xl w-full max-w-sm p-8 modal-content">
             <h3 class="text-xl font-bold text-slate-800 mb-4">Confirm Revision</h3>
             <p class="text-slate-600 mb-6">Mark revision <strong id="confirm-revision-day">D-X</strong> for topic: <strong id="confirm-topic-name"></strong> as done?</p>
             <div class="flex justify-end space-x-4">
-                <button type="button" id="confirm-revision-cancel-btn" class="bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-semibold">Cancel</button>
-                <button type="button" id="confirm-revision-submit-btn" data-action="confirm-revision" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700">Yes, Confirm</button>
+                <button type="button" id="confirm-revision-cancel-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Cancel</button>
+                <button type="button" id="confirm-revision-submit-btn" data-action="confirm-revision" class="btn btn-success" style="padding: 0.5rem 1.5rem;">Yes, Confirm</button>
             </div>
         </div>
     </div>
 
-    <div id="daily-reminder-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
+    <div id="daily-reminder-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
         <div class="rounded-lg shadow-2xl w-full max-w-xl p-8 modal-content">
             <div class="flex justify-between items-start mb-4">
                 <h3 class="text-2xl font-bold text-orange-600 flex items-center"><i class="fas fa-bell mr-3"></i>Daily Revision Reminder!</h3>
@@ -414,12 +430,12 @@
             <div id="reminder-topic-list" class="space-y-3 max-h-60 overflow-y-auto border p-4 rounded-lg" style="background-color: var(--bg-secondary);">
                 </div>
             <div class="mt-6 text-right">
-                <button id="go-to-dashboard-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700">Go to Tracker Dashboard</button>
+                <button id="go-to-dashboard-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Go to Tracker Dashboard</button>
             </div>
         </div>
     </div>
 
-    <div id="ai-response-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
+    <div id="ai-response-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 hidden">
          <div class="rounded-lg shadow-2xl w-full max-w-3xl modal-content my-8 max-h-[90vh] flex flex-col">
              <div class="p-6 border-b sticky top-0 z-10 rounded-t-lg">
                  <div class="flex justify-between items-center">
@@ -431,10 +447,10 @@
              <div id="ai-response-content" class="p-6 overflow-y-auto flex-grow prose max-w-none">
                  <div class="flex justify-center items-center h-48 text-center">
                      <div>
-                         <div class="loader-bars flex justify-center items-end h-16" aria-label="Loading AI response">
-                             <div class="bar w-3 h-3 m-1 bg-blue-500 rounded-full animate-bounce" style="animation-delay:-0.3s"></div>
-                             <div class="bar w-3 h-3 m-1 bg-blue-500 rounded-full animate-bounce" style="animation-delay:-0.15s"></div>
-                             <div class="bar w-3 h-3 m-1 bg-blue-500 rounded-full animate-bounce"></div>
+                        <div class="loader-bars flex justify-center items-end h-16" aria-label="Loading AI response">
+                             <div class="bar w-3 h-3 m-1 rounded-full animate-bounce" style="animation-delay:-0.3s; background-color: var(--brand-primary);"></div>
+                             <div class="bar w-3 h-3 m-1 rounded-full animate-bounce" style="animation-delay:-0.15s; background-color: var(--brand-primary);"></div>
+                             <div class="bar w-3 h-3 m-1 rounded-full animate-bounce" style="background-color: var(--brand-primary);"></div>
                          </div>
                          <p class="text-slate-500 mt-4">Consulting the AI...</p>
                      </div>
