@@ -110,7 +110,7 @@ export default async function handler(req, res) {
         // --- *** MODIFICATION END *** ---
 
         // --- *** MODIFICATION START: Inline Gemini call with JSON mode *** ---
-        const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         const geminiPayload = {
             contents: [{ parts: [{ text: extractionPrompt }] }],
             generationConfig: { 
