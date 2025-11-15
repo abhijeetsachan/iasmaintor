@@ -421,6 +421,18 @@ p {
 }
 /* ### END FIX ### */
 
+
+/* ### NEW: Theme-aware Quiz Loader Box ### */
+.quiz-loading-box {
+    background-color: var(--brand-bg-light); /* light-blue in light mode, dark-gray in dark mode */
+    border: 1px solid var(--border-primary);
+}
+.quiz-loading-box p {
+    color: var(--text-tertiary); /* dark-text in light mode, light-text in dark mode */
+}
+/* ### END NEW STYLES ### */
+
+
 /* AI Loader Animation */
 @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulse-inner { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.9); } }
