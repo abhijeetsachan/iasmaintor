@@ -7,12 +7,14 @@
  * 3. Robust checks for environment variables.
  */
 
-import admin from 'firebase-admin';
+// ### THE FIX: Use modern, modular Firebase Admin imports ###
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getDatabase } from 'firebase-admin/database';
+// ### END FIX ###
 
 // --- Drona's "Brains" (System Prompts) ---
 const generalPrompt = `You are Drona, a helpful and professional AI assistant for the iasmAIntor website. Your role is to handle general, conversational queries. Be friendly, concise, and professional.`;
 
-// *** THIS IS THE FIX: A new, stricter formatting rule has been added ***
 const academicPrompt = `You are Drona, an expert UPSC mentor. Your personality is that of a master strategist and guide.
 
 **Your internal thought process (DO NOT display this):**
@@ -32,19 +34,20 @@ const academicPrompt = `You are Drona, an expert UPSC mentor. Your personality i
 let db;
 let cacheRef;
 try {
-    // ### THIS IS THE FIX ###
-    // Check only for the SDK JSON.
+    // Only check for the SDK JSON.
     if (process.env.FIREBASE_ADMIN_SDK_JSON) {
-        if (!admin.apps.length) {
+        // ### THE FIX: Use modular getApps() and initializeApp() ###
+        if (!getApps().length) {
             // Initialize *without* the databaseURL to avoid service conflicts.
-            admin.initializeApp({
-                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
+            initializeApp({
+                credential: cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
             });
         }
-        db = admin.database(); // Initialize Realtime Database
+        db = getDatabase(); // Initialize Realtime Database
         cacheRef = db.ref('chatCache');
+        // ### END FIX ###
     } else {
-        console.warn("Firebase Admin environment variables not set. Cache will be disabled.");
+        console.warn("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON) are not set. DB features will be disabled.");
     }
 } catch (error) {
     console.error('Firebase admin initialization error', error);
@@ -62,12 +65,12 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: { message: `Method ${req.method} Not Allowed` } });
 
-    // *** NEW: Check for all required variables ***
+    // *** Check for required variables ***
     const { GEMINI_API_KEY, FIREBASE_ADMIN_SDK_JSON } = process.env;
     if (!GEMINI_API_KEY) return res.status(500).json({ error: { message: "Gemini API key not configured." } });
     
-    // Check if Firebase is configured. If not, we can still proceed, but caching will be skipped.
-    const isCacheEnabled = admin.apps.length > 0 && db && cacheRef;
+    // Check if Firebase is configured.
+    const isCacheEnabled = getApps().length > 0 && db && cacheRef;
     if (!isCacheEnabled && process.env.FIREBASE_ADMIN_SDK_JSON) {
         // This condition means the env var exists, but init failed. Log it.
         console.error("Firebase cache is disabled. Check server logs for an init error.");
