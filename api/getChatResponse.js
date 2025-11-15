@@ -35,14 +35,11 @@ try {
     // Check if all required Firebase variables are present
     if (process.env.FIREBASE_ADMIN_SDK_JSON && process.env.FIREBASE_DB_URL) {
         if (!admin.apps.length) {
-            // *** MODIFICATION: Decode Base64 string first ***
-            const serviceAccountString = Buffer.from(process.env.FIREBASE_ADMIN_SDK_JSON, 'base64').toString('utf8');
-            const serviceAccount = JSON.parse(serviceAccountString);
             
             admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-                databaseURL: process.env.FIREBASE_DB_URL,
-            });
+    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
+    databaseURL: process.env.FIREBASE_DB_URL,
+});
         }
         db = admin.database();
         cacheRef = db.ref('chatCache');
