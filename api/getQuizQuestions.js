@@ -1,39 +1,36 @@
 // api/getQuizQuestions.js
-// This is a Vercel Serverless Function (Node.js)
 
-// --- Firebase Admin: For secure backend database access ---
 import admin from 'firebase-admin';
-
-// --- Google AI: For generating new questions ---
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // --- Initialize Firebase Admin ---
-let db; // Define db at the top level
+let db;
 try {
     if (process.env.FIREBASE_ADMIN_SDK_JSON && process.env.FIREBASE_DB_URL) {
         if (!admin.apps.length) {
-            // *** MODIFICATION: Decode Base64 string first ***
-            const serviceAccountString = Buffer.from(process.env.FIREBASE_ADMIN_SDK_JSON, 'base64').toString('utf8');
-            const serviceAccount = JSON.parse(serviceAccountString);
-
+            
+            // ### THIS IS THE FIX ###
+            // Revert to parsing the raw JSON string directly from the environment variable.
             admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
+                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
                 databaseURL: process.env.FIREBASE_DB_URL,
             });
+            // ### END FIX ###
+
         }
         db = admin.firestore(); // Initialize db ONLY on success
     } else {
         console.warn("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL) are not set. DB features will be disabled.");
     }
 } catch (error) {
+    // This will now catch any JSON parsing errors
     console.error('Firebase admin initialization error', error);
-    // DO NOT re-throw. 'db' will remain undefined, and the handler will catch it.
 }
 
 // --- Initialize Google AI (Gemini) ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const geminiModel = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash', // Use your desired model
+  model: 'gemini-2.5-flash',
 });
 
 // --- Main Handler ---
@@ -54,45 +51,37 @@ export default async function handler(request, response) {
   } catch (error) {
     console.error("Auth verification error:", error);
     // This error is often a symptom of the init block failing
-    return response.status(401).json({ error: { message: 'Unauthorized: Invalid token.' } });
+    return response.status(401).json({ error: { message: 'Unauthorized: Invalid token. Check server logs for init error.' } });
   }
 
-  // --- NEW: Add this check to ensure DB is initialized ---
   if (!db) {
     console.error("Firestore (db) is not initialized. Check server logs for init errors.");
     return response.status(500).json({ error: { message: "Database service is not configured on the server." } });
   }
-  // --- END NEW CHECK ---
 
-  try { // <-- Main try block
+  try { 
     // 2. Get Quiz Parameters from client
     const params = request.body;
     const requestedCount = parseInt(params.num_questions || '5', 10);
     const subject = getSubject(params);
     const difficulty = params.difficulty || 'basic';
-    const type = params.question_type || 'blend'; // 'static', 'current', 'blend'
+    const type = params.question_type || 'blend';
 
     // 3. Get User's Seen Questions
     const seenQuestionIds = await getUserSeenQuestions(userId);
 
     // 4. Find Questions in Database
-    // 1. Start building the query
     let dbQuery = db.collection('quizzieQuestionBank')
       .where('subject', '==', subject)
       .where('difficulty', '==', difficulty);
 
-    // 2. Conditionally add the 'type' filter
     if (type !== 'blend') {
       dbQuery = dbQuery.where('type', '==', type);
     }
-
-    // 3. Add the limit at the end
     dbQuery = dbQuery.limit(30);
           
-    // --- FIX: MODIFIED LOGIC ---
     const snapshot = await dbQuery.get();
     
-    // --- MANUAL FILTERING to avoid 'not-in' 10-item limit ---
     const seenIdsSet = new Set(seenQuestionIds);
     let dbQuestions = [];
     snapshot.forEach(doc => {
@@ -100,27 +89,20 @@ export default async function handler(request, response) {
         dbQuestions.push({ id: doc.id, ...doc.data() });
       }
     });
-    // --- END MANUAL FILTERING ---
 
     let finalQuestions = dbQuestions;
-    const newQuestionIdsToSave = []; // IDs of newly generated questions
-
-    // 5. Check if we need to generate new questions
     const neededCount = requestedCount - finalQuestions.length;
 
-    if (neededCount > 0) { // <-- IF block starts (Line 108)
-      // We need more questions! Call the AI.
+    if (neededCount > 0) {
       console.log(`DB had ${finalQuestions.length}, generating ${neededCount} new questions...`);
       try {
         const newQuestions = await generateNewQuestions(neededCount, subject, difficulty, type);
         
-        // Save new questions to the bank *and* get their new IDs
         const batch = db.batch();
         const newQuestionsWithIds = [];
 
         newQuestions.forEach(q => {
           const newDocRef = db.collection('quizzieQuestionBank').doc(); // Auto-generate ID
-          // Add tags for filtering
           const questionData = {
             ...q,
             subject: subject,
@@ -129,26 +111,22 @@ export default async function handler(request, response) {
             createdAt: admin.firestore.FieldValue.serverTimestamp()
           };
           batch.set(newDocRef, questionData);
-          
           newQuestionsWithIds.push({ id: newDocRef.id, ...questionData });
-          newQuestionIdsToSave.push(newDocRef.id);
         });
 
-        await batch.commit(); // Save new questions to the bank
+        await batch.commit();
         console.log(`Saved ${newQuestionsWithIds.length} new questions to bank.`);
         finalQuestions = [...finalQuestions, ...newQuestionsWithIds];
 
       } catch (genError) {
         console.error("Failed to generate or save new questions:", genError);
-        // We might fail to generate, but we can still return what we found
         if (finalQuestions.length === 0) {
           throw new Error(`Failed to get any questions. AI Error: ${genError.message}`);
         }
-        // else, we'll just return the few we found in the DB
       }
-    } // <-- *** THIS IS THE CORRECTED, MISSING BRACE ***
+    }
 
-    // 6. Asynchronously update user's 'seen' list (don't make user wait)
+    // 6. Asynchronously update user's 'seen' list
     const allSeenIds = finalQuestions.map(q => q.id);
     if (allSeenIds.length > 0) {
       updateUserSeenQuestions(userId, allSeenIds).catch(err => {
@@ -159,7 +137,7 @@ export default async function handler(request, response) {
     // 7. Return the final list of questions
     return response.status(200).json({ questions: finalQuestions });
 
-  } catch (error) { // <-- Main catch block
+  } catch (error) {
     console.error("Error in getQuizQuestions handler:", error);
     return response.status(500).json({
       error: {
@@ -170,11 +148,8 @@ export default async function handler(request, response) {
   }
 }
 
-// --- Helper Functions ---
+// --- Helper Functions (No changes needed below this line) ---
 
-/**
- * Gets the list of question IDs the user has already seen.
- */
 async function getUserSeenQuestions(userId) {
   try {
     const docRef = db.doc(`users/${userId}/quizData/seen`);
@@ -185,13 +160,10 @@ async function getUserSeenQuestions(userId) {
     return [];
   } catch (error) {
     console.error("Error getting user seen questions:", error);
-    return []; // Return empty on error
+    return [];
   }
 }
 
-/**
- * (Async) Updates the user's seen questions list in Firestore.
- */
 async function updateUserSeenQuestions(userId, questionIds) {
   if (questionIds.length === 0) return;
   const docRef = db.doc(`users/${userId}/quizData/seen`);
@@ -200,22 +172,15 @@ async function updateUserSeenQuestions(userId, questionIds) {
   }, { merge: true });
 }
 
-/**
- * Maps the client's form parameters to a single 'subject' tag.
- */
 function getSubject(params) {
   if (params.main_subject === 'csat') {
     return `csat-${params.csat_subject || 'general'}`;
   }
-  // Default to GS
-  return params.gs_subject || 'general'; // e.g., 'history', 'polity'
+  return params.gs_subject || 'general';
 }
 
-/**
-* Calls Gemini to generate new questions.
-*/
 async function generateNewQuestions(count, subject, difficulty, type) {
-  const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
+    const systemPrompt = `You are an expert quiz generator for the Indian Civil Services (UPSC) examination. Your task is to create high-quality Multiple Choice Questions (MCQs) based on the user's request. The questions should be in the style and standard of the UPSC Prelims exam.
 - If the user selects 'basic' difficulty, generate straightforward, knowledge-based questions that test fundamental concepts.
 - If the user selects 'advanced' difficulty, generate tricky, application-based, or multi-statement questions (e.g., "How many of the above statements are correct?") that require deeper analysis and are designed to be challenging.
 
@@ -234,7 +199,7 @@ For each question, provide a question (string), four options (array of strings),
       contents: [{ role: 'user', parts: [{ text: userQuery }] }],
       systemInstruction: { role: 'system', parts: [{ text: systemPrompt }] },
       generationConfig: {
-        responseMimeType: 'application/json', // Ask for JSON output
+        responseMimeType: 'application/json',
         temperature: 0.8,
       }
     });
