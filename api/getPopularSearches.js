@@ -12,19 +12,27 @@ import admin from 'firebase-admin';
 
 // --- Firebase Admin SDK Initialization ---
 // (We need this to read/write from the cache)
+let db;
+let cacheRef;
 try {
-    if (!admin.apps.length) {
-        admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
-    databaseURL: process.env.FIREBASE_DB_URL,
-});
+    // ### THIS IS THE FIX ###
+    // Check only for the SDK JSON.
+    if (process.env.FIREBASE_ADMIN_SDK_JSON) {
+        if (!admin.apps.length) {
+            // Initialize *without* the databaseURL to avoid service conflicts.
+            admin.initializeApp({
+                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
+            });
+        }
+        db = admin.database(); // Initialize Realtime Database
+        cacheRef = db.ref('popularTopicsCache');
+    } else {
+        console.warn("Firebase Admin environment variables not set. Cache will be disabled.");
     }
 } catch (error) {
     console.error('Firebase admin initialization error', error);
+    // If init fails, db and cacheRef will be undefined, and the cache logic will be skipped.
 }
-
-const db = admin.database();
-const cacheRef = db.ref('popularTopicsCache');
 
 // --- Cache Duration: 6 Hours ---
 const CACHE_DURATION_MS = 6 * 60 * 60 * 1000;
@@ -57,21 +65,28 @@ export default async function handler(req, res) {
 
     // --- 1. CHECK CACHE ---
     let staleData = null;
-    try {
-        const snapshot = await cacheRef.once('value');
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            staleData = data.topics; // Store as fallback
-            const isCacheValid = (Date.now() - data.timestamp) < CACHE_DURATION_MS;
-            
-            if (isCacheValid) {
-                // CACHE HIT: Return cached data
-                return res.status(200).json({ searches: data.topics });
+    const isCacheEnabled = admin.apps.length > 0 && db && cacheRef;
+
+    if (isCacheEnabled) {
+        try {
+            const snapshot = await cacheRef.once('value');
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                staleData = data.topics; // Store as fallback
+                const isCacheValid = (Date.now() - data.timestamp) < CACHE_DURATION_MS;
+                
+                if (isCacheValid) {
+                    // CACHE HIT: Return cached data
+                    return res.status(200).json({ searches: data.topics });
+                }
             }
+        } catch (dbError) {
+            console.error("Error reading from Firebase cache:", dbError.message);
+            // Don't fail, just proceed to fetch
         }
-    } catch (dbError) {
-        console.error("Error reading from Firebase cache:", dbError.message);
-        // Don't fail, just proceed to fetch
+    } else if (process.env.FIREBASE_ADMIN_SDK_JSON) {
+        // This condition means the env var exists, but init failed. Log it.
+        console.error("Firebase cache is disabled. Check server logs for an init error.");
     }
 
     // --- 2. CACHE MISS or STALE: Fetch New Topics ---
@@ -157,14 +172,16 @@ export default async function handler(req, res) {
         if (uniqueTopics.length === 0) throw new Error("AI produced no valid topics");
 
         // --- 4. SAVE TO CACHE & RESPOND ---
-        try {
-            await cacheRef.set({
-                topics: uniqueTopics,
-                timestamp: Date.now()
-            });
-        } catch (dbError) {
-            console.error("Error saving to Firebase cache:", dbError.message);
-            // Don't fail, just log the error
+        if (isCacheEnabled) {
+            try {
+                await cacheRef.set({
+                    topics: uniqueTopics,
+                    timestamp: Date.now()
+                });
+            } catch (dbError) {
+                console.error("Error saving to Firebase cache:", dbError.message);
+                // Don't fail, just log the error
+            }
         }
 
         return res.status(200).json({ searches: uniqueTopics });
