@@ -32,16 +32,16 @@ const academicPrompt = `You are Drona, an expert UPSC mentor. Your personality i
 let db;
 let cacheRef;
 try {
-    // Check if all required Firebase variables are present
-    if (process.env.FIREBASE_ADMIN_SDK_JSON && process.env.FIREBASE_DB_URL) {
+    // ### THIS IS THE FIX ###
+    // Check only for the SDK JSON.
+    if (process.env.FIREBASE_ADMIN_SDK_JSON) {
         if (!admin.apps.length) {
-            
+            // Initialize *without* the databaseURL to avoid service conflicts.
             admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
-    databaseURL: process.env.FIREBASE_DB_URL,
-});
+                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
+            });
         }
-        db = admin.database();
+        db = admin.database(); // Initialize Realtime Database
         cacheRef = db.ref('chatCache');
     } else {
         console.warn("Firebase Admin environment variables not set. Cache will be disabled.");
@@ -63,13 +63,16 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: { message: `Method ${req.method} Not Allowed` } });
 
     // *** NEW: Check for all required variables ***
-    const { GEMINI_API_KEY, FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL } = process.env;
+    const { GEMINI_API_KEY, FIREBASE_ADMIN_SDK_JSON } = process.env;
     if (!GEMINI_API_KEY) return res.status(500).json({ error: { message: "Gemini API key not configured." } });
     
     // Check if Firebase is configured. If not, we can still proceed, but caching will be skipped.
     const isCacheEnabled = admin.apps.length > 0 && db && cacheRef;
-    if (!isCacheEnabled) {
-        console.warn("Firebase not initialized. Proceeding without cache.");
+    if (!isCacheEnabled && process.env.FIREBASE_ADMIN_SDK_JSON) {
+        // This condition means the env var exists, but init failed. Log it.
+        console.error("Firebase cache is disabled. Check server logs for an init error.");
+    } else if (!isCacheEnabled) {
+        console.warn("Firebase not configured. Proceeding without cache.");
     }
 
     const { contents, queryType } = req.body;
