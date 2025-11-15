@@ -25,6 +25,147 @@ function handleThemeToggle() {
     console.log("Theme toggled, isDark:", isDark);
 }
 
+// --- ### NEW: Testimonial Carousel Logic ### ---
+function initTestimonialCarousel() {
+    const track = document.getElementById('testimonial-carousel-track');
+    
+    // --- ### MODIFICATION: Removed prevBtn and nextBtn ### ---
+    if (!track) {
+        console.warn("Testimonial carousel track not found. Skipping init.");
+        return;
+    }
+
+    let cards = Array.from(track.children);
+    let cardWidth = 0;
+    let currentIndex = 0;
+    let isMoving = false;
+    let itemsToShow = 3; // Default for desktop
+    let totalClonedItems = 0;
+
+    function setupCarousel() {
+        // --- 1. Clone cards for infinite loop ---
+        // We clone `itemsToShow` count for both start and end
+        itemsToShow = window.innerWidth < 768 ? 1 : 3;
+        totalClonedItems = itemsToShow * 2; // Clones at start + clones at end
+
+        // Clear existing
+        track.innerHTML = '';
+        cards.forEach(card => track.appendChild(card));
+
+        const clonesStart = cards.slice(-itemsToShow).map(card => card.cloneNode(true));
+        const clonesEnd = cards.slice(0, itemsToShow).map(card => card.cloneNode(true));
+        
+        // [Clones(End)] + [Originals] + [Clones(Start)] -- This order is a bit confusing but common
+        // Let's try [Clones(Start)] + [Originals] + [Clones(End)]
+        clonesStart.reverse().forEach(clone => track.insertBefore(clone, cards[0]));
+        clonesEnd.forEach(clone => track.appendChild(clone));
+        
+        cards = Array.from(track.children); // Update cards array with clones
+        
+        // --- 2. Initial Position ---
+        // Start at the first *real* item
+        currentIndex = itemsToShow; 
+        updateCardWidth();
+        track.style.transition = 'none'; // No animation for initial set
+        setTrackPosition();
+        
+        // Re-enable transitions after a tick
+        setTimeout(() => {
+            track.style.transition = 'transform 0.5s ease';
+        }, 50);
+
+        updateActiveCard();
+    }
+
+    function updateCardWidth() {
+        itemsToShow = window.innerWidth < 768 ? 1 : 3;
+        const container = track.parentElement;
+        if (container) {
+            cardWidth = container.clientWidth / itemsToShow;
+        }
+        // Force all cards to have this width
+        cards.forEach(card => {
+            card.style.flexBasis = `${cardWidth}px`;
+        });
+    }
+
+    function setTrackPosition() {
+        const offset = -currentIndex * cardWidth;
+        track.style.transform = `translateX(${offset}px)`;
+    }
+
+    function updateActiveCard() {
+        cards.forEach((card, index) => {
+            const cardInner = card.querySelector('.testimonial-card');
+            if (!cardInner) return;
+            
+            // The active card is the one at `currentIndex` + the middle item offset
+            const middleItemIndex = Math.floor(itemsToShow / 2);
+            const activeCardIndex = currentIndex + middleItemIndex;
+
+            if (index === activeCardIndex) {
+                cardInner.classList.add('is-active');
+            } else {
+                cardInner.classList.remove('is-active');
+            }
+        });
+    }
+
+    function move(direction) {
+        if (isMoving) return;
+        isMoving = true;
+
+        currentIndex += direction;
+        track.style.transition = 'transform 0.5s ease';
+        setTrackPosition();
+        updateActiveCard();
+
+        // Check for loop reset
+        if (currentIndex === 0) { // Reached start of originals
+            setTimeout(() => {
+                track.style.transition = 'none';
+                currentIndex = cards.length - totalClonedItems; // Go to equivalent card at the end
+                setTrackPosition();
+            }, 500);
+        } else if (currentIndex === (cards.length - itemsToShow)) { // Reached end of originals
+             setTimeout(() => {
+                track.style.transition = 'none';
+                currentIndex = itemsToShow; // Go back to equivalent card at the start
+                setTrackPosition();
+            }, 500);
+        }
+
+        setTimeout(() => {
+            isMoving = false;
+        }, 500);
+    }
+    
+    // --- 3. Attach Listeners ---
+    // --- ### MODIFICATION: Removed button listeners ### ---
+    
+    // --- 4. Auto-scroll ---
+    let autoScroll = setInterval(() => move(1), 4000); // Auto-scroll every 4 seconds
+    track.addEventListener('mouseenter', () => clearInterval(autoScroll));
+    track.addEventListener('mouseleave', () => autoScroll = setInterval(() => move(1), 4000));
+    
+    // --- 5. Resize Handler ---
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            // Full reset on resize
+            clearInterval(autoScroll);
+            setupCarousel();
+            autoScroll = setInterval(() => move(1), 4000);
+        }, 200);
+    });
+    
+    // --- 6. Initial Setup ---
+    setupCarousel();
+}
+// --- ### END: Testimonial Carousel Logic ### ---
+
+
 document.addEventListener('DOMContentLoaded', async function() {
     
     // --- State Variables ---
@@ -249,6 +390,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Initialize Chatbot
     initChatbot(showNotification);
+    
+    // --- ### NEW: Initialize Testimonial Carousel ### ---
+    initTestimonialCarousel();
 
     // --- Core App Logic ---
     if (DOMElements.copyrightYear) DOMElements.copyrightYear.textContent = new Date().getFullYear();
