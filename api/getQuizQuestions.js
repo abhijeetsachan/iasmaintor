@@ -2,7 +2,6 @@
 // This is a Vercel Serverless Function (Node.js)
 
 // --- Firebase Admin: For secure backend database access ---
-// We use firebase-admin on the backend, not the client SDK
 import admin from 'firebase-admin';
 
 // --- Google AI: For generating new questions ---
@@ -11,17 +10,19 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // --- Initialize Firebase Admin ---
 let db; // Define db at the top level
 try {
-    // This is the SAME logic used in your other API files
     if (process.env.FIREBASE_ADMIN_SDK_JSON && process.env.FIREBASE_DB_URL) {
         if (!admin.apps.length) {
+            // *** MODIFICATION: Decode Base64 string first ***
+            const serviceAccountString = Buffer.from(process.env.FIREBASE_ADMIN_SDK_JSON, 'base64').toString('utf8');
+            const serviceAccount = JSON.parse(serviceAccountString);
+
             admin.initializeApp({
-                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON)),
+                credential: admin.credential.cert(serviceAccount),
                 databaseURL: process.env.FIREBASE_DB_URL,
             });
         }
         db = admin.firestore(); // Initialize db ONLY on success
     } else {
-        // If the variables aren't set, just log a warning.
         console.warn("Firebase Admin environment variables (FIREBASE_ADMIN_SDK_JSON, FIREBASE_DB_URL) are not set. DB features will be disabled.");
     }
 } catch (error) {
@@ -52,6 +53,7 @@ export default async function handler(request, response) {
     userId = decodedToken.uid;
   } catch (error) {
     console.error("Auth verification error:", error);
+    // This error is often a symptom of the init block failing
     return response.status(401).json({ error: { message: 'Unauthorized: Invalid token.' } });
   }
 
