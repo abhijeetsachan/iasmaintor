@@ -1,6 +1,6 @@
 // api/getQuizQuestions.js
 
-// ### THE FIX: Use modern, modular Firebase Admin imports ###
+// ### Use modern, modular Firebase Admin imports ###
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
@@ -13,7 +13,7 @@ let db;
 try {
     // Only check for the SDK JSON.
     if (process.env.FIREBASE_ADMIN_SDK_JSON) {
-        // ### THE FIX: Use modular getApps() and initializeApp() ###
+        // ### Use modular getApps() and initializeApp() ###
         if (!getApps().length) {
             // Initialize *without* the databaseURL to avoid service conflicts.
             initializeApp({
@@ -50,7 +50,7 @@ export default async function handler(request, response) {
       return response.status(401).json({ error: { message: 'Unauthorized: No token provided.' } });
     }
     
-    // ### THE FIX: Use modular getAuth() ###
+    // ### Use modular getAuth() ###
     const decodedToken = await getAuth().verifyIdToken(token);
     userId = decodedToken.uid;
   } catch (error) {
@@ -87,7 +87,11 @@ export default async function handler(request, response) {
           
     const snapshot = await dbQuery.get();
     
-    const seenIdsSet = new Set(seenIdsSet);
+    // ### THIS IS THE FIX ###
+    // Initialize seenIdsSet using the 'seenQuestionIds' variable
+    const seenIdsSet = new Set(seenQuestionIds);
+    // ### END FIX ###
+
     let dbQuestions = [];
     snapshot.forEach(doc => {
       if (!seenIdsSet.has(doc.id) && dbQuestions.length < requestedCount) {
@@ -113,7 +117,7 @@ export default async function handler(request, response) {
             subject: subject,
             difficulty: difficulty,
             type: type,
-            // ### THE FIX: Use modular FieldValue ###
+            // ### Use modular FieldValue ###
             createdAt: FieldValue.serverTimestamp()
           };
           batch.set(newDocRef, questionData);
@@ -173,7 +177,7 @@ async function getUserSeenQuestions(userId) {
 async function updateUserSeenQuestions(userId, questionIds) {
   if (questionIds.length === 0) return;
   const docRef = db.doc(`users/${userId}/quizData/seen`);
-  // ### THE FIX: Use modular FieldValue ###
+  // ### Use modular FieldValue ###
   await docRef.set({
     seenQuestionIds: FieldValue.arrayUnion(...questionIds)
   }, { merge: true });
