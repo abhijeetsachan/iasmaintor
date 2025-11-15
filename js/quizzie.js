@@ -493,15 +493,18 @@ const handleQuizSubmit = async (e) => {
     form.classList.add('hidden');
     activeView.classList.remove('hidden');
     
-    // Show loading animation
+    // ### THIS IS THE FIX (Dark Mode Loading Box) ###
+    // Removed 'bg-blue-50' and 'text-slate-700' and added a new class 'quiz-loading-box'
+    // This new class is defined in css/style.css to be theme-aware
     activeView.innerHTML = `
-        <div class="p-4 bg-blue-50 rounded-lg text-center">
+        <div class="p-4 rounded-lg text-center quiz-loading-box">
             <div class="loader-bars" aria-label="Loading AI response">
                 <div class="bar"></div> <div class="bar"></div> <div class="bar"></div> <div class="bar"></div> <div class="bar"></div>
             </div>
-            <p class="font-semibold text-slate-700 mt-4">Finding the best questions for you...</p>
+            <p class="font-semibold mt-4">Finding the best questions for you...</p>
         </div>
     `;
+    // ### END FIX ###
 
     const user = getCurrentUser();
     if (!user) {
