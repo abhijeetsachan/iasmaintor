@@ -1275,6 +1275,7 @@ footer .border-slate-700 {
     display: flex;
     justify-content: center;
     box-sizing: border-box;
+    align-items: center; /* --- THIS IS THE FIX --- */
 }
 
 /* The card itself */
