@@ -460,7 +460,7 @@ p {
     animation: tick-animation 0.3s ease-in-out 0.5s forwards;
     stroke: var(--color-green-DEFAULT);
 }
-/* #success-overlay .bg-white is now .modal-content */
+/* #success-overlay .bg-white is now in the base styles */
 
 
 /* --- Syllabus Tracker Styles --- */
@@ -1254,7 +1254,7 @@ footer .border-slate-700 {
     margin-left: auto;
     margin-right: auto;
     overflow: hidden; /* This is the main container */
-    padding: 0 40px; /* Space for the arrows on mobile */
+    padding: 0 1rem; /* --- ### FIX 1: Reduced padding --- */
 }
 
 .testimonial-carousel-track-container {
@@ -1267,15 +1267,16 @@ footer .border-slate-700 {
     /* We will set width and transform via JS */
     transition: transform 0.5s ease;
     margin-left: 0; /* JS will calculate this */
+    align-items: center; /* This prevents wrappers from stretching */
 }
 
 .testimonial-card-wrapper {
     flex: 0 0 100%; /* On mobile, 1 card visible */
-    padding: 0 1rem;
+    padding: 0 0.5rem; /* --- ### FIX 2: Reduced padding --- */
     display: flex;
     justify-content: center;
     box-sizing: border-box;
-    align-items: center; /* --- THIS IS THE FIX --- */
+    align-items: center; /* This centers the card vertically */
 }
 
 /* The card itself */
@@ -1307,7 +1308,7 @@ footer .border-slate-700 {
     
     .testimonial-card-wrapper {
         flex: 0 0 33.333%; /* 3 cards visible on desktop */
-        padding: 0 1rem;
+        padding: 0 1rem; /* Restore desktop padding */
     }
     
     /* --- ### MODIFICATION: Removed Nav Button Position Styles ### --- */
