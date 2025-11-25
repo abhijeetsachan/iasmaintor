@@ -12,12 +12,12 @@ import {
     signInWithEmailAndPassword, 
     sendPasswordResetEmail, 
     signOut,
-    // --- NEW: Added modules that were missing in tracker.js ---
     signInWithCustomToken,
     EmailAuthProvider,
     linkWithCredential,
     GoogleAuthProvider,
-    linkWithPopup
+    linkWithPopup,
+    sendEmailVerification // <--- NEW IMPORT
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
     getFirestore,
@@ -83,7 +83,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
             Object.assign(firebaseAuthModule, {
                 getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
                 sendPasswordResetEmail, signOut, signInWithCustomToken, EmailAuthProvider, 
-                linkWithCredential, GoogleAuthProvider, linkWithPopup
+                linkWithCredential, GoogleAuthProvider, linkWithPopup, sendEmailVerification // <--- ADDED TO MODULE
             });
 
             // --- Persistence ---
@@ -101,6 +101,8 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
                     const userId = user?.uid;
 
                     if (user && !user.isAnonymous) {
+                        // --- CHECK: If user managed to log in but isn't verified (edge case), treat as guest/logout?
+                        // Ideally we catch this at login, but here we just load profile.
                         await fetchUserProfile(userId);
                         if (onLogin) {
                             onLogin(user, db, firestoreModule, authHasChecked);
@@ -256,38 +258,62 @@ async function fetchUserProfile(userId) {
 
 function initSharedEventListeners() {
 
-    // --- Form Submit Listeners (Auth/Account) ---
+    // --- 1. LOGIN FORM LISTENER (UPDATED FOR EMAIL VERIFICATION) ---
     DOMElements.authModal.loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         if (!firebaseEnabled || !firebaseAuthModule || !auth) return;
         const email = e.target.elements['login-email'].value, password = e.target.elements['login-password'].value;
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
+        
         try {
-            await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
+            const userCred = await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
+            
+            // --- SECURITY CHECK: EMAIL VERIFICATION ---
+            if (!userCred.user.emailVerified) {
+                // User exists and password is correct, BUT email is not verified.
+                // Log them out immediately.
+                await firebaseAuthModule.signOut(auth);
+                
+                if (errorEl) {
+                    errorEl.innerHTML = `Please verify your email before logging in.<br>Check your inbox for the verification link.`;
+                    errorEl.classList.remove('hidden');
+                }
+                return; // Stop here
+            }
+            
+            // If verified, close modal and proceed
             closeModal(DOMElements.authModal.modal); 
             globalShowNotification("Logged in!");
+            
         } catch(error){ 
              console.error("Login error:", error.code); 
              if(errorEl){
                  let msg = "Login failed. Invalid credentials or network error.";
                  if (error.code.includes('auth/invalid-credential')) msg = "Invalid email or password.";
                  else if (error.code.includes('auth/user-not-found')) msg = "No user found with this email.";
+                 else if (error.code.includes('auth/wrong-password')) msg = "Invalid password.";
+                 else if (error.code.includes('auth/too-many-requests')) msg = "Access to this account has been temporarily disabled due to many failed login attempts.";
                  errorEl.textContent = msg; 
                  errorEl.classList.remove('hidden');
              } 
         }
     });
     
+    // --- 2. SIGNUP FORM LISTENER (UPDATED FOR EMAIL VERIFICATION) ---
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         if (!firebaseEnabled || !firebaseAuthModule || !firestoreModule || !auth) return;
         const firstName = e.target.elements['signup-first-name'].value, lastName = e.target.elements['signup-last-name'].value, email = e.target.elements['signup-email'].value, password = e.target.elements['signup-password'].value;
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
+        
         try {
+            // 1. Create User
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             const user = userCred.user;
+            
+            // 2. Create Database Profile (Do this before signing out)
             const { doc, setDoc, serverTimestamp } = firestoreModule; 
             const userDocRef = doc(db, 'artifacts', globalAppId, 'users', user.uid);
             await setDoc(userDocRef, { 
@@ -299,11 +325,29 @@ function initSharedEventListeners() {
                     optionalSubject: null 
                 } 
             }, { merge: true });
+
+            // 3. Send Verification Email
+            await firebaseAuthModule.sendEmailVerification(user);
+
+            // 4. Force Logout (So they can't use the app until verified)
+            await firebaseAuthModule.signOut(auth);
+
             closeModal(DOMElements.authModal.modal); 
-            if (DOMElements.successOverlay) { 
+            
+            // 5. Show specific success message
+            if (DOMElements.successOverlay) {
+                // Modify success message dynamically if possible, or rely on notification
+                const title = DOMElements.successOverlay.querySelector('h3');
+                const desc = DOMElements.successOverlay.querySelector('p');
+                if(title) title.textContent = "Verification Sent!";
+                if(desc) desc.textContent = "We sent a verification link to your email. Please verify to log in.";
+                
                 DOMElements.successOverlay.classList.remove('hidden'); 
-                setTimeout(() => DOMElements.successOverlay.classList.add('hidden'), 2500); 
+                setTimeout(() => DOMElements.successOverlay.classList.add('hidden'), 4000); 
+            } else {
+                globalShowNotification("Account created! Please verify your email to log in.", false);
             }
+
         } catch(error){ 
             console.error("Signup error:", error.code); 
             if(errorEl){
@@ -370,10 +414,6 @@ function initSharedEventListeners() {
     });
 
     // --- General Click Listeners for Auth/Modals ---
-    // Note: We use document.body.addEventListener in app.js and syllabus-tracker.js
-    // to handle page-specific clicks. We only add listeners here for *shared* elements
-    // that were passed in DOMElements.
-    
     DOMElements.mobileMenuButton?.addEventListener('click', () => {
         DOMElements.mobileMenu?.classList.toggle('hidden');
     });
@@ -392,9 +432,6 @@ function initSharedEventListeners() {
     });
 
     // --- Shared Button Clicks (Login, Logout, My Account) ---
-    // We attach these to document.body and check IDs to ensure they are captured
-    // even if the buttons are inside the mobile menu.
-    
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         const targetId = target.id;
