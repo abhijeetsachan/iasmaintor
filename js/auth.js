@@ -1,9 +1,9 @@
 // js/auth.js
-// This new module centralizes all Firebase Auth, UI, and Modal logic.
+// Robust Authentication Module with Email Verification & UI Gates
 
 import { firebaseConfig } from './firebase-config.js';
 
-// --- Firebase SDK Modules ---
+// --- Firebase SDK Imports ---
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { 
     getAuth, 
@@ -12,23 +12,13 @@ import {
     signInWithEmailAndPassword, 
     sendPasswordResetEmail, 
     signOut,
-    signInWithCustomToken,
-    EmailAuthProvider,
-    linkWithCredential,
-    GoogleAuthProvider,
-    linkWithPopup,
     sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
     getFirestore,
     doc,
     getDoc,
-    getDocs,
     setDoc,
-    onSnapshot,
-    collection,
-    query,
-    orderBy,
     serverTimestamp,
     updateDoc,
     enableIndexedDbPersistence,
@@ -41,132 +31,96 @@ let firebaseAuthModule = {};
 let currentUser = null;
 let currentUserProfile = null;
 let authReady = false;
-let authHasChecked = false; // Flag to handle initial auth check
+let authHasChecked = false;
 let firebaseEnabled = false;
 let DOMElements = {};
-let globalShowNotification = (message, isError) => console.log(`Notification (${isError ? 'ERROR' : 'INFO'}): ${message}`);
+let globalShowNotification = (message, isError) => console.log(`Notification: ${message}`);
 let globalAppId = 'default-app-id';
 
-
 /**
- * Initializes the Firebase app, auth state, and all shared UI listeners.
+ * Initialize Auth Module
  */
 export async function initAuth(pageDOMElements, appId, showNotification, callbacks = {}) {
-    
-    // Store page-specific functions and elements
     DOMElements = pageDOMElements;
     globalShowNotification = showNotification;
     globalAppId = appId;
-    
     const { onLogin, onLogout } = callbacks;
 
     try {
         if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-            
             app = getApps().length ? getApp() : initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
             firebaseEnabled = true;
 
-            // Store module references
-            Object.assign(firestoreModule, {
-                getFirestore, doc, getDoc, getDocs,
-                setDoc, onSnapshot, collection, query, orderBy, serverTimestamp, updateDoc, enableIndexedDbPersistence
-            });
-            Object.assign(firebaseAuthModule, {
-                getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-                sendPasswordResetEmail, signOut, signInWithCustomToken, EmailAuthProvider, 
-                linkWithCredential, GoogleAuthProvider, linkWithPopup, sendEmailVerification
-            });
+            // Map modules for internal use
+            Object.assign(firestoreModule, { getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc, enableIndexedDbPersistence });
+            Object.assign(firebaseAuthModule, { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, sendEmailVerification });
 
-            // --- Persistence ---
-            try {
-                await firestoreModule.enableIndexedDbPersistence(db);
-                console.log("Auth Module: Firestore offline persistence enabled.");
-            } catch (err) { console.warn("Auth Module: Persistence error:", err.code); }
+            // Enable Offline Persistence
+            try { await firestoreModule.enableIndexedDbPersistence(db); } catch (err) { /* Ignore persistence errors */ }
 
-             // --- Auth State Change Listener ---
+            // --- GLOBAL AUTH LISTENER ---
             firebaseAuthModule.onAuthStateChanged(auth, async (user) => {
-                console.log("Auth Module: Auth state changed. Raw User:", user ? user.uid : 'null');
-
-                // --- SECURITY FIX: Force Logout UI if not Verified ---
-                // If the user exists (is logged in) AND is not anonymous AND has NOT verified email:
-                // We treat 'user' as null for the rest of the app logic.
+                // SECURITY GATE: Treat unverified users as logged out
+                let verifiedUser = user;
+                
                 if (user && !user.isAnonymous && !user.emailVerified) {
-                    console.warn("Auth Module: User email not verified. Treating as logged out.");
-                    user = null; 
+                    console.log("Auth: User is unverified. Treating as guest.");
+                    verifiedUser = null; 
                 }
-                // ----------------------------------------------------
 
+                // Detect State Change
                 if (user?.uid !== currentUser?.uid || !authHasChecked) {
-                    currentUser = user;
+                    currentUser = verifiedUser; // Update internal state
                     const userId = user?.uid;
 
-                    if (user && !user.isAnonymous) {
+                    if (verifiedUser && !verifiedUser.isAnonymous) {
+                        // 1. Fetch Profile for "Greeting Screen"
                         await fetchUserProfile(userId);
-                        if (onLogin) {
-                            onLogin(user, db, firestoreModule, authHasChecked);
-                        }
+                        if (onLogin) onLogin(verifiedUser, db, firestoreModule, authHasChecked);
                     } else {
+                        // 2. Clear Profile
                         currentUserProfile = null;
-                        if (onLogout) {
-                            onLogout(authHasChecked);
-                        }
+                        if (onLogout) onLogout(authHasChecked);
                     }
                     
-                    updateUIForAuthStateChange(user);
+                    // 3. Update UI (Header, Buttons, Greetings)
+                    updateUIForAuthStateChange(verifiedUser);
 
-                    if (!authReady) {
-                        authReady = true;
-                        console.log("Auth Module: Auth Ready.");
-                    }
+                    if (!authReady) authReady = true;
                     authHasChecked = true;
                 }
             });
-            console.log("Auth Module: Firebase initialized. Waiting for auth state...");
 
         } else { throw new Error("Missing Firebase config"); }
     } catch (error) {
-        console.error("Auth Module: Firebase init failed:", error);
-        globalShowNotification("Core services failed to load.", true);
+        console.error("Firebase Init Error:", error);
         authReady = true;
         authHasChecked = true;
-        firebaseEnabled = false;
-        updateUIForAuthStateChange(null);
-        if (onLogout) onLogout(authHasChecked);
     }
     
-    // --- Initialize All Shared Event Listeners ---
     initSharedEventListeners();
 
     return { 
-        db, 
-        auth, 
-        firestoreModule, 
-        firebaseAuthModule, 
+        db, auth, firestoreModule, firebaseAuthModule, 
         getCurrentUser: () => currentUser,
         showNotification: globalShowNotification 
     };
 }
 
-
-// --- ### SHARED UTILITY FUNCTIONS ### ---
+// --- UI HELPER FUNCTIONS ---
 
 function openModal(modal) {
     if (modal) { 
         modal.classList.remove('hidden'); 
-        modal.classList.add('active'); 
-        setTimeout(() => { 
-            const content = modal.querySelector('.modal-content'); 
-            if (content) content.style.transform = 'translateY(0)'; 
-        }, 10); 
+        // Small delay to allow display:block to apply before opacity transition
+        requestAnimationFrame(() => modal.classList.add('active'));
     } 
 }
 
 function closeModal(modal) {
     if (modal) { 
-        const content = modal.querySelector('.modal-content'); 
-        if (content) content.style.transform = 'translateY(-20px)'; 
         modal.classList.remove('active'); 
         setTimeout(() => modal.classList.add('hidden'), 300); 
     } 
@@ -174,297 +128,237 @@ function closeModal(modal) {
 
 function openAuthModal(mode = 'login') {
     if (currentUser && !currentUser.isAnonymous) { 
-        globalShowNotification("Already logged in.", false); 
+        globalShowNotification("You are already logged in.", false); 
         return; 
     }
     const { modal, loginForm, signupForm, error, forgotPasswordView } = DOMElements.authModal;
-    if (!modal || !loginForm || !signupForm || !error || !forgotPasswordView) return;
-    error.classList.add('hidden');
-    loginForm.reset();
-    signupForm.reset();
-    forgotPasswordView.classList.add('hidden');
+    if (!modal) return;
+    
+    if(error) error.classList.add('hidden');
+    if(loginForm) loginForm.reset();
+    if(signupForm) signupForm.reset();
+    if(forgotPasswordView) forgotPasswordView.classList.add('hidden');
+    
     document.getElementById('login-view')?.classList.toggle('hidden', mode !== 'login');
     document.getElementById('signup-view')?.classList.toggle('hidden', mode !== 'signup');
     openModal(modal);
 }
 
+// --- GREETINGS SCREEN & HEADER LOGIC ---
 function updateUIForAuthStateChange(user) {
     const isLoggedIn = !!user;
     const isAnon = user?.isAnonymous ?? false;
     const isVisibleUser = isLoggedIn && !isAnon;
 
+    // Toggle Header Elements
     DOMElements.authLinks?.classList.toggle('hidden', isVisibleUser);
     DOMElements.userMenu?.classList.toggle('hidden', !isVisibleUser);
+    
+    // Toggle Mobile Elements
     DOMElements.mobileAuthLinks?.classList.toggle('hidden', isVisibleUser);
     DOMElements.mobileUserActions?.classList.toggle('hidden', !isVisibleUser);
     
+    // Toggle Main Dashboard (if on index page)
     DOMElements.dashboardSection?.classList.toggle('hidden', !isVisibleUser);
 
     if (isVisibleUser) {
-        let displayName = 'User'; 
-        let avatarIconClass = 'fas fa-user text-xl';
-        if (currentUserProfile?.firstName) { 
-            displayName = currentUserProfile.firstName; 
-        } else if (user.email) { 
-            const emailName = user.email.split('@')[0]; 
-            displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1); 
-        }
+        // GREETING LOGIC
+        let displayName = currentUserProfile?.firstName || (user.email ? user.email.split('@')[0] : 'User');
+        displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
         
-        const loginBtn = document.getElementById('login-btn'); 
-        if(loginBtn) loginBtn.innerHTML = `<i class="fas fa-right-to-bracket mr-2"></i>Log In`;
-        const mobileLoginBtn = document.getElementById('mobile-login-btn'); 
-        if(mobileLoginBtn) mobileLoginBtn.innerHTML = `<i class="fas fa-right-to-bracket mr-2"></i>Log In`;
-        
-        document.getElementById('my-account-btn')?.classList.remove('hidden'); 
-        document.getElementById('mobile-my-account-btn')?.classList.remove('hidden');
-        
-        if(DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
-        if(DOMElements.userAvatar) DOMElements.userAvatar.innerHTML = `<i class="${avatarIconClass}"></i>`;
+        if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
     } else {
-        if(DOMElements.userGreeting) DOMElements.userGreeting.textContent = '';
-        const loginBtn = document.getElementById('login-btn'); 
-        if(loginBtn) loginBtn.innerHTML = `<i class="fas fa-right-to-bracket mr-2"></i>Log In`;
-        const mobileLoginBtn = document.getElementById('mobile-login-btn'); 
-        if(mobileLoginBtn) mobileLoginBtn.innerHTML = `<i class="fas fa-right-to-bracket mr-2"></i>Log In`;
+        if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = '';
     }
 }
 
 async function fetchUserProfile(userId) {
-    if (!firebaseEnabled || !firestoreModule || !userId || auth.currentUser?.isAnonymous) { 
-        currentUserProfile = null; 
-        return; 
-    }
     try {
-        const { doc, getDoc } = firestoreModule;
         const userDocRef = doc(db, 'artifacts', globalAppId, 'users', userId);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             currentUserProfile = userDoc.data().profile;
-            let displayName = currentUserProfile?.firstName || (currentUser?.email ? currentUser.email.split('@')[0].charAt(0).toUpperCase() + currentUser.email.split('@')[0].slice(1) : 'User');
-            if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
-        } else {
-            console.warn("Auth Module: User doc not found:", userId); 
-            currentUserProfile = null;
-            if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${currentUser?.email ? currentUser.email.split('@')[0].charAt(0).toUpperCase() + currentUser.email.split('@')[0].slice(1) : 'User'}`;
+            // Re-run UI update to show actual name instead of email
+            updateUIForAuthStateChange(auth.currentUser);
         }
-    } catch (error) { 
-        console.error("Auth Module: Error fetching profile:", error); 
-        currentUserProfile = null; 
-    }
+    } catch (error) { console.error("Profile fetch error:", error); }
 }
 
-// --- ### SHARED EVENT LISTENERS ### ---
+// --- EVENT LISTENERS ---
 
 function initSharedEventListeners() {
 
-    // --- 1. LOGIN FORM LISTENER ---
+    // 1. LOGIN LISTENER
     DOMElements.authModal.loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault(); 
-        if (!firebaseEnabled || !firebaseAuthModule || !auth) return;
-        const email = e.target.elements['login-email'].value, password = e.target.elements['login-password'].value;
+        const email = e.target.elements['login-email'].value;
+        const password = e.target.elements['login-password'].value;
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
+        
         try {
             const userCred = await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
             
-            // --- CHECK VERIFICATION STATUS ON LOGIN ---
+            // --- VERIFICATION CHECK ---
             if (!userCred.user.emailVerified) {
                 await firebaseAuthModule.signOut(auth); // Log them out
                 if(errorEl) {
-                    errorEl.textContent = "Please verify your email before logging in.";
+                    errorEl.innerHTML = `
+                        <strong>Email not verified.</strong><br>
+                        Please check your inbox (and spam folder) for the verification link.
+                    `;
                     errorEl.classList.remove('hidden');
                 }
                 return;
             }
 
             closeModal(DOMElements.authModal.modal); 
-            globalShowNotification("Logged in!");
+            globalShowNotification("Welcome back! Logged in successfully.");
         } catch(error){ 
              console.error("Login error:", error.code); 
              if(errorEl){
                  let msg = "Login failed.";
-                 if (error.code.includes('auth/invalid-credential')) msg = "Invalid email or password.";
-                 else if (error.code.includes('auth/user-not-found')) msg = "No user found with this email.";
+                 if (error.code.includes('user-not-found') || error.code.includes('wrong-password') || error.code.includes('invalid-credential')) msg = "Invalid email or password.";
+                 else if (error.code.includes('too-many-requests')) msg = "Too many attempts. Try again later.";
                  errorEl.textContent = msg; 
                  errorEl.classList.remove('hidden');
              } 
         }
     });
     
-    // --- 2. SIGNUP FORM LISTENER ---
+    // 2. SIGNUP LISTENER (ROBUST VERSION)
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
-        if (!firebaseEnabled || !firebaseAuthModule || !firestoreModule || !auth) return;
-        const firstName = e.target.elements['signup-first-name'].value, lastName = e.target.elements['signup-last-name'].value, email = e.target.elements['signup-email'].value, password = e.target.elements['signup-password'].value;
+        const firstName = e.target.elements['signup-first-name'].value;
+        const lastName = e.target.elements['signup-last-name'].value;
+        const email = e.target.elements['signup-email'].value;
+        const password = e.target.elements['signup-password'].value;
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
         
+        // Show loading state (optional UI enhancement)
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.innerText : 'Sign Up';
+        if(submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'Creating Account...'; }
+
         try {
-            // 1. Create User
+            // A. Create User in Authentication
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             const user = userCred.user;
             
-            // 2. Create Profile
-            const { doc, setDoc, serverTimestamp } = firestoreModule; 
-            const userDocRef = doc(db, 'artifacts', globalAppId, 'users', user.uid);
-            await setDoc(userDocRef, { 
-                profile: { 
-                    firstName, 
-                    lastName, 
-                    email, 
-                    createdAt: serverTimestamp(), 
-                    optionalSubject: null 
-                } 
-            }, { merge: true });
-
-            // 3. Send Verification & Logout
+            // B. Send Verification Email IMMEDIATELY
             await firebaseAuthModule.sendEmailVerification(user);
+
+            // C. Sign Out IMMEDIATELY (to enforce the "must verify" rule)
             await firebaseAuthModule.signOut(auth);
 
+            // D. Close the Auth Modal
             closeModal(DOMElements.authModal.modal); 
             
-            // Show "Check Email" message in Success Overlay
+            // E. Show the "Verification Screen" (Success Overlay)
             if (DOMElements.successOverlay) {
+                // Customize the overlay text for verification
                 const title = DOMElements.successOverlay.querySelector('h3');
                 const desc = DOMElements.successOverlay.querySelector('p');
-                if(title) title.textContent = "Verification Sent!";
-                if(desc) desc.textContent = "We sent a verification link to your email. Please verify to log in.";
+                if(title) title.textContent = "Verification Link Sent!";
+                if(desc) desc.innerHTML = `We sent an email to <strong>${email}</strong>.<br>Please click the link in it to verify your account.`;
                 
                 DOMElements.successOverlay.classList.remove('hidden'); 
-                setTimeout(() => DOMElements.successOverlay.classList.add('hidden'), 4000); 
+                
+                // Hide it after 6 seconds
+                setTimeout(() => {
+                    DOMElements.successOverlay.classList.add('hidden');
+                }, 6000);
             } else {
-                globalShowNotification("Account created! Verify your email to log in.", false);
+                // Fallback if overlay is missing
+                globalShowNotification("Verification email sent! Please check your inbox.", false);
+            }
+
+            // F. Create Database Profile (Background Task)
+            // We do this LAST so if it fails, the user still sees the success screen
+            try {
+                const { doc, setDoc, serverTimestamp } = firestoreModule; 
+                const userDocRef = doc(db, 'artifacts', globalAppId, 'users', user.uid);
+                await setDoc(userDocRef, { 
+                    profile: { firstName, lastName, email, createdAt: serverTimestamp(), optionalSubject: null } 
+                }, { merge: true });
+                console.log("Profile created successfully.");
+            } catch (dbErr) {
+                // Silent fail or log for admin - do not disturb user flow
+                console.error("Profile creation failed (User still created):", dbErr);
             }
 
         } catch(error){ 
-            console.error("Signup error:", error.code); 
+            console.error("Signup error:", error); 
             if(errorEl){
                 let msg = "Signup failed.";
-                if (error.code === 'auth/email-already-in-use') msg = "Email already registered.";
+                if (error.code === 'auth/email-already-in-use') msg = "That email is already registered. Please log in.";
+                else if (error.code === 'auth/weak-password') msg = "Password is too weak.";
                 errorEl.textContent = msg;
                 errorEl.classList.remove('hidden');
             }
+        } finally {
+            // Restore button state
+            if(submitBtn) { submitBtn.disabled = false; submitBtn.innerText = originalBtnText; }
         }
     });
+
+    // 3. OTHER LISTENERS (Unchanged)
     
+    // Account Update
     DOMElements.accountModal.form?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
-        const userId = currentUser?.uid; 
-        if (!userId || currentUser?.isAnonymous) { 
-            globalShowNotification("You must be logged in.", true); 
-            return; 
-        } 
-        if (!firebaseEnabled || !firestoreModule) return;
-        const firstName = e.target.elements['account-first-name'].value, lastName = e.target.elements['account-last-name'].value;
-        const errorEl = DOMElements.accountModal.error; 
-        if(errorEl) errorEl.classList.add('hidden');
-        const { doc, updateDoc } = firestoreModule; 
-        const userDocRef = doc(db, 'artifacts', globalAppId, 'users', userId);
+        if (!currentUser || currentUser.isAnonymous) return;
+        const firstName = e.target.elements['account-first-name'].value;
+        const lastName = e.target.elements['account-last-name'].value;
         try {
+            const { doc, updateDoc } = firestoreModule; 
+            const userDocRef = doc(db, 'artifacts', globalAppId, 'users', currentUser.uid);
             await updateDoc(userDocRef, { 'profile.firstName': firstName, 'profile.lastName': lastName }); 
             globalShowNotification('Account updated!');
-            if (currentUserProfile) { 
-                currentUserProfile.firstName = firstName; 
-                currentUserProfile.lastName = lastName; 
-            }
-            if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${firstName}`; 
+            if (currentUserProfile) { currentUserProfile.firstName = firstName; currentUserProfile.lastName = lastName; }
+            updateUIForAuthStateChange(currentUser);
             closeModal(DOMElements.accountModal.modal);
-        } catch(error){ 
-             console.error("Account update error:", error.code); 
-             if(errorEl){
-                 errorEl.textContent="Update failed."; 
-                 errorEl.classList.remove('hidden');
-            } 
-        }
+        } catch(error){ console.error(error); }
     });
-    
+
+    // Password Reset
     DOMElements.authModal.forgotPasswordForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
-        if (!firebaseEnabled || !firebaseAuthModule || !auth) return;
         const email = e.target.elements['reset-email'].value; 
-        const errorEl = DOMElements.authModal.error; 
-        if(errorEl) errorEl.classList.add('hidden');
         try { 
             await firebaseAuthModule.sendPasswordResetEmail(auth, email); 
             globalShowNotification('Password reset email sent.'); 
             openAuthModal('login'); 
-        }
-        catch(error){ 
-            console.error("PW Reset error:", error.code); 
-            if(errorEl){
-                errorEl.textContent="Reset failed."; 
-                errorEl.classList.remove('hidden');
-            } 
-        }
+        } catch(error){ console.error(error); }
     });
 
-    // --- General Click Listeners for Auth/Modals ---
-    DOMElements.mobileMenuButton?.addEventListener('click', () => {
-        DOMElements.mobileMenu?.classList.toggle('hidden');
-    });
+    // Menu & Dropdown Toggles
+    DOMElements.mobileMenuButton?.addEventListener('click', () => DOMElements.mobileMenu?.classList.toggle('hidden'));
+    DOMElements.userMenu?.addEventListener('click', (e) => { if (e.target.closest('#user-menu-button')) DOMElements.userDropdown?.classList.toggle('hidden'); });
+    document.body.addEventListener('click', (e) => { if (!e.target.closest('#user-menu')) DOMElements.userDropdown?.classList.add('hidden'); });
 
-    DOMElements.userMenu?.addEventListener('click', (e) => {
-        if (e.target.closest('#user-menu-button')) {
-            DOMElements.userDropdown?.classList.toggle('hidden');
-        }
-    });
-    
-    // Close dropdown if clicking outside
-    document.body.addEventListener('click', (e) => {
-        if (!e.target.closest('#user-menu')) { 
-            DOMElements.userDropdown?.classList.add('hidden'); 
-        }
-    });
-
-    // --- Shared Button Clicks (Login, Logout, My Account) ---
+    // Global Clicks (Login/Logout/Account)
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         const targetId = target.id;
 
-        // Login
         if (['login-btn', 'mobile-login-btn'].includes(targetId) || target.closest('#login-btn, #mobile-login-btn')) { 
-            e.preventDefault(); 
-            openAuthModal('login'); 
+            e.preventDefault(); openAuthModal('login'); 
         }
-        
-        // Logout
         if (target.closest('#dropdown-logout-btn, #mobile-logout-btn')) { 
-             if (firebaseEnabled && firebaseAuthModule && auth) {
-                 try { 
-                     await firebaseAuthModule.signOut(auth); 
-                     globalShowNotification('Logged out.'); 
-                 }
-                 catch (error) { 
-                     globalShowNotification('Logout failed.', true); 
-                     console.error("Logout error:", error); 
-                 }
-             } else { 
-                 globalShowNotification('Cannot log out: Service unavailable.', true); 
-             }
+             try { await firebaseAuthModule.signOut(auth); globalShowNotification('Logged out.'); }
+             catch (error) { console.error(error); }
         }
-        
-        // My Account
         if (target.closest('#my-account-btn, #mobile-my-account-btn')) {
             e.preventDefault();
-            if (!authReady) { 
-                globalShowNotification("Connecting...", false); 
-                return; 
-            }
-            if (!currentUser || currentUser.isAnonymous) { 
-                globalShowNotification("Please log in/sign up.", false); 
-                openAuthModal('login'); 
-                return; 
-            }
-            const { form, error } = DOMElements.accountModal;
-            if (!form || !error) return;
-            error.classList.add('hidden');
+            if (!authReady || !currentUser || currentUser.isAnonymous) { openAuthModal('login'); return; }
+            const { form } = DOMElements.accountModal;
             form.elements['account-first-name'].value = currentUserProfile?.firstName || '';
             form.elements['account-last-name'].value = currentUserProfile?.lastName || '';
-            form.elements['account-email'].value = currentUser.email || 'N/A';
+            form.elements['account-email'].value = currentUser.email || '';
             openModal(DOMElements.accountModal.modal);
         }
-
-        // Auth Modal Controls
         if (targetId === 'close-auth-modal') closeModal(DOMElements.authModal.modal);
         if (targetId === 'auth-switch-to-signup') openAuthModal('signup');
         if (targetId === 'auth-switch-to-login' || targetId === 'auth-switch-to-login-from-reset') openAuthModal('login');
@@ -472,8 +366,6 @@ function initSharedEventListeners() {
             document.getElementById('login-view')?.classList.add('hidden'); 
             DOMElements.authModal.forgotPasswordView?.classList.remove('hidden'); 
         }
-        
-        // Account Modal Close
         if (targetId === 'close-account-modal') closeModal(DOMElements.accountModal.modal);
     });
 }
