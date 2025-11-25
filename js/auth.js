@@ -17,7 +17,7 @@ import {
     linkWithCredential,
     GoogleAuthProvider,
     linkWithPopup,
-    sendEmailVerification // <--- NEW IMPORT
+    sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
     getFirestore,
@@ -50,13 +50,6 @@ let globalAppId = 'default-app-id';
 
 /**
  * Initializes the Firebase app, auth state, and all shared UI listeners.
- * @param {object} pageDOMElements - A map of all DOM elements needed from the specific page.
- * @param {string} appId - The application ID.
- * @param {function} showNotification - The page-specific notification function.
- * @param {object} callbacks - Object containing onLogin and onLogout functions.
- * @param {function} callbacks.onLogin - Called with (user, db, firestoreModule) when a user is logged in.
- * @param {function} callbacks.onLogout - Called when a user is logged out or anonymous.
- * @returns {Promise<object>} A promise that resolves with { db, auth, firestoreModule, firebaseAuthModule, getCurrentUser, showNotification }
  */
 export async function initAuth(pageDOMElements, appId, showNotification, callbacks = {}) {
     
@@ -83,7 +76,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
             Object.assign(firebaseAuthModule, {
                 getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
                 sendPasswordResetEmail, signOut, signInWithCustomToken, EmailAuthProvider, 
-                linkWithCredential, GoogleAuthProvider, linkWithPopup, sendEmailVerification // <--- ADDED TO MODULE
+                linkWithCredential, GoogleAuthProvider, linkWithPopup, sendEmailVerification
             });
 
             // --- Persistence ---
@@ -94,15 +87,22 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
 
              // --- Auth State Change Listener ---
             firebaseAuthModule.onAuthStateChanged(auth, async (user) => {
-                console.log("Auth Module: Auth state changed. User:", user ? user.uid : 'null');
+                console.log("Auth Module: Auth state changed. Raw User:", user ? user.uid : 'null');
+
+                // --- SECURITY FIX: Force Logout UI if not Verified ---
+                // If the user exists (is logged in) AND is not anonymous AND has NOT verified email:
+                // We treat 'user' as null for the rest of the app logic.
+                if (user && !user.isAnonymous && !user.emailVerified) {
+                    console.warn("Auth Module: User email not verified. Treating as logged out.");
+                    user = null; 
+                }
+                // ----------------------------------------------------
 
                 if (user?.uid !== currentUser?.uid || !authHasChecked) {
                     currentUser = user;
                     const userId = user?.uid;
 
                     if (user && !user.isAnonymous) {
-                        // --- CHECK: If user managed to log in but isn't verified (edge case), treat as guest/logout?
-                        // Ideally we catch this at login, but here we just load profile.
                         await fetchUserProfile(userId);
                         if (onLogin) {
                             onLogin(user, db, firestoreModule, authHasChecked);
@@ -133,7 +133,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
         authHasChecked = true;
         firebaseEnabled = false;
         updateUIForAuthStateChange(null);
-        if (onLogout) onLogout(authHasChecked); // Trigger logout flow on failure
+        if (onLogout) onLogout(authHasChecked);
     }
     
     // --- Initialize All Shared Event Listeners ---
@@ -198,7 +198,6 @@ function updateUIForAuthStateChange(user) {
     DOMElements.mobileAuthLinks?.classList.toggle('hidden', isVisibleUser);
     DOMElements.mobileUserActions?.classList.toggle('hidden', !isVisibleUser);
     
-    // This element is index.html specific, so check if it exists
     DOMElements.dashboardSection?.classList.toggle('hidden', !isVisibleUser);
 
     if (isVisibleUser) {
@@ -258,49 +257,41 @@ async function fetchUserProfile(userId) {
 
 function initSharedEventListeners() {
 
-    // --- 1. LOGIN FORM LISTENER (UPDATED FOR EMAIL VERIFICATION) ---
+    // --- 1. LOGIN FORM LISTENER ---
     DOMElements.authModal.loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         if (!firebaseEnabled || !firebaseAuthModule || !auth) return;
         const email = e.target.elements['login-email'].value, password = e.target.elements['login-password'].value;
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
-        
         try {
             const userCred = await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
             
-            // --- SECURITY CHECK: EMAIL VERIFICATION ---
+            // --- CHECK VERIFICATION STATUS ON LOGIN ---
             if (!userCred.user.emailVerified) {
-                // User exists and password is correct, BUT email is not verified.
-                // Log them out immediately.
-                await firebaseAuthModule.signOut(auth);
-                
-                if (errorEl) {
-                    errorEl.innerHTML = `Please verify your email before logging in.<br>Check your inbox for the verification link.`;
+                await firebaseAuthModule.signOut(auth); // Log them out
+                if(errorEl) {
+                    errorEl.textContent = "Please verify your email before logging in.";
                     errorEl.classList.remove('hidden');
                 }
-                return; // Stop here
+                return;
             }
-            
-            // If verified, close modal and proceed
+
             closeModal(DOMElements.authModal.modal); 
             globalShowNotification("Logged in!");
-            
         } catch(error){ 
              console.error("Login error:", error.code); 
              if(errorEl){
-                 let msg = "Login failed. Invalid credentials or network error.";
+                 let msg = "Login failed.";
                  if (error.code.includes('auth/invalid-credential')) msg = "Invalid email or password.";
                  else if (error.code.includes('auth/user-not-found')) msg = "No user found with this email.";
-                 else if (error.code.includes('auth/wrong-password')) msg = "Invalid password.";
-                 else if (error.code.includes('auth/too-many-requests')) msg = "Access to this account has been temporarily disabled due to many failed login attempts.";
                  errorEl.textContent = msg; 
                  errorEl.classList.remove('hidden');
              } 
         }
     });
     
-    // --- 2. SIGNUP FORM LISTENER (UPDATED FOR EMAIL VERIFICATION) ---
+    // --- 2. SIGNUP FORM LISTENER ---
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         if (!firebaseEnabled || !firebaseAuthModule || !firestoreModule || !auth) return;
@@ -313,7 +304,7 @@ function initSharedEventListeners() {
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             const user = userCred.user;
             
-            // 2. Create Database Profile (Do this before signing out)
+            // 2. Create Profile
             const { doc, setDoc, serverTimestamp } = firestoreModule; 
             const userDocRef = doc(db, 'artifacts', globalAppId, 'users', user.uid);
             await setDoc(userDocRef, { 
@@ -326,17 +317,14 @@ function initSharedEventListeners() {
                 } 
             }, { merge: true });
 
-            // 3. Send Verification Email
+            // 3. Send Verification & Logout
             await firebaseAuthModule.sendEmailVerification(user);
-
-            // 4. Force Logout (So they can't use the app until verified)
             await firebaseAuthModule.signOut(auth);
 
             closeModal(DOMElements.authModal.modal); 
             
-            // 5. Show specific success message
+            // Show "Check Email" message in Success Overlay
             if (DOMElements.successOverlay) {
-                // Modify success message dynamically if possible, or rely on notification
                 const title = DOMElements.successOverlay.querySelector('h3');
                 const desc = DOMElements.successOverlay.querySelector('p');
                 if(title) title.textContent = "Verification Sent!";
@@ -345,15 +333,14 @@ function initSharedEventListeners() {
                 DOMElements.successOverlay.classList.remove('hidden'); 
                 setTimeout(() => DOMElements.successOverlay.classList.add('hidden'), 4000); 
             } else {
-                globalShowNotification("Account created! Please verify your email to log in.", false);
+                globalShowNotification("Account created! Verify your email to log in.", false);
             }
 
         } catch(error){ 
             console.error("Signup error:", error.code); 
             if(errorEl){
                 let msg = "Signup failed.";
-                if (error.code === 'auth/email-already-in-use') msg = "Email already registered. Please log in.";
-                else if (error.code === 'auth/weak-password') msg = "Password too weak. Min 6 characters.";
+                if (error.code === 'auth/email-already-in-use') msg = "Email already registered.";
                 errorEl.textContent = msg;
                 errorEl.classList.remove('hidden');
             }
@@ -364,7 +351,7 @@ function initSharedEventListeners() {
         e.preventDefault(); 
         const userId = currentUser?.uid; 
         if (!userId || currentUser?.isAnonymous) { 
-            globalShowNotification("You must be logged in to update account.", true); 
+            globalShowNotification("You must be logged in.", true); 
             return; 
         } 
         if (!firebaseEnabled || !firestoreModule) return;
@@ -379,8 +366,6 @@ function initSharedEventListeners() {
             if (currentUserProfile) { 
                 currentUserProfile.firstName = firstName; 
                 currentUserProfile.lastName = lastName; 
-            } else { 
-                currentUserProfile = { firstName, lastName, email: currentUser.email }; 
             }
             if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${firstName}`; 
             closeModal(DOMElements.accountModal.modal);
