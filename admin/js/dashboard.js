@@ -1,5 +1,5 @@
 // admin/js/dashboard.js
-// Main Logic: Stats, User Mgmt, Notifications
+// Full Admin Logic: Stats, Users, Notifications, and Question Bank
 
 import { firebaseConfig } from '../../js/firebase-config.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -16,14 +16,18 @@ import {
     getDoc,
     setDoc, 
     deleteDoc, 
+    updateDoc,
     query, 
     where, 
     orderBy, 
+    limit,
+    startAfter,
     serverTimestamp, 
     getCountFromServer 
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // --- Initialize ---
+console.log("Dashboard: Initializing...");
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -31,334 +35,415 @@ const db = getFirestore(app);
 // --- State ---
 let currentUser = null;
 let adminProfile = null;
+let lastQuestionSnapshot = null; // For pagination
 
-// --- AUTH GUARD & INIT ---
+// --- AUTH GUARD ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         try {
-            // 1. Verify Role
-            const adminDocRef = doc(db, "admin_directory", user.uid);
-            const adminDoc = await getDoc(adminDocRef);
+            // 1. Verify Role in 'admin_directory'
+            const adminDoc = await getDoc(doc(db, "admin_directory", user.uid));
             
             if (adminDoc.exists()) {
                 adminProfile = adminDoc.data();
                 
-                // 2. Update UI & Remove Loader
+                // 2. Update Profile & Reveal Dashboard
                 updateProfileUI(adminProfile);
                 revealDashboard(); 
                 
-                // 3. Start Data Load
+                // 3. Load Data
                 initDashboard(); 
             } else {
-                throw new Error("Unauthorized");
+                throw new Error("User not in admin directory");
             }
         } catch (error) {
-            console.error("Auth Guard Failed:", error);
-            alert("Access Denied: You are not an administrator.");
-            await signOut(auth);
-            window.location.href = 'login.html';
+            console.error("Access Error:", error);
+            handleAuthError(error.message);
         }
     } else {
         window.location.href = 'login.html';
     }
 });
 
-function updateProfileUI(profile) {
-    const nameDisplay = document.getElementById('admin-name-display');
-    const roleDisplay = document.getElementById('admin-role-display');
-    const avatarDisplay = document.getElementById('admin-avatar');
-
-    if(nameDisplay) nameDisplay.textContent = profile.name || "Admin";
-    if(roleDisplay) roleDisplay.textContent = (profile.role || "Staff").toUpperCase().replace('_', ' ');
-    if(avatarDisplay) avatarDisplay.textContent = (profile.name || "A").charAt(0).toUpperCase();
-}
-
 function revealDashboard() {
     const loader = document.getElementById('auth-loader');
     const layout = document.getElementById('app-layout');
-    
     if (loader) loader.classList.add('hidden');
     if (layout) layout.classList.remove('hidden');
 }
 
-// --- LOGOUT ---
-const logoutBtn = document.getElementById('logout-btn');
-if(logoutBtn) {
-    logoutBtn.addEventListener('click', async () => {
-        await signOut(auth);
-        window.location.href = 'login.html';
-    });
+function handleAuthError(msg) {
+    const loader = document.getElementById('auth-loader');
+    if (loader) {
+        loader.innerHTML = `
+            <div class="text-center text-red-500">
+                <i class="fas fa-lock text-4xl mb-4"></i>
+                <p class="font-bold mb-4">Access Denied: ${msg}</p>
+                <button class="bg-slate-700 text-white px-4 py-2 rounded" onclick="location.href='login.html'">Go to Login</button>
+            </div>`;
+    }
 }
+
+function updateProfileUI(profile) {
+    const nameEl = document.getElementById('admin-name-display');
+    const roleEl = document.getElementById('admin-role-display');
+    const avatarEl = document.getElementById('admin-avatar');
+    
+    if(nameEl) nameEl.textContent = profile.name || "Admin";
+    if(roleEl) roleEl.textContent = (profile.role || "Staff").replace('_', ' ').toUpperCase();
+    if(avatarEl) avatarEl.textContent = (profile.name || "A").charAt(0).toUpperCase();
+}
+
+document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
 
 // ==========================================================================
-// 1. DASHBOARD STATS MODULE
+// 1. DASHBOARD STATS
 // ==========================================================================
 
 async function initDashboard() {
-    console.log("Initializing Admin Dashboard Data...");
-    
-    // Load Stats
-    // Note: 'users' count might fail if you don't have the aggregation index enabled yet.
-    // Check browser console for a link to create the index if it fails.
     loadStatCount('users', 'stat-total-users');
     loadStatCount('admin_directory', 'stat-admins');
     loadStatCount('quizzieQuestionBank', 'stat-questions');
+    loadStatCount('system_notifications', 'stat-broadcasts');
     
-    // Load Modules
     loadAdminUsers();
     loadNotifications();
+    loadQuestions(); // Load first batch of questions
 }
 
 async function loadStatCount(colName, elementId) {
     const el = document.getElementById(elementId);
-    if (!el) return;
-    
     try {
-        // Attempt server-side count (cheaper/faster)
-        const coll = collection(db, colName);
-        const snapshot = await getCountFromServer(coll);
-        el.textContent = snapshot.data().count;
+        const snapshot = await getCountFromServer(collection(db, colName));
+        if(el) el.textContent = snapshot.data().count;
     } catch (e) {
-        console.warn(`Count failed for ${colName}. Falling back to snapshot size (legacy).`, e);
-        try {
-            // Fallback: Download docs (expensive, but works without index)
-            const snapshot = await getDocs(collection(db, colName));
-            el.textContent = snapshot.size;
-        } catch (err2) {
-            console.error(`Stats error for ${colName}:`, err2);
-            el.textContent = "Err";
-        }
+        console.warn(`Stats error (${colName}):`, e);
+        if(el) el.textContent = "-";
     }
 }
 
 
 // ==========================================================================
-// 2. USER MANAGEMENT MODULE (RBAC)
+// 2. QUESTION BANK MODULE
+// ==========================================================================
+
+async function loadQuestions(loadMore = false) {
+    const tbody = document.getElementById('questions-table-body');
+    if (!loadMore) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-500">Loading questions...</td></tr>';
+        lastQuestionSnapshot = null;
+    }
+
+    try {
+        const subjectFilter = document.getElementById('filter-subject')?.value || 'all';
+        let q = query(collection(db, "quizzieQuestionBank"), orderBy("createdAt", "desc"), limit(10));
+        
+        if (subjectFilter !== 'all') {
+            // Note: Firestore requires an index for filtering by subject + sorting by time
+            // If this fails, check console for index creation link
+            q = query(collection(db, "quizzieQuestionBank"), where("subject", "==", subjectFilter), orderBy("createdAt", "desc"), limit(10));
+        }
+        
+        if (loadMore && lastQuestionSnapshot) {
+            q = query(q, startAfter(lastQuestionSnapshot));
+        }
+
+        const snapshot = await getDocs(q);
+        
+        if (!loadMore) tbody.innerHTML = ''; // Clear loader
+
+        if (snapshot.empty && !loadMore) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-500">No questions found.</td></tr>';
+            return;
+        }
+
+        lastQuestionSnapshot = snapshot.docs[snapshot.docs.length - 1];
+
+        snapshot.forEach(docSnap => {
+            const qData = docSnap.data();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="font-medium text-white line-clamp-2">${qData.question}</div>
+                    <div class="text-xs text-slate-500 mt-1">Ans: ${qData.answer}</div>
+                </td>
+                <td class="text-slate-400 text-sm capitalize">${qData.subject || 'General'}</td>
+                <td><span class="px-2 py-1 rounded text-xs bg-slate-700 text-slate-300 capitalize">${qData.difficulty || 'Basic'}</span></td>
+                <td class="text-right">
+                    <button onclick="window.editQuestion('${docSnap.id}')" class="text-blue-400 hover:text-blue-300 mr-3"><i class="fas fa-edit"></i></button>
+                    <button onclick="window.deleteQuestion('${docSnap.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Handle "Load More" button visibility
+        const loadMoreBtn = document.getElementById('load-more-questions');
+        if (snapshot.size < 10) loadMoreBtn.style.display = 'none';
+        else loadMoreBtn.style.display = 'inline-block';
+
+    } catch (e) {
+        console.error("Load Questions Error:", e);
+        if(!loadMore) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500 py-4">Error loading data. Check console.</td></tr>';
+    }
+}
+
+// -- Question Actions --
+
+window.openQuestionModal = () => {
+    document.getElementById('question-form').reset();
+    document.getElementById('q-id').value = '';
+    document.getElementById('q-modal-title').textContent = "Add Question";
+    
+    // Populate options dropdown
+    updateAnswerDropdown();
+    
+    window.openModal('modal-question-editor');
+};
+
+window.editQuestion = async (id) => {
+    try {
+        const docSnap = await getDoc(doc(db, "quizzieQuestionBank", id));
+        if (!docSnap.exists()) return;
+        const d = docSnap.data();
+
+        document.getElementById('q-id').value = id;
+        document.getElementById('q-text').value = d.question;
+        document.getElementById('q-opt-0').value = d.options[0] || '';
+        document.getElementById('q-opt-1').value = d.options[1] || '';
+        document.getElementById('q-opt-2').value = d.options[2] || '';
+        document.getElementById('q-opt-3').value = d.options[3] || '';
+        document.getElementById('q-subject').value = d.subject;
+        document.getElementById('q-difficulty').value = d.difficulty;
+        document.getElementById('q-explanation').value = d.explanation;
+        
+        updateAnswerDropdown(); // Refresh select options based on inputs
+        document.getElementById('q-answer').value = d.answer;
+
+        document.getElementById('q-modal-title').textContent = "Edit Question";
+        window.openModal('modal-question-editor');
+
+    } catch (e) { alert("Error fetching question details: " + e.message); }
+};
+
+// Helper to sync "Correct Answer" dropdown with Option Inputs
+function updateAnswerDropdown() {
+    const select = document.getElementById('q-answer');
+    const oldVal = select.value;
+    select.innerHTML = '';
+    
+    for(let i=0; i<4; i++) {
+        const optVal = document.getElementById(`q-opt-${i}`).value;
+        const opt = document.createElement('option');
+        opt.value = optVal;
+        opt.textContent = `Option ${String.fromCharCode(65+i)}: ${optVal.substring(0, 30)}...`;
+        select.appendChild(opt);
+    }
+    select.value = oldVal;
+}
+
+// Listen to option inputs to update dropdown in real-time
+[0,1,2,3].forEach(i => {
+    document.getElementById(`q-opt-${i}`)?.addEventListener('input', updateAnswerDropdown);
+});
+
+window.saveQuestion = async () => {
+    const id = document.getElementById('q-id').value;
+    const question = document.getElementById('q-text').value;
+    const options = [
+        document.getElementById('q-opt-0').value,
+        document.getElementById('q-opt-1').value,
+        document.getElementById('q-opt-2').value,
+        document.getElementById('q-opt-3').value
+    ];
+    const answer = document.getElementById('q-answer').value;
+    const subject = document.getElementById('q-subject').value;
+    const difficulty = document.getElementById('q-difficulty').value;
+    const explanation = document.getElementById('q-explanation').value;
+
+    if (!question || options.some(o => !o) || !answer) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    const data = {
+        question, options, answer, subject, difficulty, explanation,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid
+    };
+
+    try {
+        if (id) {
+            await updateDoc(doc(db, "quizzieQuestionBank", id), data);
+            alert("Question updated!");
+        } else {
+            data.createdAt = serverTimestamp();
+            await setDoc(doc(collection(db, "quizzieQuestionBank")), data); // Auto-ID
+            alert("Question added!");
+        }
+        window.closeModal('modal-question-editor');
+        loadQuestions(); // Refresh list
+    } catch (e) {
+        console.error("Save Error:", e);
+        alert("Failed to save: " + e.message);
+    }
+};
+
+window.deleteQuestion = async (id) => {
+    if (confirm("Are you sure you want to delete this question?")) {
+        await deleteDoc(doc(db, "quizzieQuestionBank", id));
+        loadQuestions();
+    }
+};
+
+document.getElementById('filter-subject')?.addEventListener('change', () => loadQuestions(false));
+document.getElementById('load-more-questions')?.addEventListener('click', () => loadQuestions(true));
+
+
+// ==========================================================================
+// 3. ADMIN USER MANAGEMENT
 // ==========================================================================
 
 async function loadAdminUsers() {
     const tbody = document.getElementById('admin-table-body');
     if (!tbody) return;
     
-    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center italic text-slate-500">Refreshing list...</td></tr>';
-
     try {
-        const q = query(collection(db, "admin_directory"), orderBy("role"));
-        const querySnapshot = await getDocs(q);
-        
-        tbody.innerHTML = ''; // Clear loader
-
-        querySnapshot.forEach((docSnap) => {
-            const data = docSnap.data();
+        const snapshot = await getDocs(query(collection(db, "admin_directory"), orderBy("role")));
+        tbody.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const d = docSnap.data();
             const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-800/30 transition-colors border-b border-slate-800 last:border-0";
-            
-            const roleColors = {
-                'super_admin': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-                'editor': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-                'mentor': 'bg-green-500/10 text-green-400 border-green-500/20'
-            };
-            const roleBadge = `<span class="px-2 py-1 rounded text-xs border ${roleColors[data.role] || 'bg-slate-700'}">${(data.role || 'Unknown').replace('_', ' ').toUpperCase()}</span>`;
-
+            tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
             tr.innerHTML = `
-                <td class="px-6 py-4 font-medium text-white">${data.name || 'No Name'}</td>
-                <td class="px-6 py-4">${roleBadge}</td>
-                <td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span> Active</span></td>
-                <td class="px-6 py-4 text-xs text-slate-500">${data.email}</td>
+                <td class="px-6 py-4">${d.name}</td>
+                <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs bg-slate-700 border border-slate-600 text-slate-300">${d.role}</span></td>
+                <td class="px-6 py-4 text-slate-400 text-xs">${d.email}</td>
                 <td class="px-6 py-4 text-right">
-                    ${(adminProfile.role === 'super_admin' && docSnap.id !== currentUser.uid) ? 
-                        `<button onclick="window.deleteAdmin('${docSnap.id}')" class="text-red-400 hover:text-red-300 transition-colors"><i class="fas fa-trash"></i></button>` 
-                        : '<span class="text-slate-600 cursor-not-allowed"><i class="fas fa-lock"></i></span>'}
+                    ${adminProfile.role === 'super_admin' && docSnap.id !== currentUser.uid ? 
+                    `<button onclick="window.removeAdmin('${docSnap.id}')" class="text-red-400 hover:text-white"><i class="fas fa-trash"></i></button>` : 
+                    `<i class="fas fa-lock text-slate-600"></i>`}
                 </td>
             `;
             tbody.appendChild(tr);
         });
-    } catch (e) {
-        console.error("Error loading admins:", e);
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-4">Failed to load data. Check permissions.</td></tr>';
+    } catch (e) { console.error("Admin Load Error:", e); }
+}
+
+document.getElementById('add-admin-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const email = formData.get('email').trim().toLowerCase();
+    
+    // Check if user exists in main DB
+    const usersRef = collection(db, "artifacts", "default-app-id", "users");
+    const q = query(usersRef, where("profile.email", "==", email));
+    const snap = await getDocs(q);
+    
+    if (snap.empty) {
+        alert("User not found. Please ask them to register on the main website first.");
+        return;
     }
-}
-
-const addAdminForm = document.getElementById('add-admin-form');
-if (addAdminForm) {
-    addAdminForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (adminProfile.role !== 'super_admin') {
-            alert("Only Super Admins can add new team members.");
-            return;
-        }
-
-        const formData = new FormData(e.target);
-        const email = formData.get('email').trim().toLowerCase();
-        const name = formData.get('name').trim();
-        const role = formData.get('role');
-
-        const btn = e.target.querySelector('button[type="submit"]');
-        const originalText = btn.textContent;
-        btn.textContent = "Searching...";
-        btn.disabled = true;
-
-        try {
-            // For this to work, you must be using the same 'artifacts/default-app-id/users' path as in auth.js
-            // Note: Firestore queries on 'profile.email' require an index.
-            const usersRef = collection(db, "artifacts", "default-app-id", "users"); 
-            const q = query(usersRef, where("profile.email", "==", email));
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                alert(`User ${email} not found. They must register on the main site first.`);
-                return;
-            }
-
-            const targetUid = querySnapshot.docs[0].id;
-
-            await setDoc(doc(db, "admin_directory", targetUid), {
-                name, email, role,
-                addedBy: currentUser.uid,
-                createdAt: serverTimestamp()
-            });
-
-            alert("Admin added!");
-            window.closeModal('modal-add-admin');
-            e.target.reset();
-            loadAdminUsers();
-
-        } catch (error) {
-            console.error("Add Admin Error:", error);
-            alert("Failed: " + error.message);
-        } finally {
-            btn.textContent = originalText;
-            btn.disabled = false;
-        }
+    
+    const uid = snap.docs[0].id;
+    await setDoc(doc(db, "admin_directory", uid), {
+        name: formData.get('name'),
+        email: email,
+        role: formData.get('role'),
+        addedBy: currentUser.uid,
+        createdAt: serverTimestamp()
     });
-}
+    
+    alert("Admin added!");
+    window.closeModal('modal-add-admin');
+    loadAdminUsers();
+});
 
-window.deleteAdmin = async (uid) => {
-    if (!confirm("Remove this admin?")) return;
-    try {
-        await deleteDoc(doc(db, "admin_directory", uid));
+window.removeAdmin = async (id) => {
+    if (confirm("Remove access for this admin?")) {
+        await deleteDoc(doc(db, "admin_directory", id));
         loadAdminUsers();
-    } catch (e) {
-        alert("Error: " + e.message);
     }
 };
 
 
 // ==========================================================================
-// 3. GLOBAL NOTIFICATIONS MODULE
+// 4. NOTIFICATIONS
 // ==========================================================================
 
 async function loadNotifications() {
-    const listContainer = document.getElementById('active-notifications-list');
-    if (!listContainer) return;
-
+    const container = document.getElementById('active-notifications-list');
+    if (!container) return;
+    
     try {
         const q = query(collection(db, "system_notifications"), where("active", "==", true), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            listContainer.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">No active broadcasts.</p>';
-            return;
-        }
-
-        listContainer.innerHTML = '';
-        querySnapshot.forEach(docSnap => {
-            const data = docSnap.data();
+        const snapshot = await getDocs(q);
+        container.innerHTML = '';
+        if (snapshot.empty) container.innerHTML = '<p class="text-slate-500 text-sm">No active broadcasts.</p>';
+        
+        snapshot.forEach(docSnap => {
+            const d = docSnap.data();
             const item = document.createElement('div');
-            item.className = "bg-slate-800 border border-slate-700 rounded-lg p-4 flex justify-between items-start group";
-            
-            const typeBadge = `<span class="text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-300">${data.type}</span>`;
-            const pages = data.targetPages ? data.targetPages.join(", ") : "All";
-
+            item.className = "bg-slate-800 p-3 rounded border border-slate-700 flex justify-between items-start";
             item.innerHTML = `
                 <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        ${typeBadge}
-                        <span class="text-xs text-slate-500">Visible on: ${pages}</span>
-                    </div>
-                    <p class="text-white text-sm">${data.message}</p>
-                    ${data.imageUrl ? `<img src="${data.imageUrl}" class="mt-2 h-16 w-auto rounded border border-slate-600">` : ''}
+                    <span class="text-xs uppercase bg-blue-900 text-blue-300 px-1 rounded">${d.type}</span>
+                    <p class="text-sm text-white mt-1">${d.message}</p>
+                    ${d.imageUrl ? `<a href="${d.imageUrl}" target="_blank" class="text-xs text-blue-400 underline">View Image</a>` : ''}
                 </div>
-                <button onclick="window.deactivateNotification('${docSnap.id}')" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <i class="fas fa-times-circle text-xl"></i>
-                </button>
+                <button onclick="window.stopBroadcast('${docSnap.id}')" class="text-slate-500 hover:text-red-400"><i class="fas fa-times"></i></button>
             `;
-            listContainer.appendChild(item);
+            container.appendChild(item);
         });
+    } catch (e) { console.error(e); }
+}
 
-    } catch (e) {
-        console.error("Load Notifs Error:", e);
-        // Don't show error in UI if it's just a "requires index" error initially
+document.getElementById('notification-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = document.getElementById('notif-message').value;
+    const type = document.getElementById('notif-type').value;
+    const pages = Array.from(e.target.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+    
+    let imageUrl = null;
+    const fileInput = document.getElementById('notif-image');
+    if (type === 'popup' && fileInput.files[0]) {
+        imageUrl = await fileToBase64(fileInput.files[0]);
     }
-}
-
-const notifForm = document.getElementById('notification-form');
-if (notifForm) {
-    notifForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const message = document.getElementById('notif-message').value;
-        const type = document.getElementById('notif-type').value;
-        
-        const checkedPages = [];
-        e.target.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
-            if (cb.value !== 'on') checkedPages.push(cb.value);
-        });
-
-        let imageUrl = null;
-        const fileInput = document.getElementById('notif-image');
-        
-        if (type === 'popup' && fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            if (file.size > 1024 * 1024) {
-                alert("Image too large (Max 1MB)");
-                return;
-            }
-            imageUrl = await fileToBase64(file);
-        }
-
-        try {
-            await setDoc(doc(collection(db, "system_notifications")), {
-                message, type, targetPages: checkedPages, imageUrl,
-                active: true, createdAt: serverTimestamp(), createdBy: currentUser.uid
-            });
-
-            alert("Broadcast published!");
-            e.target.reset();
-            document.getElementById('banner-upload-container').classList.add('hidden');
-            loadNotifications();
-        } catch (err) {
-            console.error("Publish Error:", err);
-            alert("Error: " + err.message);
-        }
+    
+    await setDoc(doc(collection(db, "system_notifications")), {
+        message, type, targetPages: pages, imageUrl, active: true,
+        createdAt: serverTimestamp(), createdBy: currentUser.uid
     });
-}
+    
+    alert("Broadcast sent!");
+    e.target.reset();
+    loadNotifications();
+});
 
-window.deactivateNotification = async (id) => {
-    if (!confirm("Stop this broadcast?")) return;
-    try {
+window.stopBroadcast = async (id) => {
+    if(confirm("Stop this broadcast?")) {
         await deleteDoc(doc(db, "system_notifications", id));
         loadNotifications();
-    } catch (e) {
-        alert("Error: " + e.message);
     }
 };
 
+// --- Utils ---
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+        const r = new FileReader();
+        r.readAsDataURL(file);
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
     });
 }
 
-// --- Global Helper ---
+// Global Modal Helper
 window.closeModal = (id) => {
     const el = document.getElementById(id);
-    el.classList.add('opacity-0');
-    setTimeout(() => el.classList.add('hidden'), 200);
+    if(el) {
+        el.classList.add('opacity-0');
+        setTimeout(() => el.classList.add('hidden'), 200);
+    }
 };
