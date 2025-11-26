@@ -1,4 +1,4 @@
-// js/app.js (Refactored to use auth.js module)
+// js/app.js (Refactored to remove duplicate auth listeners)
 
 // --- Imports ---
 import { initAuth } from './auth.js';
@@ -29,9 +29,7 @@ function handleThemeToggle() {
 function initTestimonialCarousel() {
     const track = document.getElementById('testimonial-carousel-track');
     
-    // --- ### MODIFICATION: Removed prevBtn and nextBtn ### ---
     if (!track) {
-        console.warn("Testimonial carousel track not found. Skipping init.");
         return;
     }
 
@@ -43,33 +41,25 @@ function initTestimonialCarousel() {
     let totalClonedItems = 0;
 
     function setupCarousel() {
-        // --- 1. Clone cards for infinite loop ---
-        // We clone `itemsToShow` count for both start and end
         itemsToShow = window.innerWidth < 768 ? 1 : 3;
-        totalClonedItems = itemsToShow * 2; // Clones at start + clones at end
+        totalClonedItems = itemsToShow * 2;
 
-        // Clear existing
         track.innerHTML = '';
         cards.forEach(card => track.appendChild(card));
 
         const clonesStart = cards.slice(-itemsToShow).map(card => card.cloneNode(true));
         const clonesEnd = cards.slice(0, itemsToShow).map(card => card.cloneNode(true));
         
-        // [Clones(End)] + [Originals] + [Clones(Start)] -- This order is a bit confusing but common
-        // Let's try [Clones(Start)] + [Originals] + [Clones(End)]
         clonesStart.reverse().forEach(clone => track.insertBefore(clone, cards[0]));
         clonesEnd.forEach(clone => track.appendChild(clone));
         
-        cards = Array.from(track.children); // Update cards array with clones
+        cards = Array.from(track.children);
         
-        // --- 2. Initial Position ---
-        // Start at the first *real* item
         currentIndex = itemsToShow; 
         updateCardWidth();
-        track.style.transition = 'none'; // No animation for initial set
+        track.style.transition = 'none';
         setTrackPosition();
         
-        // Re-enable transitions after a tick
         setTimeout(() => {
             track.style.transition = 'transform 0.5s ease';
         }, 50);
@@ -83,7 +73,6 @@ function initTestimonialCarousel() {
         if (container) {
             cardWidth = container.clientWidth / itemsToShow;
         }
-        // Force all cards to have this width
         cards.forEach(card => {
             card.style.flexBasis = `${cardWidth}px`;
         });
@@ -99,7 +88,6 @@ function initTestimonialCarousel() {
             const cardInner = card.querySelector('.testimonial-card');
             if (!cardInner) return;
             
-            // The active card is the one at `currentIndex` + the middle item offset
             const middleItemIndex = Math.floor(itemsToShow / 2);
             const activeCardIndex = currentIndex + middleItemIndex;
 
@@ -120,17 +108,16 @@ function initTestimonialCarousel() {
         setTrackPosition();
         updateActiveCard();
 
-        // Check for loop reset
-        if (currentIndex === 0) { // Reached start of originals
+        if (currentIndex === 0) {
             setTimeout(() => {
                 track.style.transition = 'none';
-                currentIndex = cards.length - totalClonedItems; // Go to equivalent card at the end
+                currentIndex = cards.length - totalClonedItems;
                 setTrackPosition();
             }, 500);
-        } else if (currentIndex === (cards.length - itemsToShow)) { // Reached end of originals
+        } else if (currentIndex === (cards.length - itemsToShow)) {
              setTimeout(() => {
                 track.style.transition = 'none';
-                currentIndex = itemsToShow; // Go back to equivalent card at the start
+                currentIndex = itemsToShow;
                 setTrackPosition();
             }, 500);
         }
@@ -140,49 +127,35 @@ function initTestimonialCarousel() {
         }, 500);
     }
     
-    // --- 3. Attach Listeners ---
-    // --- ### MODIFICATION: Removed button listeners ### ---
-    
-    // --- 4. Auto-scroll ---
-    let autoScroll = setInterval(() => move(1), 4000); // Auto-scroll every 4 seconds
+    let autoScroll = setInterval(() => move(1), 4000);
     track.addEventListener('mouseenter', () => clearInterval(autoScroll));
     track.addEventListener('mouseleave', () => autoScroll = setInterval(() => move(1), 4000));
     
-    // --- 5. Resize Handler ---
     let resizeTimer;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            // Full reset on resize
             clearInterval(autoScroll);
             setupCarousel();
             autoScroll = setInterval(() => move(1), 4000);
         }, 200);
     });
     
-    // --- 6. Initial Setup ---
     setupCarousel();
 }
-// --- ### END: Testimonial Carousel Logic ### ---
-
 
 document.addEventListener('DOMContentLoaded', async function() {
     
-    // --- State Variables ---
     let unsubscribePlans = null;
     let unsubscribeDashboardProgress = null;
     let quizzieInitialized = false;
-    let authServices = {}; // Will hold { db, auth, firestoreModule, etc. }
-
-    // --- NEW: State for Revision Module ---
+    let authServices = {}; 
     let syllabusData = [];
     let optionalSubject = null;
     let unsubscribeOptional = null;
 
 
-    // --- UI Element Refs (Page-Specific + Shared) ---
     const DOMElements = {
-        // --- Shared Auth Elements (for auth.js) ---
         authLinks: document.getElementById('auth-links'),
         userMenu: document.getElementById('user-menu'),
         userGreeting: document.getElementById('user-greeting'),
@@ -208,12 +181,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             form: document.getElementById('account-form'), 
             error: document.getElementById('account-error') 
         },
-
-        // --- Page-Specific Elements (index.html) ---
         dashboardSection: document.getElementById('dashboard'),
-        plansList: document.getElementById('plans-list'), // Specific to index.html
-        dashboardProgressBars: document.getElementById('dashboard-progress-bars'), // Specific to index.html
-        revisionReminderList: document.getElementById('revision-reminder-list'), // --- NEW ---
+        plansList: document.getElementById('plans-list'), 
+        dashboardProgressBars: document.getElementById('dashboard-progress-bars'), 
+        revisionReminderList: document.getElementById('revision-reminder-list'),
         copyrightYear: document.getElementById('copyright-year'),
         mentorshipModal: document.getElementById('mentorship-modal'),
         mentorshipForm: document.getElementById('mentorship-form'),
@@ -233,50 +204,38 @@ document.addEventListener('DOMContentLoaded', async function() {
         quizCloseButton: document.getElementById('close-quizzie-modal'),
         installPwaBtnDesktop: document.getElementById('install-pwa-btn-desktop'),
         installPwaBtnMobile: document.getElementById('install-pwa-btn-mobile'),
-        
-        // --- NEW: Theme Toggle Buttons ---
         themeToggleBtn: document.getElementById('theme-toggle-btn'),
         themeToggleBtnMobile: document.getElementById('theme-toggle-btn-mobile'),
     };
     
-    // --- ### NEW: Bind Theme Toggle Events ### ---
     DOMElements.themeToggleBtn?.addEventListener('click', handleThemeToggle);
     DOMElements.themeToggleBtnMobile?.addEventListener('click', handleThemeToggle);
 
 
-    // --- Utility Functions (Page-Specific) ---
     const showNotification = (message, isError = false) => { 
         if (!DOMElements.notification) return; 
-        const chatbotContainer = document.getElementById('chatbot-container'); // Get chatbot
+        const chatbotContainer = document.getElementById('chatbot-container');
 
         DOMElements.notification.textContent = message; 
         DOMElements.notification.classList.toggle('bg-red-600', isError); 
         DOMElements.notification.classList.toggle('bg-slate-800', !isError); 
         
-        // --- FIX START ---
-        // Explicitly remove classes that hide the notification
         DOMElements.notification.classList.remove('opacity-0');
         DOMElements.notification.classList.remove('pointer-events-none');
-        // Add class to show it
         DOMElements.notification.classList.add('opacity-100'); 
-        // --- FIX END ---
         
-        if (chatbotContainer) chatbotContainer.classList.add('chatbot-container-lifted'); // LIFT chatbot
+        if (chatbotContainer) chatbotContainer.classList.add('chatbot-container-lifted'); 
 
         setTimeout(() => { 
             if (DOMElements.notification) {
                 DOMElements.notification.classList.remove('opacity-100'); 
-                // --- FIX START ---
-                // Add classes back to hide it correctly
                 DOMElements.notification.classList.add('opacity-0');
                 DOMElements.notification.classList.add('pointer-events-none');
-                // --- FIX END ---
             }
-            if (chatbotContainer) chatbotContainer.classList.remove('chatbot-container-lifted'); // LOWER chatbot
+            if (chatbotContainer) chatbotContainer.classList.remove('chatbot-container-lifted'); 
         }, 3000); 
     };
     
-    // Simple pass-through functions for modals, as auth.js handles the implementation
     const openModal = (modal) => {
         if (modal) { 
             modal.classList.remove('hidden'); 
@@ -297,59 +256,36 @@ document.addEventListener('DOMContentLoaded', async function() {
         } 
     };
 
-
-    // --- Auth Initialization ---
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
     
     authServices = await initAuth(DOMElements, appId, showNotification, {
-        /**
-         * @param {User} user - The Firebase User object.
-         * @param {Firestore} db - The Firestore database instance.
-         * @param {object} firestoreModule - Firestore functions (doc, getDoc, etc.)
-         * @param {boolean} authHasChecked - True if this is not the first auth check.
-         */
         onLogin: (user, db, firestoreModule, authHasChecked) => {
             console.log("Index Page: onLogin callback triggered.");
-            // Fetch data needed for index.html
             fetchAndDisplayPlans(user.uid, db, firestoreModule);
             listenForDashboardProgress(user.uid, db, firestoreModule);
-            
-            // --- NEW: Start revision listener ---
             listenForRevisionReminders(user.uid, db, firestoreModule, appId);
             
-            // Re-initialize Quizzie if auth is now ready
             if (authServices.db && authServices.getCurrentUser && !quizzieInitialized) {
                 initQuizzieModule();
             }
         },
-        /**
-         * @param {boolean} authHasChecked - True if this is not the first auth check.
-         */
         onLogout: (authHasChecked) => {
             console.log("Index Page: onLogout callback triggered.");
             if (unsubscribePlans) { unsubscribePlans(); unsubscribePlans = null; }
             if (unsubscribeDashboardProgress) { unsubscribeDashboardProgress(); unsubscribeDashboardProgress = null; }
-            // --- NEW: Stop revision listener ---
             if (unsubscribeOptional) { unsubscribeOptional(); unsubscribeOptional = null; }
 
-
-            // Only update UI to "logged out" state after initial check
             if (authHasChecked) {
                 if (DOMElements.plansList) { DOMElements.plansList.innerHTML = `<p class="text-slate-500">Please log in to see saved plans.</p>`; }
                 if (DOMElements.dashboardProgressBars) { DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Please log in to see your progress.</p>`; }
-                // --- NEW: Update revision list on logout ---
                 if (DOMElements.revisionReminderList) { DOMElements.revisionReminderList.innerHTML = `<p class="text-slate-500">Please log in to see your revision reminders.</p>`; }
             } else {
                 if (DOMElements.dashboardProgressBars) { DOMElements.dashboardProgressBars.innerHTML = `<p class="text-slate-500">Authenticating...</p>`; }
-                // --- NEW: Update revision list on auth check ---
                 if (DOMElements.revisionReminderList) { DOMElements.revisionReminderList.innerHTML = `<p class="text-slate-500">Authenticating...</p>`; }
             }
         }
     });
 
-    // --- Initialize Page-Specific Modules ---
-    
-    // Initialize Quizzie (it now gets its auth/db info from the authServices)
     function initQuizzieModule() {
         const quizzieElements = {
             modal: DOMElements.quizzieModal,
@@ -371,11 +307,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizzieElements,
                 showNotification,
                 closeModal,
-                { // Pass DB and modules from the initialized auth service
+                { 
                     db: authServices.db,
                     ...authServices.firestoreModule 
                 },
-                authServices.getCurrentUser // Pass the function to get the current user state
+                authServices.getCurrentUser 
             );
             quizzieInitialized = true;
         } else {
@@ -383,21 +319,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    // Call it once, in case auth was ready immediately
     if (authServices.db && authServices.getCurrentUser && !quizzieInitialized) {
         initQuizzieModule();
     }
     
-    // Initialize Chatbot
     initChatbot(showNotification);
     
-    // --- ### NEW: Initialize Testimonial Carousel ### ---
     initTestimonialCarousel();
 
-    // --- Core App Logic ---
     if (DOMElements.copyrightYear) DOMElements.copyrightYear.textContent = new Date().getFullYear();
-
-    // --- Firestore Functions (Page-Specific) ---
 
     const fetchAndDisplayPlans = async (userId, db, firestoreModule) => {
         if (!DOMElements.plansList) return;
@@ -452,11 +382,6 @@ document.addEventListener('DOMContentLoaded', async function() {
          } catch (error) { console.error("Error setting up progress listener:", error); progressContainer.innerHTML = `<p class="text-red-500">Error initializing progress display.</p>`; unsubscribeDashboardProgress = null; }
     }
 
-    // --- ### NEW: REVISION REMINDER LOGIC (from syllabus-tracker.js) ### ---
-    
-    /**
-     * Assembles the full default syllabus structure.
-     */
     function assembleDefaultSyllabus() {
         try {
             const prelimsData = getPrelimsSyllabus();
@@ -481,9 +406,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    /**
-     * Updates the syllabusData object with the correct optional subject data.
-     */
     function updateOptionalSyllabusData(syllabusDataRef) {
         if (!optionalSubject) return;
         const { paper1, paper2 } = getOptionalSyllabusById(optionalSubject);
@@ -501,9 +423,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    /**
-     * Finds a topic item by its ID in the syllabusData tree.
-     */
     function findItemById(id, nodes) {
         if (!id || !Array.isArray(nodes)) return null;
         for (const node of nodes) {
@@ -517,9 +436,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         return null;
     }
 
-    /**
-     * Calculates the status of a specific revision day.
-     */
     function getRevisionStatus(startDate, days, isDone) {
         if (!startDate) return { status: 'pending', date: null };
         if (isDone) return { status: 'done', date: null };
@@ -540,14 +456,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    /**
-     * --- ### MODIFIED: getDueRevisions ### ---
-     * Traverses the entire syllabusData tree and finds all due revisions.
-     * It now groups due revisions by topic to avoid duplicates.
-     */
     function getDueRevisions(nodes) {
         if (!Array.isArray(nodes)) return [];
-        const revisionsMap = new Map(); // Use a Map to group by topic ID
+        const revisionsMap = new Map();
     
         function traverse(items) {
             if (!Array.isArray(items)) return;
@@ -556,7 +467,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (!item || !item.id) return;
     
                 if (!Array.isArray(item.children) || item.children.length === 0) {
-                    // This is a micro-topic
                     if (item.startDate && item.revisions) {
                         
                         Object.entries(REVISION_SCHEDULE).forEach(([dayKey, days]) => {
@@ -564,64 +474,51 @@ document.addEventListener('DOMContentLoaded', async function() {
                             const { status } = getRevisionStatus(item.startDate, days, isDone);
     
                             if (status === 'due' || status === 'overdue') {
-                                // Get existing entry or create a new one
                                 const existingEntry = revisionsMap.get(item.id) || {
                                     topicName: item.name,
                                     id: item.id,
                                     dueRevisions: []
                                 };
                                 
-                                // Add this due revision
                                 existingEntry.dueRevisions.push({
-                                    day: dayKey.toUpperCase(), // "D1", "D3", "D7"
-                                    status: status // "due" or "overdue"
+                                    day: dayKey.toUpperCase(), 
+                                    status: status 
                                 });
 
-                                // Save it back to the map
                                 revisionsMap.set(item.id, existingEntry);
                             }
                         });
                     }
                 } else {
-                    // This is a parent, traverse children
                     traverse(item.children);
                 }
             });
         }
     
         traverse(nodes);
-        return Array.from(revisionsMap.values()); // Returns the new, de-duplicated structure
+        return Array.from(revisionsMap.values()); 
     }
 
-    /**
-     * Fetches all user progress, calculates due revisions, and renders them.
-     * Also listens for changes to the optional subject.
-     */
     async function listenForRevisionReminders(userId, db, firestoreModule, appId) {
         const reminderListEl = DOMElements.revisionReminderList;
         if (!reminderListEl) return;
         
         const { doc, getDoc, collection, getDocs, query, onSnapshot } = firestoreModule;
 
-        // This function does the heavy lifting
         const refreshRevisions = async () => {
             try {
                 reminderListEl.innerHTML = `<p class="text-slate-500">Loading full syllabus and progress...</p>`;
                 
-                // 1. Assemble base syllabus
                 let fullSyllabus = assembleDefaultSyllabus();
                 if (fullSyllabus.length === 0) throw new Error("Syllabus assembly failed.");
 
-                // 2. Integrate Optional Subject data
                 if (optionalSubject) {
                     updateOptionalSyllabusData(fullSyllabus);
                 }
                 
-                // 3. Fetch all topic progress
                 const progressCollectionRef = collection(db, 'users', userId, 'topicProgress');
                 const progressSnapshot = await getDocs(query(progressCollectionRef));
                 
-                // 4. Merge progress into syllabus data
                 if (!progressSnapshot.empty) {
                     progressSnapshot.forEach(doc => {
                         const topicId = doc.id;
@@ -633,18 +530,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                     });
                 }
                 
-                // 5. Calculate due revisions (using the new de-duplicating function)
                 const revisionsDue = getDueRevisions(fullSyllabus);
                 
-                // 6. --- MODIFIED: Render the new grouped badge list ---
                 if (revisionsDue.length === 0) {
                     reminderListEl.innerHTML = `<p class="text-green-700 font-semibold text-center py-4">🎉 All caught up! No revisions due today.</p>`;
                 } else {
                     reminderListEl.innerHTML = revisionsDue.map(r => {
-                        // --- MODIFICATION START ---
-                        // Create a single badge with all due days
-                        const dueDays = r.dueRevisions.map(day => day.day).join(', '); // "D1, D3, D7"
-                        // Determine the "worst" status to show (Overdue > Due)
+                        const dueDays = r.dueRevisions.map(day => day.day).join(', ');
                         const overallStatus = r.dueRevisions.some(day => day.status === 'overdue') ? 'overdue' : 'due';
                         const statusText = overallStatus === 'overdue' ? 'Overdue' : 'Due';
                         
@@ -652,7 +544,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <span class="dashboard-reminder-badge status-${overallStatus}" title="Revisions due: ${dueDays}">
                                 ${dueDays} ${statusText}
                             </span>`;
-                        // --- MODIFICATION END ---
                 
                         return `
                         <div class="dashboard-reminder-item">
@@ -671,19 +562,16 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         };
 
-        // Stop any previous listener
         if (unsubscribeOptional) unsubscribeOptional();
 
-        // Start a new listener for profile changes (e.g., optional subject)
         const profileDocRef = doc(db, 'artifacts', appId, 'users', userId);
         unsubscribeOptional = onSnapshot(profileDocRef, (docSnap) => {
             const newOptional = docSnap.data()?.profile?.optionalSubject || null;
             if (newOptional !== optionalSubject) {
                 console.log(`Dashboard: Optional subject changed to ${newOptional}. Refreshing revisions.`);
                 optionalSubject = newOptional;
-                refreshRevisions(); // Refresh list if optional changes
-            } else if (optionalSubject === null) { // --- MODIFIED: Handle initial load correctly
-                 // This handles the initial load
+                refreshRevisions(); 
+            } else if (optionalSubject === null) { 
                  refreshRevisions();
             }
         }, (error) => {
@@ -691,28 +579,21 @@ document.addEventListener('DOMContentLoaded', async function() {
              reminderListEl.innerHTML = `<p class="text-red-500">Error loading user profile.</p>`;
         });
         
-        // Also refresh revisions if the user is already logged in but the optional subject was already set
         if(optionalSubject) {
             refreshRevisions();
         }
     }
 
 
-    // --- ### END OF NEW REVISION LOGIC ### ---
-
-
-    // --- Page-Specific Event Listeners ---
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         const targetId = target.id;
 
-        // --- Mentorship Modal ---
         if (target.closest('#mentorship-cta-btn, #mentorship-final-cta-btn')) {
             e.preventDefault();
             const user = authServices.getCurrentUser();
             if (!user || user.isAnonymous) {
                 showNotification("Please log in to request mentorship.", false);
-                // openAuthModal is handled by auth.js listener
             } else {
                 if(DOMElements.mentorshipForm) DOMElements.mentorshipForm.elements['mentorship-email'].value = user.email;
                 if(DOMElements.mentorshipError) DOMElements.mentorshipError.classList.add('hidden');
@@ -723,7 +604,6 @@ document.addEventListener('DOMContentLoaded', async function() {
              closeModal(DOMElements.mentorshipModal);
         }
 
-        // --- Quizzie Modal ---
         if (target.closest('#quizzie-feature-card')) { 
             if (!quizzieInitialized) {
                  showNotification("Quizzie module is not initialized.", true);
@@ -732,20 +612,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             const user = authServices.getCurrentUser();
             if (!user || user.isAnonymous) {
                  showNotification("Please log in to use the Quizzie module.", false);
-                 // openAuthModal is handled by auth.js listener
                  return;
             }
             resetQuizzieModal(); 
             openModal(DOMElements.quizzieModal);
         }
         
-        // --- Other Features ---
         if (target.closest('#current-affairs-card')) { 
             showNotification("Feature coming soon!"); 
         }
     });
 
-    // --- Mentorship Form Submit Listener ---
     DOMElements.mentorshipForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const user = authServices.getCurrentUser();
@@ -795,7 +672,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // --- PWA Install Logic (Remains page-specific) ---
     let deferredPrompt = null;
     
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -834,7 +710,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         deferredPrompt = null;
     });
 
-    // --- Other UI Listeners (Intersection Observer) ---
     try { 
         const observer = new IntersectionObserver((entries) => entries.forEach(e => e.isIntersecting && e.target.classList.add('visible')), { threshold: 0.1 }); 
         document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el)); 
@@ -844,7 +719,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.querySelectorAll('.fade-in-up').forEach(el => el.classList.add('visible')); 
     }
 
-    // --- PWA Service Worker Registration ---
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
