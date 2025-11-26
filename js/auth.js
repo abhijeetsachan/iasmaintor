@@ -1,5 +1,5 @@
 // js/auth.js
-// Robust Authentication Module with Email Verification & Admin Detection
+// Robust Authentication Module with Email Verification & UI Gates
 
 import { firebaseConfig } from './firebase-config.js';
 
@@ -23,11 +23,11 @@ import {
     serverTimestamp,
     updateDoc,
     enableIndexedDbPersistence,
-    collection,   // <--- Added
-    query,        // <--- Added
-    onSnapshot,   // <--- Added
-    orderBy,      // <--- Added
-    getDocs       // <--- Added
+    collection,
+    query,
+    onSnapshot,
+    orderBy,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // --- Module State ---
@@ -59,7 +59,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
             auth = getAuth(app);
             firebaseEnabled = true;
 
-            // Map modules for internal use - ADDED MISSING FUNCTIONS HERE
+            // Map modules for internal use
             Object.assign(firestoreModule, { 
                 getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc, 
                 enableIndexedDbPersistence, collection, query, onSnapshot, orderBy, getDocs 
@@ -93,9 +93,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
                     const userId = user?.uid;
 
                     if (verifiedUser && !verifiedUser.isAnonymous) {
-                        // Fetch Profile AND Admin Status
                         await fetchUserProfile(userId);
-                        // Pass updated firestoreModule to callback
                         if (onLogin) onLogin(verifiedUser, db, firestoreModule, authHasChecked);
                     } else {
                         currentUserProfile = null;
@@ -182,7 +180,7 @@ function updateUIForAuthStateChange(user, isAdmin = false) {
             if (!adminLink) {
                 adminLink = document.createElement('a');
                 adminLink.id = adminLinkId;
-                adminLink.href = 'admin/login.html';
+                adminLink.href = 'admin/login.html'; 
                 adminLink.className = 'block px-4 py-2 text-sm text-blue-600 font-bold hover:bg-slate-100 flex items-center';
                 adminLink.innerHTML = '<i class="fas fa-shield-alt mr-2"></i>Admin Panel';
                 
@@ -392,20 +390,24 @@ function initSharedEventListeners() {
 
     DOMElements.mobileMenuButton?.addEventListener('click', () => DOMElements.mobileMenu?.classList.toggle('hidden'));
     
-    // Delegated User Menu Click
-    DOMElements.userMenu?.addEventListener('click', (e) => { 
-        const btn = e.target.closest('#user-menu-button');
-        if (btn) {
-            DOMElements.userDropdown?.classList.toggle('hidden'); 
-        }
-    });
-    
-    document.body.addEventListener('click', (e) => { 
-        if (!e.target.closest('#user-menu')) {
-            DOMElements.userDropdown?.classList.add('hidden'); 
-        }
-    });
+    // --- USER MENU LOGIC (Fixed) ---
+    const userMenuBtn = document.getElementById('user-menu-button');
+    const userDropdown = document.getElementById('user-dropdown');
 
+    if (userMenuBtn && userDropdown) {
+        userMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent immediate close from body listener
+            userDropdown.classList.toggle('hidden');
+        });
+
+        document.body.addEventListener('click', (e) => {
+            if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                userDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    // Global Clicks (Login/Logout/Account)
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         const targetId = target.id;
