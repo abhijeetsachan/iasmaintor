@@ -1,5 +1,5 @@
 // js/auth.js
-// Robust Authentication Module with Legacy User Support
+// Robust Authentication Module with Legacy User Support & Fixed Overlay
 
 import { firebaseConfig } from './firebase-config.js';
 
@@ -68,12 +68,11 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
             // --- GLOBAL AUTH LISTENER ---
             firebaseAuthModule.onAuthStateChanged(auth, async (user) => {
                 // --- SECURITY GATE LOGIC ---
-                // We perform the "Legacy vs New" check here as well to be safe
                 let verifiedUser = user;
                 
                 if (user && !user.isAnonymous) {
                     // 1. Define the Cutoff Date (YYYY-MM-DD format)
-                    // Any account created BEFORE this date is allowed in without verification.
+                    // Accounts older than this are Legacy and bypass verification
                     const CUTOFF_DATE = new Date("2025-11-26"); 
                     
                     // 2. Check User Creation Time
@@ -130,6 +129,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
 function openModal(modal) {
     if (modal) { 
         modal.classList.remove('hidden'); 
+        // Small delay to allow display:block to apply before opacity transition
         requestAnimationFrame(() => modal.classList.add('active'));
     } 
 }
@@ -195,7 +195,7 @@ async function fetchUserProfile(userId) {
 
 function initSharedEventListeners() {
 
-    // 1. LOGIN LISTENER (UPDATED: Time-Based Logic)
+    // 1. LOGIN LISTENER (Time-Based Verification Logic)
     DOMElements.authModal.loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         const email = e.target.elements['login-email'].value;
@@ -208,15 +208,11 @@ function initSharedEventListeners() {
             const user = userCred.user;
             
             // --- TIME-BASED VERIFICATION CHECK ---
-            // Set this to TODAY'S date. 
-            // Accounts older than this = Allowed without verification
-            // Accounts newer than this = Must verify
             const CUTOFF_DATE = new Date("2025-11-26"); 
-            
             const creationTime = new Date(user.metadata.creationTime);
             const isLegacyUser = creationTime < CUTOFF_DATE;
 
-            // If user is NEW (not legacy) AND NOT VERIFIED -> Block them
+            // Block ONLY if New AND Unverified
             if (!isLegacyUser && !user.emailVerified) {
                 
                 if(errorEl) {
@@ -262,7 +258,7 @@ function initSharedEventListeners() {
         }
     });
     
-    // 2. SIGNUP LISTENER (Unchanged: Strict for new users)
+    // 2. SIGNUP LISTENER (Fixed Success Overlay)
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         const firstName = e.target.elements['signup-first-name'].value;
@@ -292,20 +288,29 @@ function initSharedEventListeners() {
                 throw new Error("Could not send verification email. Please check the email address and try again.");
             }
 
-            // C. Sign Out (New users MUST verify)
+            // C. Sign Out
             await firebaseAuthModule.signOut(auth);
 
             // D. Success Flow
             closeModal(DOMElements.authModal.modal); 
             
+            // *** FIXED OVERLAY LOGIC ***
             if (DOMElements.successOverlay) {
                 const title = DOMElements.successOverlay.querySelector('h3');
                 const desc = DOMElements.successOverlay.querySelector('p');
                 if(title) title.textContent = "Verification Link Sent!";
                 if(desc) desc.innerHTML = `We sent an email to <strong>${email}</strong>.<br>Please click the link in it to verify your account.`;
                 
-                DOMElements.successOverlay.classList.remove('hidden'); 
-                setTimeout(() => { DOMElements.successOverlay.classList.add('hidden'); }, 6000);
+                // 1. Ensure it has 'modal' class so .active works in CSS
+                DOMElements.successOverlay.classList.add('modal');
+                
+                // 2. Use openModal to trigger 'active' class and visibility
+                openModal(DOMElements.successOverlay);
+                
+                // 3. Hide after 6 seconds
+                setTimeout(() => {
+                    closeModal(DOMElements.successOverlay);
+                }, 6000);
             } else {
                 globalShowNotification("Verification email sent! Please check your inbox.", false);
             }
