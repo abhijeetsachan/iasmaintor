@@ -1,5 +1,5 @@
 // js/auth.js
-// Robust Authentication Module with Email Verification & Error Recovery
+// Robust Authentication Module with Legacy User Support
 
 import { firebaseConfig } from './firebase-config.js';
 
@@ -13,7 +13,7 @@ import {
     sendPasswordResetEmail, 
     signOut,
     sendEmailVerification,
-    deleteUser // <--- IMPERATIVE: Needed to rollback failed registrations
+    deleteUser 
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
     getFirestore,
@@ -67,12 +67,24 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
 
             // --- GLOBAL AUTH LISTENER ---
             firebaseAuthModule.onAuthStateChanged(auth, async (user) => {
-                // SECURITY GATE: Treat unverified users as logged out
+                // --- SECURITY GATE LOGIC ---
+                // We perform the "Legacy vs New" check here as well to be safe
                 let verifiedUser = user;
                 
-                if (user && !user.isAnonymous && !user.emailVerified) {
-                    console.log("Auth: User is unverified. Treating as guest.");
-                    verifiedUser = null; 
+                if (user && !user.isAnonymous) {
+                    // 1. Define the Cutoff Date (YYYY-MM-DD format)
+                    // Any account created BEFORE this date is allowed in without verification.
+                    const CUTOFF_DATE = new Date("2025-11-26"); 
+                    
+                    // 2. Check User Creation Time
+                    const creationTime = new Date(user.metadata.creationTime);
+                    const isLegacyUser = creationTime < CUTOFF_DATE;
+
+                    // 3. The Gate: Block ONLY if New AND Unverified
+                    if (!isLegacyUser && !user.emailVerified) {
+                        console.log("Auth: New unverified user detected. Treating as guest.");
+                        verifiedUser = null; 
+                    }
                 }
 
                 // Detect State Change
@@ -81,16 +93,15 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
                     const userId = user?.uid;
 
                     if (verifiedUser && !verifiedUser.isAnonymous) {
-                        // 1. Fetch Profile for "Greeting Screen"
+                        // Fetch Profile
                         await fetchUserProfile(userId);
                         if (onLogin) onLogin(verifiedUser, db, firestoreModule, authHasChecked);
                     } else {
-                        // 2. Clear Profile
+                        // Clear Profile
                         currentUserProfile = null;
                         if (onLogout) onLogout(authHasChecked);
                     }
                     
-                    // 3. Update UI (Header, Buttons, Greetings)
                     updateUIForAuthStateChange(verifiedUser);
 
                     if (!authReady) authReady = true;
@@ -119,7 +130,6 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
 function openModal(modal) {
     if (modal) { 
         modal.classList.remove('hidden'); 
-        // Small delay to allow display:block to apply before opacity transition
         requestAnimationFrame(() => modal.classList.add('active'));
     } 
 }
@@ -155,22 +165,15 @@ function updateUIForAuthStateChange(user) {
     const isAnon = user?.isAnonymous ?? false;
     const isVisibleUser = isLoggedIn && !isAnon;
 
-    // Toggle Header Elements
     DOMElements.authLinks?.classList.toggle('hidden', isVisibleUser);
     DOMElements.userMenu?.classList.toggle('hidden', !isVisibleUser);
-    
-    // Toggle Mobile Elements
     DOMElements.mobileAuthLinks?.classList.toggle('hidden', isVisibleUser);
     DOMElements.mobileUserActions?.classList.toggle('hidden', !isVisibleUser);
-    
-    // Toggle Main Dashboard (if on index page)
     DOMElements.dashboardSection?.classList.toggle('hidden', !isVisibleUser);
 
     if (isVisibleUser) {
-        // GREETING LOGIC
         let displayName = currentUserProfile?.firstName || (user.email ? user.email.split('@')[0] : 'User');
         displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-        
         if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
     } else {
         if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = '';
@@ -183,7 +186,6 @@ async function fetchUserProfile(userId) {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             currentUserProfile = userDoc.data().profile;
-            // Re-run UI update to show actual name instead of email
             updateUIForAuthStateChange(auth.currentUser);
         }
     } catch (error) { console.error("Profile fetch error:", error); }
@@ -193,7 +195,7 @@ async function fetchUserProfile(userId) {
 
 function initSharedEventListeners() {
 
-    // 1. LOGIN LISTENER (Fix: Added Resend Button Logic)
+    // 1. LOGIN LISTENER (UPDATED: Time-Based Logic)
     DOMElements.authModal.loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         const email = e.target.elements['login-email'].value;
@@ -205,10 +207,18 @@ function initSharedEventListeners() {
             const userCred = await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
             const user = userCred.user;
             
-            // --- VERIFICATION CHECK ---
-            if (!user.emailVerified) {
+            // --- TIME-BASED VERIFICATION CHECK ---
+            // Set this to TODAY'S date. 
+            // Accounts older than this = Allowed without verification
+            // Accounts newer than this = Must verify
+            const CUTOFF_DATE = new Date("2025-11-26"); 
+            
+            const creationTime = new Date(user.metadata.creationTime);
+            const isLegacyUser = creationTime < CUTOFF_DATE;
+
+            // If user is NEW (not legacy) AND NOT VERIFIED -> Block them
+            if (!isLegacyUser && !user.emailVerified) {
                 
-                // UI: Allow user to resend verification if they are stuck
                 if(errorEl) {
                     errorEl.innerHTML = `
                         <strong>Email not verified.</strong><br>
@@ -217,7 +227,6 @@ function initSharedEventListeners() {
                     `;
                     errorEl.classList.remove('hidden');
                     
-                    // Attach listener to the dynamic button
                     const resendBtn = document.getElementById('resend-verification-btn');
                     if(resendBtn) {
                         resendBtn.onclick = async (evt) => {
@@ -235,7 +244,7 @@ function initSharedEventListeners() {
                     }
                 }
                 
-                await firebaseAuthModule.signOut(auth); // Log them out immediately
+                await firebaseAuthModule.signOut(auth); // Log them out
                 return;
             }
 
@@ -253,7 +262,7 @@ function initSharedEventListeners() {
         }
     });
     
-    // 2. SIGNUP LISTENER (Fix: Added Auto-Rollback)
+    // 2. SIGNUP LISTENER (Unchanged: Strict for new users)
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         const firstName = e.target.elements['signup-first-name'].value;
@@ -263,7 +272,6 @@ function initSharedEventListeners() {
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
         
-        // Show loading state
         const submitBtn = e.target.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn ? submitBtn.innerText : 'Sign Up';
         if(submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'Creating Account...'; }
@@ -271,28 +279,25 @@ function initSharedEventListeners() {
         let createdUser = null;
 
         try {
-            // A. Create User in Authentication
+            // A. Create User
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             createdUser = userCred.user;
             
-            // B. Send Verification Email IMMEDIATELY
+            // B. Send Verification Email
             try {
                 await firebaseAuthModule.sendEmailVerification(createdUser);
             } catch (emailError) {
                 console.error("Verification email failed. Rolling back user creation.", emailError);
-                // *** CRITICAL FIX: DELETE USER IF EMAIL FAILS ***
-                // This prevents the "email already in use" error when they try again.
                 await firebaseAuthModule.deleteUser(createdUser);
                 throw new Error("Could not send verification email. Please check the email address and try again.");
             }
 
-            // C. Sign Out IMMEDIATELY (to enforce the "must verify" rule)
+            // C. Sign Out (New users MUST verify)
             await firebaseAuthModule.signOut(auth);
 
-            // D. Close the Auth Modal
+            // D. Success Flow
             closeModal(DOMElements.authModal.modal); 
             
-            // E. Show the "Verification Screen" (Success Overlay)
             if (DOMElements.successOverlay) {
                 const title = DOMElements.successOverlay.querySelector('h3');
                 const desc = DOMElements.successOverlay.querySelector('p');
@@ -300,25 +305,19 @@ function initSharedEventListeners() {
                 if(desc) desc.innerHTML = `We sent an email to <strong>${email}</strong>.<br>Please click the link in it to verify your account.`;
                 
                 DOMElements.successOverlay.classList.remove('hidden'); 
-                
-                setTimeout(() => {
-                    DOMElements.successOverlay.classList.add('hidden');
-                }, 6000);
+                setTimeout(() => { DOMElements.successOverlay.classList.add('hidden'); }, 6000);
             } else {
                 globalShowNotification("Verification email sent! Please check your inbox.", false);
             }
 
-            // F. Create Database Profile (Fire and Forget)
-            // We do this after success logic so UI updates fast
+            // E. Create Profile
             try {
                 const { doc, setDoc, serverTimestamp } = firestoreModule; 
                 const userDocRef = doc(db, 'artifacts', globalAppId, 'users', createdUser.uid);
                 await setDoc(userDocRef, { 
                     profile: { firstName, lastName, email, createdAt: serverTimestamp(), optionalSubject: null } 
                 }, { merge: true });
-            } catch (dbErr) {
-                console.error("Profile creation failed (User still created):", dbErr);
-            }
+            } catch (dbErr) { console.error("Profile creation failed (User still created):", dbErr); }
 
         } catch(error){ 
             console.error("Signup error:", error); 
@@ -330,7 +329,6 @@ function initSharedEventListeners() {
                 errorEl.classList.remove('hidden');
             }
         } finally {
-            // Restore button state
             if(submitBtn) { submitBtn.disabled = false; submitBtn.innerText = originalBtnText; }
         }
     });
@@ -370,7 +368,7 @@ function initSharedEventListeners() {
     DOMElements.userMenu?.addEventListener('click', (e) => { if (e.target.closest('#user-menu-button')) DOMElements.userDropdown?.classList.toggle('hidden'); });
     document.body.addEventListener('click', (e) => { if (!e.target.closest('#user-menu')) DOMElements.userDropdown?.classList.add('hidden'); });
 
-    // Global Clicks (Login/Logout/Account)
+    // Global Clicks
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         const targetId = target.id;
