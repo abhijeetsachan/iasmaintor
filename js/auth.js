@@ -1,5 +1,5 @@
 // js/auth.js
-// Robust Authentication Module with Email Verification & UI Gates
+// Robust Authentication Module with Email Verification & Error Recovery
 
 import { firebaseConfig } from './firebase-config.js';
 
@@ -13,7 +13,7 @@ import {
     sendPasswordResetEmail, 
     signOut,
     sendEmailVerification,
-    deleteUser // <--- NEW IMPORT
+    deleteUser // <--- IMPERATIVE: Needed to rollback failed registrations
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
     getFirestore,
@@ -119,6 +119,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
 function openModal(modal) {
     if (modal) { 
         modal.classList.remove('hidden'); 
+        // Small delay to allow display:block to apply before opacity transition
         requestAnimationFrame(() => modal.classList.add('active'));
     } 
 }
@@ -166,8 +167,10 @@ function updateUIForAuthStateChange(user) {
     DOMElements.dashboardSection?.classList.toggle('hidden', !isVisibleUser);
 
     if (isVisibleUser) {
+        // GREETING LOGIC
         let displayName = currentUserProfile?.firstName || (user.email ? user.email.split('@')[0] : 'User');
         displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+        
         if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
     } else {
         if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = '';
@@ -180,6 +183,7 @@ async function fetchUserProfile(userId) {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             currentUserProfile = userDoc.data().profile;
+            // Re-run UI update to show actual name instead of email
             updateUIForAuthStateChange(auth.currentUser);
         }
     } catch (error) { console.error("Profile fetch error:", error); }
@@ -189,7 +193,7 @@ async function fetchUserProfile(userId) {
 
 function initSharedEventListeners() {
 
-    // 1. LOGIN LISTENER (FIXED: Adds Resend Button)
+    // 1. LOGIN LISTENER (Fix: Added Resend Button Logic)
     DOMElements.authModal.loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         const email = e.target.elements['login-email'].value;
@@ -203,30 +207,35 @@ function initSharedEventListeners() {
             
             // --- VERIFICATION CHECK ---
             if (!user.emailVerified) {
-                // UI: Show specific error with Resend button
+                
+                // UI: Allow user to resend verification if they are stuck
                 if(errorEl) {
                     errorEl.innerHTML = `
                         <strong>Email not verified.</strong><br>
-                        Check your inbox. 
+                        Please check your inbox. 
                         <button id="resend-verification-btn" class="underline text-red-800 hover:text-red-600 font-bold ml-1">Resend Link</button>
                     `;
                     errorEl.classList.remove('hidden');
                     
-                    // Attach listener to the new dynamic button
+                    // Attach listener to the dynamic button
                     const resendBtn = document.getElementById('resend-verification-btn');
-                    resendBtn.onclick = async () => {
-                        try {
-                            await firebaseAuthModule.sendEmailVerification(user);
-                            resendBtn.innerText = "Sent!";
-                            resendBtn.disabled = true;
-                            globalShowNotification("Verification email resent.");
-                        } catch (err) {
-                            console.error(err);
-                            globalShowNotification("Too many requests. Try again later.", true);
-                        }
-                    };
+                    if(resendBtn) {
+                        resendBtn.onclick = async (evt) => {
+                            evt.preventDefault();
+                            try {
+                                await firebaseAuthModule.sendEmailVerification(user);
+                                resendBtn.innerText = "Sent!";
+                                resendBtn.disabled = true;
+                                globalShowNotification("Verification email resent.");
+                            } catch (err) {
+                                console.error(err);
+                                globalShowNotification("Too many requests. Try again later.", true);
+                            }
+                        };
+                    }
                 }
-                await firebaseAuthModule.signOut(auth); // Log them out
+                
+                await firebaseAuthModule.signOut(auth); // Log them out immediately
                 return;
             }
 
@@ -244,7 +253,7 @@ function initSharedEventListeners() {
         }
     });
     
-    // 2. SIGNUP LISTENER (FIXED: Rollback on Email Fail)
+    // 2. SIGNUP LISTENER (Fix: Added Auto-Rollback)
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         const firstName = e.target.elements['signup-first-name'].value;
@@ -254,6 +263,7 @@ function initSharedEventListeners() {
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
         
+        // Show loading state
         const submitBtn = e.target.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn ? submitBtn.innerText : 'Sign Up';
         if(submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'Creating Account...'; }
@@ -261,26 +271,28 @@ function initSharedEventListeners() {
         let createdUser = null;
 
         try {
-            // A. Create User
+            // A. Create User in Authentication
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             createdUser = userCred.user;
             
-            // B. Send Verification Email
+            // B. Send Verification Email IMMEDIATELY
             try {
                 await firebaseAuthModule.sendEmailVerification(createdUser);
             } catch (emailError) {
-                // CRITICAL FIX: If email sending fails, DELETE the user so they aren't stuck
                 console.error("Verification email failed. Rolling back user creation.", emailError);
+                // *** CRITICAL FIX: DELETE USER IF EMAIL FAILS ***
+                // This prevents the "email already in use" error when they try again.
                 await firebaseAuthModule.deleteUser(createdUser);
                 throw new Error("Could not send verification email. Please check the email address and try again.");
             }
 
-            // C. Sign Out
+            // C. Sign Out IMMEDIATELY (to enforce the "must verify" rule)
             await firebaseAuthModule.signOut(auth);
 
-            // D. Success Flow
+            // D. Close the Auth Modal
             closeModal(DOMElements.authModal.modal); 
             
+            // E. Show the "Verification Screen" (Success Overlay)
             if (DOMElements.successOverlay) {
                 const title = DOMElements.successOverlay.querySelector('h3');
                 const desc = DOMElements.successOverlay.querySelector('p');
@@ -288,20 +300,25 @@ function initSharedEventListeners() {
                 if(desc) desc.innerHTML = `We sent an email to <strong>${email}</strong>.<br>Please click the link in it to verify your account.`;
                 
                 DOMElements.successOverlay.classList.remove('hidden'); 
-                setTimeout(() => { DOMElements.successOverlay.classList.add('hidden'); }, 6000);
+                
+                setTimeout(() => {
+                    DOMElements.successOverlay.classList.add('hidden');
+                }, 6000);
             } else {
                 globalShowNotification("Verification email sent! Please check your inbox.", false);
             }
 
-            // F. Create Profile (Fire and Forget)
-            // Only do this if we didn't rollback
+            // F. Create Database Profile (Fire and Forget)
+            // We do this after success logic so UI updates fast
             try {
                 const { doc, setDoc, serverTimestamp } = firestoreModule; 
                 const userDocRef = doc(db, 'artifacts', globalAppId, 'users', createdUser.uid);
                 await setDoc(userDocRef, { 
                     profile: { firstName, lastName, email, createdAt: serverTimestamp(), optionalSubject: null } 
                 }, { merge: true });
-            } catch (dbErr) { console.error("Profile creation failed (User still created):", dbErr); }
+            } catch (dbErr) {
+                console.error("Profile creation failed (User still created):", dbErr);
+            }
 
         } catch(error){ 
             console.error("Signup error:", error); 
@@ -313,11 +330,12 @@ function initSharedEventListeners() {
                 errorEl.classList.remove('hidden');
             }
         } finally {
+            // Restore button state
             if(submitBtn) { submitBtn.disabled = false; submitBtn.innerText = originalBtnText; }
         }
     });
 
-    // 3. OTHER LISTENERS
+    // 3. OTHER LISTENERS (Unchanged)
     
     // Account Update
     DOMElements.accountModal.form?.addEventListener('submit', async (e) => { 
