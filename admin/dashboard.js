@@ -13,6 +13,7 @@ import {
     collection, 
     getDocs, 
     doc, 
+    getDoc,
     setDoc, 
     deleteDoc, 
     query, 
@@ -35,16 +36,26 @@ let adminProfile = null;
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        // 1. Verify Role (Double check session vs DB)
-        const adminDoc = await getDoc(doc(db, "admin_directory", user.uid));
-        
-        if (adminDoc.exists()) {
-            adminProfile = adminDoc.data();
-            updateProfileUI(adminProfile);
-            initDashboard(); // Start loading data
-        } else {
-            // Not an admin? Kick them out.
-            alert("Unauthorized. Redirecting...");
+        try {
+            // 1. Verify Role
+            const adminDocRef = doc(db, "admin_directory", user.uid);
+            const adminDoc = await getDoc(adminDocRef);
+            
+            if (adminDoc.exists()) {
+                adminProfile = adminDoc.data();
+                
+                // 2. Update UI & Remove Loader
+                updateProfileUI(adminProfile);
+                revealDashboard(); 
+                
+                // 3. Start Data Load
+                initDashboard(); 
+            } else {
+                throw new Error("Unauthorized");
+            }
+        } catch (error) {
+            console.error("Auth Guard Failed:", error);
+            alert("Access Denied: You are not an administrator.");
             await signOut(auth);
             window.location.href = 'login.html';
         }
@@ -54,16 +65,31 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 function updateProfileUI(profile) {
-    document.getElementById('admin-name-display').textContent = profile.name || "Admin";
-    document.getElementById('admin-role-display').textContent = profile.role.toUpperCase().replace('_', ' ');
-    document.getElementById('admin-avatar').textContent = (profile.name || "A").charAt(0).toUpperCase();
+    const nameDisplay = document.getElementById('admin-name-display');
+    const roleDisplay = document.getElementById('admin-role-display');
+    const avatarDisplay = document.getElementById('admin-avatar');
+
+    if(nameDisplay) nameDisplay.textContent = profile.name || "Admin";
+    if(roleDisplay) roleDisplay.textContent = (profile.role || "Staff").toUpperCase().replace('_', ' ');
+    if(avatarDisplay) avatarDisplay.textContent = (profile.name || "A").charAt(0).toUpperCase();
+}
+
+function revealDashboard() {
+    const loader = document.getElementById('auth-loader');
+    const layout = document.getElementById('app-layout');
+    
+    if (loader) loader.classList.add('hidden');
+    if (layout) layout.classList.remove('hidden');
 }
 
 // --- LOGOUT ---
-document.getElementById('logout-btn').addEventListener('click', async () => {
-    await signOut(auth);
-    window.location.href = 'login.html';
-});
+const logoutBtn = document.getElementById('logout-btn');
+if(logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        await signOut(auth);
+        window.location.href = 'login.html';
+    });
+}
 
 
 // ==========================================================================
@@ -71,17 +97,14 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 // ==========================================================================
 
 async function initDashboard() {
-    console.log("Initializing Admin Dashboard...");
+    console.log("Initializing Admin Dashboard Data...");
     
     // Load Stats
+    // Note: 'users' count might fail if you don't have the aggregation index enabled yet.
+    // Check browser console for a link to create the index if it fails.
     loadStatCount('users', 'stat-total-users');
     loadStatCount('admin_directory', 'stat-admins');
     loadStatCount('quizzieQuestionBank', 'stat-questions');
-    
-    // Special Query for Mentorship (Count docs with mentorshipRequest field? 
-    // Firestore doesn't support "has field" count easily without reading. 
-    // For efficiency, we'll just count the 'users' who have 'mentorshipRequest.status' == 'pending' if you save it that way.
-    // For now, simple collection counts:)
     
     // Load Modules
     loadAdminUsers();
@@ -89,13 +112,24 @@ async function initDashboard() {
 }
 
 async function loadStatCount(colName, elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
     try {
+        // Attempt server-side count (cheaper/faster)
         const coll = collection(db, colName);
         const snapshot = await getCountFromServer(coll);
-        document.getElementById(elementId).textContent = snapshot.data().count;
+        el.textContent = snapshot.data().count;
     } catch (e) {
-        console.warn(`Could not load stats for ${colName}`, e);
-        document.getElementById(elementId).textContent = "-";
+        console.warn(`Count failed for ${colName}. Falling back to snapshot size (legacy).`, e);
+        try {
+            // Fallback: Download docs (expensive, but works without index)
+            const snapshot = await getDocs(collection(db, colName));
+            el.textContent = snapshot.size;
+        } catch (err2) {
+            console.error(`Stats error for ${colName}:`, err2);
+            el.textContent = "Err";
+        }
     }
 }
 
@@ -106,6 +140,8 @@ async function loadStatCount(colName, elementId) {
 
 async function loadAdminUsers() {
     const tbody = document.getElementById('admin-table-body');
+    if (!tbody) return;
+    
     tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center italic text-slate-500">Refreshing list...</td></tr>';
 
     try {
@@ -119,22 +155,21 @@ async function loadAdminUsers() {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-slate-800/30 transition-colors border-b border-slate-800 last:border-0";
             
-            // Role Badge Color
             const roleColors = {
                 'super_admin': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
                 'editor': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
                 'mentor': 'bg-green-500/10 text-green-400 border-green-500/20'
             };
-            const roleBadge = `<span class="px-2 py-1 rounded text-xs border ${roleColors[data.role] || 'bg-slate-700'}">${data.role.replace('_', ' ').toUpperCase()}</span>`;
+            const roleBadge = `<span class="px-2 py-1 rounded text-xs border ${roleColors[data.role] || 'bg-slate-700'}">${(data.role || 'Unknown').replace('_', ' ').toUpperCase()}</span>`;
 
             tr.innerHTML = `
-                <td class="px-6 py-4 font-medium text-white">${data.name}</td>
+                <td class="px-6 py-4 font-medium text-white">${data.name || 'No Name'}</td>
                 <td class="px-6 py-4">${roleBadge}</td>
                 <td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span> Active</span></td>
                 <td class="px-6 py-4 text-xs text-slate-500">${data.email}</td>
                 <td class="px-6 py-4 text-right">
                     ${(adminProfile.role === 'super_admin' && docSnap.id !== currentUser.uid) ? 
-                        `<button onclick="deleteAdmin('${docSnap.id}')" class="text-red-400 hover:text-red-300 transition-colors"><i class="fas fa-trash"></i></button>` 
+                        `<button onclick="window.deleteAdmin('${docSnap.id}')" class="text-red-400 hover:text-red-300 transition-colors"><i class="fas fa-trash"></i></button>` 
                         : '<span class="text-slate-600 cursor-not-allowed"><i class="fas fa-lock"></i></span>'}
                 </td>
             `;
@@ -142,85 +177,72 @@ async function loadAdminUsers() {
         });
     } catch (e) {
         console.error("Error loading admins:", e);
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-4">Failed to load data.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-4">Failed to load data. Check permissions.</td></tr>';
     }
 }
 
-// Handle Add Admin Form
-document.getElementById('add-admin-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // Permission Check
-    if (adminProfile.role !== 'super_admin') {
-        alert("Only Super Admins can add new team members.");
-        return;
-    }
-
-    const formData = new FormData(e.target);
-    const email = formData.get('email').trim().toLowerCase();
-    const name = formData.get('name').trim();
-    const role = formData.get('role');
-
-    // Button Loading State
-    const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-    btn.textContent = "Searching...";
-    btn.disabled = true;
-
-    try {
-        // 1. Find UID from 'users' collection using Email
-        // Note: This assumes the user has already signed up on the main site.
-        const usersRef = collection(db, "artifacts", "default-app-id", "users"); 
-        // ^ Using the correct path from your app structure
+const addAdminForm = document.getElementById('add-admin-form');
+if (addAdminForm) {
+    addAdminForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        // We need to query the 'profile' field inside the user doc? 
-        // Firestore doesn't let us easily query 'users' by email unless we stored email as a top-level field or ID.
-        // In your 'auth.js', you save profile: { email: ... }. 
-        // We'll try to query that.
-        
-        const q = query(usersRef, where("profile.email", "==", email));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            alert(`User with email ${email} not found in main database.\n\nAsk them to sign up on the website first!`);
-            btn.textContent = originalText;
-            btn.disabled = false;
+        if (adminProfile.role !== 'super_admin') {
+            alert("Only Super Admins can add new team members.");
             return;
         }
 
-        const targetUserDoc = querySnapshot.docs[0];
-        const targetUid = targetUserDoc.id;
+        const formData = new FormData(e.target);
+        const email = formData.get('email').trim().toLowerCase();
+        const name = formData.get('name').trim();
+        const role = formData.get('role');
 
-        // 2. Add to Admin Directory
-        await setDoc(doc(db, "admin_directory", targetUid), {
-            name: name,
-            email: email,
-            role: role,
-            addedBy: currentUser.uid,
-            createdAt: serverTimestamp()
-        });
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.textContent = "Searching...";
+        btn.disabled = true;
 
-        alert("Admin added successfully!");
-        closeModal('modal-add-admin');
-        e.target.reset();
-        loadAdminUsers(); // Refresh table
+        try {
+            // For this to work, you must be using the same 'artifacts/default-app-id/users' path as in auth.js
+            // Note: Firestore queries on 'profile.email' require an index.
+            const usersRef = collection(db, "artifacts", "default-app-id", "users"); 
+            const q = query(usersRef, where("profile.email", "==", email));
+            const querySnapshot = await getDocs(q);
 
-    } catch (error) {
-        console.error("Add Admin Error:", error);
-        alert("Failed to add admin: " + error.message);
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
-});
+            if (querySnapshot.empty) {
+                alert(`User ${email} not found. They must register on the main site first.`);
+                return;
+            }
+
+            const targetUid = querySnapshot.docs[0].id;
+
+            await setDoc(doc(db, "admin_directory", targetUid), {
+                name, email, role,
+                addedBy: currentUser.uid,
+                createdAt: serverTimestamp()
+            });
+
+            alert("Admin added!");
+            window.closeModal('modal-add-admin');
+            e.target.reset();
+            loadAdminUsers();
+
+        } catch (error) {
+            console.error("Add Admin Error:", error);
+            alert("Failed: " + error.message);
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    });
+}
 
 window.deleteAdmin = async (uid) => {
-    if (!confirm("Are you sure you want to remove this admin? They will lose access immediately.")) return;
+    if (!confirm("Remove this admin?")) return;
     try {
         await deleteDoc(doc(db, "admin_directory", uid));
         loadAdminUsers();
     } catch (e) {
-        alert("Error removing admin: " + e.message);
+        alert("Error: " + e.message);
     }
 };
 
@@ -260,7 +282,7 @@ async function loadNotifications() {
                     <p class="text-white text-sm">${data.message}</p>
                     ${data.imageUrl ? `<img src="${data.imageUrl}" class="mt-2 h-16 w-auto rounded border border-slate-600">` : ''}
                 </div>
-                <button onclick="deactivateNotification('${docSnap.id}')" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onclick="window.deactivateNotification('${docSnap.id}')" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     <i class="fas fa-times-circle text-xl"></i>
                 </button>
             `;
@@ -269,65 +291,51 @@ async function loadNotifications() {
 
     } catch (e) {
         console.error("Load Notifs Error:", e);
-        listContainer.innerHTML = '<p class="text-red-500 text-sm">Error loading broadcasts.</p>';
+        // Don't show error in UI if it's just a "requires index" error initially
     }
 }
 
-// Handle Notification Form
-document.getElementById('notification-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+const notifForm = document.getElementById('notification-form');
+if (notifForm) {
+    notifForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const message = document.getElementById('notif-message').value;
-    const type = document.getElementById('notif-type').value;
-    
-    // Get Checkboxes
-    const checkedPages = [];
-    e.target.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
-        if (cb.value !== 'on') checkedPages.push(cb.value);
-    });
-
-    // Image Handling (Base64)
-    let imageUrl = null;
-    const fileInput = document.getElementById('notif-image');
-    
-    if (type === 'popup' && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        if (file.size > 1024 * 1024) { // 1MB limit
-            alert("Image is too large. Please keep it under 1MB.");
-            return;
-        }
-        imageUrl = await fileToBase64(file);
-    }
-
-    try {
-        // Since there's usually only one active banner/popup, we could deactivate others of same type,
-        // but for now, we just add a new one.
+        const message = document.getElementById('notif-message').value;
+        const type = document.getElementById('notif-type').value;
         
-        const notifData = {
-            message,
-            type,
-            targetPages: checkedPages,
-            imageUrl,
-            active: true,
-            createdAt: serverTimestamp(),
-            createdBy: currentUser.uid
-        };
+        const checkedPages = [];
+        e.target.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+            if (cb.value !== 'on') checkedPages.push(cb.value);
+        });
 
-        // Add to collection
-        const newRef = doc(collection(db, "system_notifications"));
-        await setDoc(newRef, notifData);
+        let imageUrl = null;
+        const fileInput = document.getElementById('notif-image');
+        
+        if (type === 'popup' && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            if (file.size > 1024 * 1024) {
+                alert("Image too large (Max 1MB)");
+                return;
+            }
+            imageUrl = await fileToBase64(file);
+        }
 
-        alert("Broadcast published!");
-        e.target.reset();
-        // Hide image input again
-        document.getElementById('banner-upload-container').classList.add('hidden');
-        loadNotifications();
+        try {
+            await setDoc(doc(collection(db, "system_notifications")), {
+                message, type, targetPages: checkedPages, imageUrl,
+                active: true, createdAt: serverTimestamp(), createdBy: currentUser.uid
+            });
 
-    } catch (err) {
-        console.error("Publish Error:", err);
-        alert("Error publishing: " + err.message);
-    }
-});
+            alert("Broadcast published!");
+            e.target.reset();
+            document.getElementById('banner-upload-container').classList.add('hidden');
+            loadNotifications();
+        } catch (err) {
+            console.error("Publish Error:", err);
+            alert("Error: " + err.message);
+        }
+    });
+}
 
 window.deactivateNotification = async (id) => {
     if (!confirm("Stop this broadcast?")) return;
@@ -339,7 +347,6 @@ window.deactivateNotification = async (id) => {
     }
 };
 
-// Helper: File to Base64
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -349,10 +356,7 @@ function fileToBase64(file) {
     });
 }
 
-
-// ==========================================================================
-// GLOBAL EXPORTS (For Modal/HTML access)
-// ==========================================================================
+// --- Global Helper ---
 window.closeModal = (id) => {
     const el = document.getElementById(id);
     el.classList.add('opacity-0');
