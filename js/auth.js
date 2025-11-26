@@ -1,5 +1,5 @@
 // js/auth.js
-// Robust Authentication Module with Legacy User Support & Fixed Overlay
+// Robust Authentication Module with Email Verification & Admin Detection
 
 import { firebaseConfig } from './firebase-config.js';
 
@@ -23,6 +23,11 @@ import {
     serverTimestamp,
     updateDoc,
     enableIndexedDbPersistence,
+    collection,   // <--- Added
+    query,        // <--- Added
+    onSnapshot,   // <--- Added
+    orderBy,      // <--- Added
+    getDocs       // <--- Added
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // --- Module State ---
@@ -54,55 +59,50 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
             auth = getAuth(app);
             firebaseEnabled = true;
 
-            // Map modules for internal use
-            Object.assign(firestoreModule, { getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc, enableIndexedDbPersistence });
+            // Map modules for internal use - ADDED MISSING FUNCTIONS HERE
+            Object.assign(firestoreModule, { 
+                getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc, 
+                enableIndexedDbPersistence, collection, query, onSnapshot, orderBy, getDocs 
+            });
+            
             Object.assign(firebaseAuthModule, { 
                 getAuth, onAuthStateChanged, createUserWithEmailAndPassword, 
                 signInWithEmailAndPassword, sendPasswordResetEmail, signOut, 
                 sendEmailVerification, deleteUser 
             });
 
-            // Enable Offline Persistence
             try { await firestoreModule.enableIndexedDbPersistence(db); } catch (err) { /* Ignore persistence errors */ }
 
             // --- GLOBAL AUTH LISTENER ---
             firebaseAuthModule.onAuthStateChanged(auth, async (user) => {
-                // --- SECURITY GATE LOGIC ---
                 let verifiedUser = user;
                 
                 if (user && !user.isAnonymous) {
-                    // 1. Define the Cutoff Date (YYYY-MM-DD format)
-                    // Accounts older than this are Legacy and bypass verification
                     const CUTOFF_DATE = new Date("2025-11-26"); 
-                    
-                    // 2. Check User Creation Time
                     const creationTime = new Date(user.metadata.creationTime);
                     const isLegacyUser = creationTime < CUTOFF_DATE;
 
-                    // 3. The Gate: Block ONLY if New AND Unverified
                     if (!isLegacyUser && !user.emailVerified) {
-                        console.log("Auth: New unverified user detected. Treating as guest.");
+                        console.log("Auth: New unverified user. Treating as guest.");
                         verifiedUser = null; 
                     }
                 }
 
-                // Detect State Change
                 if (user?.uid !== currentUser?.uid || !authHasChecked) {
-                    currentUser = verifiedUser; // Update internal state
+                    currentUser = verifiedUser;
                     const userId = user?.uid;
 
                     if (verifiedUser && !verifiedUser.isAnonymous) {
-                        // Fetch Profile
+                        // Fetch Profile AND Admin Status
                         await fetchUserProfile(userId);
+                        // Pass updated firestoreModule to callback
                         if (onLogin) onLogin(verifiedUser, db, firestoreModule, authHasChecked);
                     } else {
-                        // Clear Profile
                         currentUserProfile = null;
                         if (onLogout) onLogout(authHasChecked);
+                        updateUIForAuthStateChange(null, false); 
                     }
                     
-                    updateUIForAuthStateChange(verifiedUser);
-
                     if (!authReady) authReady = true;
                     authHasChecked = true;
                 }
@@ -129,7 +129,6 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
 function openModal(modal) {
     if (modal) { 
         modal.classList.remove('hidden'); 
-        // Small delay to allow display:block to apply before opacity transition
         requestAnimationFrame(() => modal.classList.add('active'));
     } 
 }
@@ -148,19 +147,17 @@ function openAuthModal(mode = 'login') {
     }
     const { modal, loginForm, signupForm, error, forgotPasswordView } = DOMElements.authModal;
     if (!modal) return;
-    
     if(error) error.classList.add('hidden');
     if(loginForm) loginForm.reset();
     if(signupForm) signupForm.reset();
     if(forgotPasswordView) forgotPasswordView.classList.add('hidden');
-    
     document.getElementById('login-view')?.classList.toggle('hidden', mode !== 'login');
     document.getElementById('signup-view')?.classList.toggle('hidden', mode !== 'signup');
     openModal(modal);
 }
 
-// --- GREETINGS SCREEN & HEADER LOGIC ---
-function updateUIForAuthStateChange(user) {
+// --- UI UPDATE LOGIC ---
+function updateUIForAuthStateChange(user, isAdmin = false) {
     const isLoggedIn = !!user;
     const isAnon = user?.isAnonymous ?? false;
     const isVisibleUser = isLoggedIn && !isAnon;
@@ -175,6 +172,48 @@ function updateUIForAuthStateChange(user) {
         let displayName = currentUserProfile?.firstName || (user.email ? user.email.split('@')[0] : 'User');
         displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
         if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
+
+        // --- INJECT ADMIN LINK (Dropdown) ---
+        const dropdown = DOMElements.userDropdown;
+        const adminLinkId = 'dropdown-admin-link';
+        let adminLink = document.getElementById(adminLinkId);
+
+        if (isAdmin && dropdown) {
+            if (!adminLink) {
+                adminLink = document.createElement('a');
+                adminLink.id = adminLinkId;
+                adminLink.href = 'admin/login.html';
+                adminLink.className = 'block px-4 py-2 text-sm text-blue-600 font-bold hover:bg-slate-100 flex items-center';
+                adminLink.innerHTML = '<i class="fas fa-shield-alt mr-2"></i>Admin Panel';
+                
+                const divider = dropdown.querySelector('.border-t');
+                if(divider) dropdown.insertBefore(adminLink, divider);
+                else dropdown.prepend(adminLink);
+            }
+            adminLink.style.display = 'block';
+        } else if (adminLink) {
+            adminLink.style.display = 'none';
+        }
+
+        // --- INJECT ADMIN LINK (Mobile) ---
+        const mobileMenu = DOMElements.mobileUserActions;
+        const mobileAdminId = 'mobile-admin-link';
+        let mobileAdmin = document.getElementById(mobileAdminId);
+        
+        if(isAdmin && mobileMenu) {
+             if (!mobileAdmin) {
+                mobileAdmin = document.createElement('a');
+                mobileAdmin.id = mobileAdminId;
+                mobileAdmin.href = 'admin/login.html';
+                mobileAdmin.className = 'block py-2 text-blue-600 font-bold flex items-center';
+                mobileAdmin.innerHTML = '<i class="fas fa-shield-alt mr-2"></i>Admin Panel';
+                mobileMenu.prepend(mobileAdmin);
+             }
+             mobileAdmin.style.display = 'flex';
+        } else if (mobileAdmin) {
+            mobileAdmin.style.display = 'none';
+        }
+
     } else {
         if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = '';
     }
@@ -186,8 +225,14 @@ async function fetchUserProfile(userId) {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             currentUserProfile = userDoc.data().profile;
-            updateUIForAuthStateChange(auth.currentUser);
         }
+
+        const adminDocRef = doc(db, 'admin_directory', userId);
+        const adminDoc = await getDoc(adminDocRef);
+        const isAdmin = adminDoc.exists();
+
+        updateUIForAuthStateChange(auth.currentUser, isAdmin);
+
     } catch (error) { console.error("Profile fetch error:", error); }
 }
 
@@ -195,7 +240,7 @@ async function fetchUserProfile(userId) {
 
 function initSharedEventListeners() {
 
-    // 1. LOGIN LISTENER (Time-Based Verification Logic)
+    // 1. LOGIN LISTENER
     DOMElements.authModal.loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         const email = e.target.elements['login-email'].value;
@@ -207,14 +252,11 @@ function initSharedEventListeners() {
             const userCred = await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
             const user = userCred.user;
             
-            // --- TIME-BASED VERIFICATION CHECK ---
             const CUTOFF_DATE = new Date("2025-11-26"); 
             const creationTime = new Date(user.metadata.creationTime);
             const isLegacyUser = creationTime < CUTOFF_DATE;
 
-            // Block ONLY if New AND Unverified
             if (!isLegacyUser && !user.emailVerified) {
-                
                 if(errorEl) {
                     errorEl.innerHTML = `
                         <strong>Email not verified.</strong><br>
@@ -239,13 +281,12 @@ function initSharedEventListeners() {
                         };
                     }
                 }
-                
-                await firebaseAuthModule.signOut(auth); // Log them out
+                await firebaseAuthModule.signOut(auth); 
                 return;
             }
 
             closeModal(DOMElements.authModal.modal); 
-            globalShowNotification("Welcome back! Logged in successfully.");
+            globalShowNotification("Welcome back!");
         } catch(error){ 
              console.error("Login error:", error.code); 
              if(errorEl){
@@ -258,7 +299,7 @@ function initSharedEventListeners() {
         }
     });
     
-    // 2. SIGNUP LISTENER (Fixed Success Overlay)
+    // 2. SIGNUP LISTENER
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         const firstName = e.target.elements['signup-first-name'].value;
@@ -275,61 +316,45 @@ function initSharedEventListeners() {
         let createdUser = null;
 
         try {
-            // A. Create User
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             createdUser = userCred.user;
             
-            // B. Send Verification Email
             try {
                 await firebaseAuthModule.sendEmailVerification(createdUser);
             } catch (emailError) {
-                console.error("Verification email failed. Rolling back user creation.", emailError);
+                console.error("Verification email failed.", emailError);
                 await firebaseAuthModule.deleteUser(createdUser);
-                throw new Error("Could not send verification email. Please check the email address and try again.");
+                throw new Error("Could not send verification email.");
             }
 
-            // C. Sign Out
             await firebaseAuthModule.signOut(auth);
 
-            // D. Success Flow
             closeModal(DOMElements.authModal.modal); 
             
-            // *** FIXED OVERLAY LOGIC ***
             if (DOMElements.successOverlay) {
                 const title = DOMElements.successOverlay.querySelector('h3');
                 const desc = DOMElements.successOverlay.querySelector('p');
                 if(title) title.textContent = "Verification Link Sent!";
                 if(desc) desc.innerHTML = `We sent an email to <strong>${email}</strong>.<br>Please click the link in it to verify your account.`;
-                
-                // 1. Ensure it has 'modal' class so .active works in CSS
                 DOMElements.successOverlay.classList.add('modal');
-                
-                // 2. Use openModal to trigger 'active' class and visibility
                 openModal(DOMElements.successOverlay);
-                
-                // 3. Hide after 6 seconds
-                setTimeout(() => {
-                    closeModal(DOMElements.successOverlay);
-                }, 6000);
+                setTimeout(() => { closeModal(DOMElements.successOverlay); }, 6000);
             } else {
                 globalShowNotification("Verification email sent! Please check your inbox.", false);
             }
 
-            // E. Create Profile
             try {
                 const { doc, setDoc, serverTimestamp } = firestoreModule; 
                 const userDocRef = doc(db, 'artifacts', globalAppId, 'users', createdUser.uid);
                 await setDoc(userDocRef, { 
                     profile: { firstName, lastName, email, createdAt: serverTimestamp(), optionalSubject: null } 
                 }, { merge: true });
-            } catch (dbErr) { console.error("Profile creation failed (User still created):", dbErr); }
+            } catch (dbErr) { console.error("Profile creation failed:", dbErr); }
 
         } catch(error){ 
-            console.error("Signup error:", error); 
             if(errorEl){
                 let msg = error.message || "Signup failed.";
                 if (error.code === 'auth/email-already-in-use') msg = "That email is already registered. Please log in.";
-                else if (error.code === 'auth/weak-password') msg = "Password is too weak.";
                 errorEl.textContent = msg;
                 errorEl.classList.remove('hidden');
             }
@@ -338,9 +363,7 @@ function initSharedEventListeners() {
         }
     });
 
-    // 3. OTHER LISTENERS (Unchanged)
-    
-    // Account Update
+    // 3. OTHER LISTENERS
     DOMElements.accountModal.form?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         if (!currentUser || currentUser.isAnonymous) return;
@@ -357,7 +380,6 @@ function initSharedEventListeners() {
         } catch(error){ console.error(error); }
     });
 
-    // Password Reset
     DOMElements.authModal.forgotPasswordForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         const email = e.target.elements['reset-email'].value; 
@@ -368,12 +390,22 @@ function initSharedEventListeners() {
         } catch(error){ console.error(error); }
     });
 
-    // Menu & Dropdown Toggles
     DOMElements.mobileMenuButton?.addEventListener('click', () => DOMElements.mobileMenu?.classList.toggle('hidden'));
-    DOMElements.userMenu?.addEventListener('click', (e) => { if (e.target.closest('#user-menu-button')) DOMElements.userDropdown?.classList.toggle('hidden'); });
-    document.body.addEventListener('click', (e) => { if (!e.target.closest('#user-menu')) DOMElements.userDropdown?.classList.add('hidden'); });
+    
+    // Delegated User Menu Click
+    DOMElements.userMenu?.addEventListener('click', (e) => { 
+        const btn = e.target.closest('#user-menu-button');
+        if (btn) {
+            DOMElements.userDropdown?.classList.toggle('hidden'); 
+        }
+    });
+    
+    document.body.addEventListener('click', (e) => { 
+        if (!e.target.closest('#user-menu')) {
+            DOMElements.userDropdown?.classList.add('hidden'); 
+        }
+    });
 
-    // Global Clicks
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         const targetId = target.id;
