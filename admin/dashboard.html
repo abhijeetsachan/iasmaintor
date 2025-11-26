@@ -35,202 +35,235 @@
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
 
-        /* Hide scrollbar for main content */
+        /* Utility: Hide scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Form Elements */
+        .admin-input {
+            width: 100%;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            color: white;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .admin-input:focus { border-color: #3b82f6; ring: 1px solid #3b82f6; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="overflow-hidden">
 
-    <aside class="w-64 sidebar-glass flex flex-col justify-between h-full flex-shrink-0 transition-all duration-300" id="sidebar">
-        <div>
-            <div class="h-16 flex items-center px-6 border-b border-slate-700">
-                <span class="text-xl font-bold text-white tracking-tight">
-                    <i class="fas fa-shield-alt text-blue-500 mr-2"></i> iasmAIntor
-                </span>
-            </div>
+    <div id="auth-loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white">
+        <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+        <p class="text-sm text-slate-400 animate-pulse">Verifying Admin Access...</p>
+    </div>
 
-            <nav class="p-4 space-y-2">
-                <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Overview</p>
-                
-                <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                    <i class="fas fa-chart-pie w-6"></i> Dashboard
-                </button>
-
-                <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Management</p>
-                
-                <button onclick="switchView('users')" id="nav-users" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                    <i class="fas fa-users-cog w-6"></i> Admin Users
-                </button>
-                
-                <button onclick="switchView('mentorship')" id="nav-mentorship" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                    <i class="fas fa-graduation-cap w-6"></i> Mentorship
-                </button>
-
-                <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Content & Settings</p>
-                
-                <button onclick="switchView('notifications')" id="nav-notifications" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                    <i class="fas fa-bullhorn w-6"></i> Broadcasts
-                </button>
-            </nav>
-        </div>
-
-        <div class="p-4 border-t border-slate-700">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold" id="admin-avatar">A</div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-white truncate" id="admin-name-display">Admin User</p>
-                    <p class="text-xs text-slate-500 truncate" id="admin-role-display">Loading...</p>
-                </div>
-                <button id="logout-btn" class="text-slate-400 hover:text-red-400 transition-colors" title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-        </div>
-    </aside>
-
-    <main class="flex-1 h-full overflow-y-auto no-scrollbar bg-slate-900 relative">
+    <div id="app-layout" class="flex h-screen hidden">
         
-        <div id="view-dashboard" class="p-8 space-y-8 animate-fade-in">
-            <h1 class="text-2xl font-bold text-white">Platform Overview</h1>
+        <aside class="w-64 sidebar-glass flex flex-col justify-between h-full flex-shrink-0 transition-all duration-300 z-20" id="sidebar">
+            <div>
+                <div class="h-16 flex items-center px-6 border-b border-slate-700">
+                    <span class="text-xl font-bold text-white tracking-tight">
+                        <i class="fas fa-shield-alt text-blue-500 mr-2"></i> iasmAIntor
+                    </span>
+                </div>
+
+                <nav class="p-4 space-y-2">
+                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Overview</p>
+                    
+                    <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
+                        <i class="fas fa-chart-pie w-6"></i> Dashboard
+                    </button>
+
+                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Management</p>
+                    
+                    <button onclick="switchView('users')" id="nav-users" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
+                        <i class="fas fa-users-cog w-6"></i> Admin Users
+                    </button>
+                    
+                    <button onclick="switchView('mentorship')" id="nav-mentorship" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
+                        <i class="fas fa-graduation-cap w-6"></i> Mentorship
+                    </button>
+
+                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Content & Settings</p>
+                    
+                    <button onclick="switchView('notifications')" id="nav-notifications" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
+                        <i class="fas fa-bullhorn w-6"></i> Broadcasts
+                    </button>
+                </nav>
+            </div>
+
+            <div class="p-4 border-t border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold" id="admin-avatar">A</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate" id="admin-name-display">Admin User</p>
+                        <p class="text-xs text-slate-500 truncate" id="admin-role-display">Loading...</p>
+                    </div>
+                    <button id="logout-btn" class="text-slate-400 hover:text-red-400 transition-colors" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 h-full overflow-y-auto no-scrollbar bg-slate-900 relative">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="admin-card p-6">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-sm font-medium text-slate-400">Total Students</p>
-                            <h3 class="text-3xl font-bold text-white mt-2" id="stat-total-users">--</h3>
+            <div id="view-dashboard" class="p-8 space-y-8 animate-fade-in">
+                <h1 class="text-2xl font-bold text-white">Platform Overview</h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="admin-card p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Total Students</p>
+                                <h3 class="text-3xl font-bold text-white mt-2" id="stat-total-users">--</h3>
+                            </div>
+                            <div class="p-3 bg-blue-500/10 rounded-lg text-blue-500"><i class="fas fa-user-graduate text-xl"></i></div>
                         </div>
-                        <div class="p-3 bg-blue-500/10 rounded-lg text-blue-500"><i class="fas fa-user-graduate text-xl"></i></div>
                     </div>
-                </div>
-                <div class="admin-card p-6">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-sm font-medium text-slate-400">Mentorship Requests</p>
-                            <h3 class="text-3xl font-bold text-white mt-2" id="stat-mentorship">--</h3>
+                    <div class="admin-card p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Mentorship Requests</p>
+                                <h3 class="text-3xl font-bold text-white mt-2" id="stat-mentorship">--</h3>
+                            </div>
+                            <div class="p-3 bg-purple-500/10 rounded-lg text-purple-500"><i class="fas fa-inbox text-xl"></i></div>
                         </div>
-                        <div class="p-3 bg-purple-500/10 rounded-lg text-purple-500"><i class="fas fa-inbox text-xl"></i></div>
                     </div>
-                </div>
-                <div class="admin-card p-6">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-sm font-medium text-slate-400">Questions in Bank</p>
-                            <h3 class="text-3xl font-bold text-white mt-2" id="stat-questions">--</h3>
+                    <div class="admin-card p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Questions in Bank</p>
+                                <h3 class="text-3xl font-bold text-white mt-2" id="stat-questions">--</h3>
+                            </div>
+                            <div class="p-3 bg-green-500/10 rounded-lg text-green-500"><i class="fas fa-database text-xl"></i></div>
                         </div>
-                        <div class="p-3 bg-green-500/10 rounded-lg text-green-500"><i class="fas fa-database text-xl"></i></div>
                     </div>
-                </div>
-                <div class="admin-card p-6">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-sm font-medium text-slate-400">Admin Staff</p>
-                            <h3 class="text-3xl font-bold text-white mt-2" id="stat-admins">--</h3>
+                    <div class="admin-card p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Admin Staff</p>
+                                <h3 class="text-3xl font-bold text-white mt-2" id="stat-admins">--</h3>
+                            </div>
+                            <div class="p-3 bg-orange-500/10 rounded-lg text-orange-500"><i class="fas fa-id-badge text-xl"></i></div>
                         </div>
-                        <div class="p-3 bg-orange-500/10 rounded-lg text-orange-500"><i class="fas fa-id-badge text-xl"></i></div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="view-users" class="hidden p-8 space-y-6 animate-fade-in">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-white">Admin Team</h1>
-                    <p class="text-slate-400 text-sm mt-1">Manage access and roles for the admin panel.</p>
+            <div id="view-users" class="hidden p-8 space-y-6 animate-fade-in">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Admin Team</h1>
+                        <p class="text-slate-400 text-sm mt-1">Manage access and roles for the admin panel.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-admin')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Add New Member
+                    </button>
                 </div>
-                <button onclick="openModal('modal-add-admin')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <i class="fas fa-plus"></i> Add New Member
-                </button>
-            </div>
 
-            <div class="admin-card overflow-hidden">
-                <table class="w-full text-left text-sm text-slate-400">
-                    <thead class="bg-slate-800/50 text-slate-200 uppercase font-semibold">
-                        <tr>
-                            <th class="px-6 py-4">Name</th>
-                            <th class="px-6 py-4">Role</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4">Added</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-table-body" class="divide-y divide-slate-700">
-                        <tr><td colspan="5" class="px-6 py-8 text-center">Loading admin data...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="view-notifications" class="hidden p-8 space-y-6 animate-fade-in">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-white">Broadcasts & Notifications</h1>
-                    <p class="text-slate-400 text-sm mt-1">Manage site-wide alerts and popup banners.</p>
+                <div class="admin-card overflow-hidden">
+                    <table class="w-full text-left text-sm text-slate-400">
+                        <thead class="bg-slate-800/50 text-slate-200 uppercase font-semibold">
+                            <tr>
+                                <th class="px-6 py-4">Name</th>
+                                <th class="px-6 py-4">Role</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Added</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body" class="divide-y divide-slate-700">
+                            <tr><td colspan="5" class="px-6 py-8 text-center">Loading admin data...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-1 admin-card p-6 space-y-4 h-fit">
-                    <h3 class="text-lg font-semibold text-white border-b border-slate-700 pb-2">Create Notification</h3>
-                    <form id="notification-form">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Message Content</label>
-                            <textarea id="notif-message" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="e.g., Server maintenance at 10 PM..."></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Type</label>
-                            <select id="notif-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white outline-none">
-                                <option value="banner">Top Banner (Sticky)</option>
-                                <option value="popup">Popup Modal (Overlay)</option>
-                                <option value="toast">Toast (Bottom Right)</option>
-                            </select>
-                        </div>
+            <div id="view-notifications" class="hidden p-8 space-y-6 animate-fade-in">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Broadcasts & Notifications</h1>
+                        <p class="text-slate-400 text-sm mt-1">Manage site-wide alerts and popup banners.</p>
+                    </div>
+                </div>
 
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Target Pages</label>
-                            <div class="space-y-2 bg-slate-900 p-3 rounded border border-slate-700">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 admin-card p-6 space-y-4 h-fit">
+                        <h3 class="text-lg font-semibold text-white border-b border-slate-700 pb-2">Create Notification</h3>
+                        <form id="notification-form">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Message Content</label>
+                                <textarea id="notif-message" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="e.g., Server maintenance at 10 PM..."></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Type</label>
+                                <select id="notif-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white outline-none">
+                                    <option value="banner">Top Banner (Sticky)</option>
+                                    <option value="popup">Popup Modal (Overlay)</option>
+                                    <option value="toast">Toast (Bottom Right)</option>
+                                </select>
+                            </div>
+
+                            <div id="banner-upload-container" class="hidden">
+                                <label class="block text-sm font-medium mb-2 text-slate-300">Popup Banner Image</label>
+                                <input type="file" id="notif-image" accept="image/*" class="block w-full text-sm text-slate-400
+                                  file:mr-4 file:py-2 file:px-4
+                                  file:rounded-lg file:border-0
+                                  file:text-xs file:font-semibold
+                                  file:bg-blue-600 file:text-white
+                                  hover:file:bg-blue-500
+                                "/>
+                                <p class="text-xs text-slate-500 mt-1">Recommended size: 600x400px. Max 1MB.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Target Pages</label>
+                                <div class="space-y-2 bg-slate-900 p-3 rounded border border-slate-700">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" value="index.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600">
+                                        <span>Home (index.html)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" value="tracker.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600">
+                                        <span>Tracker (tracker.html)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" value="maintor.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600">
+                                        <span>Mains Evaluator (maintor.html)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="pt-2">
                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" value="index.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600">
-                                    <span>Home (index.html)</span>
-                                </label>
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" value="tracker.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600">
-                                    <span>Tracker (tracker.html)</span>
-                                </label>
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" value="maintor.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600">
-                                    <span>Mains Evaluator (maintor.html)</span>
+                                    <input type="checkbox" id="notif-active" checked class="form-checkbox text-green-500 rounded bg-slate-800 border-slate-600">
+                                    <span class="text-green-400">Set as Active Immediately</span>
                                 </label>
                             </div>
+
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium transition-colors mt-2">
+                                Publish Notification
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="lg:col-span-2 admin-card p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Current Active Broadcasts</h3>
+                        <div id="active-notifications-list" class="space-y-3">
+                            <p class="text-slate-500 text-sm italic">Fetching active broadcasts...</p>
                         </div>
-
-                        <div class="pt-2">
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" id="notif-active" checked class="form-checkbox text-green-500 rounded bg-slate-800 border-slate-600">
-                                <span class="text-green-400">Set as Active Immediately</span>
-                            </label>
-                        </div>
-
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium transition-colors mt-2">
-                            Publish Notification
-                        </button>
-                    </form>
-                </div>
-
-                <div class="lg:col-span-2 admin-card p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">Current Active Broadcasts</h3>
-                    <div id="active-notifications-list" class="space-y-3">
-                        <p class="text-slate-500 text-sm italic">Fetching active broadcasts...</p>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div id="view-mentorship" class="hidden p-8 text-slate-400">Mentorship Module Placeholder</div>
-    </main>
+            
+            <div id="view-mentorship" class="hidden p-8 text-slate-400">Mentorship Module Placeholder</div>
+        </main>
+    </div>
 
     <div id="modal-add-admin" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-200">
         <div class="bg-slate-800 w-full max-w-md rounded-xl border border-slate-700 shadow-2xl p-6 transform scale-95 transition-transform duration-200">
@@ -264,11 +297,8 @@
     <script>
         // Simple Tab Switcher Logic
         function switchView(viewId) {
-            // 1. Hide all views
             document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
-            // 2. Show target view
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
-            // 3. Update Sidebar Buttons
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`nav-${viewId}`).classList.add('active');
         }
@@ -277,7 +307,6 @@
         function openModal(id) {
             const el = document.getElementById(id);
             el.classList.remove('hidden');
-            // Small delay to allow display:block to apply before opacity transition
             requestAnimationFrame(() => {
                 el.classList.remove('opacity-0');
                 el.querySelector('div').classList.remove('scale-95');
@@ -291,6 +320,13 @@
             el.querySelector('div').classList.add('scale-95');
             setTimeout(() => el.classList.add('hidden'), 200);
         }
+        
+        // Conditional Input Logic (Popup Image)
+        document.getElementById('notif-type').addEventListener('change', function(e) {
+            const container = document.getElementById('banner-upload-container');
+            if(e.target.value === 'popup') container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        });
     </script>
 
     <script type="module" src="../js/firebase-config.js"></script>
