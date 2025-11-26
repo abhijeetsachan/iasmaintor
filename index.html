@@ -53,17 +53,18 @@
                         <i class="fas fa-right-to-bracket mr-2"></i>Log In
                     </a>
                 </div>
+                
                 <div id="user-menu" class="hidden relative">
-                    <button id="user-menu-button" class="flex items-center space-x-2">
+                    <button id="user-menu-button" class="flex items-center space-x-2 focus:outline-none">
                         <span id="user-avatar" class="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center">
                             <i class="fas fa-user text-xl"></i>
                         </span>
-                        <span id="user-greeting" class="font-semibold text-slate-700"></span>
+                        <span id="user-greeting" class="font-semibold text-slate-700 hidden md:inline"></span>
                         <svg class="w-5 h-5 text-slate-500 hidden md:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-</svg>
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
                     </button>
-                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 modal-content rounded-md shadow-lg py-1 z-50">
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
                         <a href="#dashboard" id="dropdown-dashboard-link" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Dashboard</a>
                         <a href="#" id="my-account-btn" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Account</a>
                         <div class="border-t border-slate-200 my-1"></div>
@@ -539,204 +540,6 @@
         </div>
     </div>
 
-    <div id="syllabus-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="rounded-lg shadow-2xl w-full max-w-4xl modal-content my-8 max-h-[90vh] flex flex-col">
-            <div class="p-6 border-b sticky top-0 z-10 rounded-t-lg">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold text-slate-800">UPSC Syllabus Navigator</h2>
-                    <button id="close-syllabus-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
-                </div>
-            </div>
-            <div id="syllabus-container" class="p-6 overflow-y-auto flex-grow">
-                 <div id="syllabus-quickstart" class="hidden">
-                    <h3 class="text-xl font-semibold mb-4 text-slate-700">Quick Start: Set Initial Progress</h3>
-                    <p class="text-slate-600 mb-6">Tell us roughly where you are with each major paper to get started quickly. You can refine this later.</p>
-                    <form id="quickstart-form">
-                        </form>
-                    <div class="mt-6 flex justify-end">
-                        <button id="start-tracking-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Start Tracking</button>
-                    </div>
-                </div>
-
-                <div id="syllabus-main-view" class="hidden">
-                    <div id="syllabus-dashboard" class="mb-6">
-                        <h4 class="text-lg font-semibold mb-3 text-slate-700">Overall Progress</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            </div>
-                    </div>
-                    <div id="syllabus-tree-container">
-                        <h4 class="text-lg font-semibold mb-3 text-slate-700">Detailed Syllabus</h4>
-                        <ul class="syllabus-list">
-                            <div class="flex justify-center items-center h-48 text-center">
-                                <div>
-                                    <i class="fas fa-spinner fa-spin text-blue-600 text-3xl mb-3"></i>
-                                    <p class="text-slate-500">Loading syllabus...</p>
-                                </div>
-                            </div>
-                         </ul>
-                    </div>
-                </div>
-                 <div id="syllabus-loading" class="flex justify-center items-center h-64 text-center">
-                    <div>
-                        <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
-                        <p class="text-slate-500">Loading progress...</p>
-                    </div>
-                </div>
-            </div>
-            <div class="p-6 border-t sticky bottom-0 z-10 rounded-b-lg">
-                <div class="flex justify-end">
-                    <button id="save-syllabus-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center disabled:opacity-50" disabled> <i class="fas fa-save mr-2"></i>Save Progress
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="rounded-lg shadow-2xl w-full md:max-w-3xl modal-content max-h-[90vh] flex flex-col">
-            
-            <div class="p-6 border-b sticky top-0 z-10">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold text-slate-800">AI Quiz Module</h2>
-                    <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-800 text-3xl">&times;</button>
-                </div>
-                <div id="quiz-progress-container" class="mt-4">
-                    <div id="quiz-progress-bar" class="w-full bg-slate-200 rounded-full h-2.5">
-                        <div id="quiz-progress-indicator" class="bg-blue-600 h-2.5 rounded-full" style="width: 25%"></div>
-                    </div>
-                    <div id="quiz-progress-text" class="text-center text-sm text-slate-500 mt-1">Step 1 of 4</div>
-                </div>
-            </div>
-            <div id="quizzie-content" class="p-8 overflow-y-auto flex-grow">
-                <form id="quizzie-form">
-                    <div data-step="1" class="active space-y-6">
-                        <h3 class="text-xl font-semibold text-slate-700">Choose your Subject</h3>
-                        <div>
-                            <select id="quiz-main-subject" name="main_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-lg" required>
-                                <option value="">-- Select a Subject --</option>
-                                <option value="gs">General Studies (Prelims)</option>
-                                <option value="csat">CSAT (Prelims)</option>
-                            </select>
-                        </div>
-                        <div class="flex justify-end pt-4">
-                            <button type="button" data-next="2" class="next-step-btn btn btn-primary">Next</button>
-                        </div>
-                    </div>
-
-                    <div data-step="2" class="space-y-6">
-                        <h3 class="text-xl font-semibold text-slate-700">Define your Test</h3>
-                        <div class="radio-card-group">
-    <label class="block text-slate-700 font-semibold mb-2">Test Type</label>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label class="block">
-            <input type="radio" name="test_type" value="sectional" class="hidden" required>
-            <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
-                <div class="font-bold text-lg">Sectional Test</div>
-                <div class="text-sm text-slate-500">Focus on a specific subject</div>
-            </div>
-        </label>
-        <label class="block">
-            <input type="radio" name="test_type" value="flt" class="hidden">
-            <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
-                <div class="font-bold text-lg">Full Length Test</div>
-                <div class="text-sm text-slate-500">Simulate the real exam</div>
-            </div>
-        </label>
-    </div>
-</div>
-
-                        <div id="gs-sectional-group" class="quiz-step-group">
-                            <label for="gs-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
-                            <select id="gs-subject" name="gs_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-base">
-                                <option value="history">History</option>
-                                <option value="geography">Geography</option>
-                                <option value="polity">Polity</option>
-                                <option value="economy">Economy</option>
-                                <option value="environment">Environment</option>
-                                <option value="science-tech">Science & Tech</option>
-                            </select>
-                        </div>
-
-                        <div id="csat-sectional-group" class="quiz-step-group">
-                            <label for="csat-subject" class="block text-slate-700 font-semibold mb-2">Sectional Subject</label>
-                            <select id="csat-subject" name="csat_subject" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-base">
-                                <option value="quant">Quant</option>
-                                <option value="reasoning">Reasoning</option>
-                                <option value="comprehension">Comprehension</option>
-                            </select>
-                        </div>
-
-                        <div class="flex justify-between pt-4">
-                            <button type="button" data-prev="1" class="prev-step-btn btn btn-secondary">Back</button>
-                            <button type="button" data-next="3" class="next-step-btn btn btn-primary">Next</button>
-                        </div>
-                    </div>
-
-                    <div data-step="3" class="space-y-6">
-                         <h3 class="text-xl font-semibold text-slate-700">Customize Questions</h3>
-
-                         <div id="num-questions-group" class="quiz-step-group">
-                            <label for="num-questions" class="block text-slate-700 font-semibold mb-2">Number of Questions</label>
-                            <select id="num-questions" name="num_questions" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-base">
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
-                        </div>
-
-                         <div id="question-type-group" class="quiz-step-group">
-                            <label class="block text-slate-700 font-semibold mb-2">Nature of Questions</label>
-                            <select name="question_type" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-base">
-                                <option value="static">Static</option>
-                                <option value="current">Current Affairs</option>
-                                <option value="blend">A Blend of Static & Current</option>
-                            </select>
-                        </div>
-
-                        <div class="flex justify-between pt-4">
-                            <button type="button" data-prev="2" class="prev-step-btn btn btn-secondary">Back</button>
-                            <button type="button" data-next="4" class="next-step-btn btn btn-primary">Next</button>
-                        </div>
-                    </div>
-
-                    <div data-step="4" class="space-y-6">
-                        <h3 class="text-xl font-semibold text-slate-700">Difficulty Level</h3>
-                        <div class="radio-card-group">
-   <label class="block text-slate-700 font-semibold mb-2">Choose Difficulty</label>
-   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-       <label class="block">
-           <input type="radio" name="difficulty" value="basic" class="hidden" checked required>
-           <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
-               <div class="font-bold text-lg">Basic</div>
-               <div class="text-sm text-slate-500">Fundamental concepts</div>
-           </div>
-       </label>
-       <label class="block">
-           <input type="radio" name="difficulty" value="advanced" class="hidden">
-           <div class="radio-card p-4 rounded-lg cursor-pointer text-center">
-               <div class="font-bold text-lg">Advanced</div>
-               <div class="text-sm text-slate-500">Tricky & analytical</div>
-           </div>
-       </label>
-   </div>
-</div>
-                        <div class="flex justify-between pt-4">
-                            <button type="button" data-prev="3" class="prev-step-btn btn btn-secondary">Back</button>
-                            <button type="submit" class="btn btn-success">Generate Quiz</button>
-                        </div>
-                    </div>
-                </form>
-                <div id="quiz-result" class="hidden"></div>
-                <div id="quiz-active-view" class="hidden"></div>
-            </div>
-            <div id="quiz-footer" class="p-6 border-t sticky bottom-0 z-10 rounded-b-lg hidden">
-                <div class="flex justify-between">
-                    <button id="prev-q-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Previous</button>
-                    <button id="next-q-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Next</button>
-                </div>
-            </div>
-            </div>
-    </div>
     <div id="account-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
        <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
             <div class="flex justify-between items-start mb-4">
@@ -783,4 +586,3 @@
     <script type="module" src="js/notification-loader.js"></script>
 </body>
 </html>
-
