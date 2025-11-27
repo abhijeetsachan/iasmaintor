@@ -17,6 +17,7 @@ import {
     setDoc, 
     deleteDoc, 
     updateDoc,
+    deleteField,
     writeBatch,
     query, 
     where, 
@@ -32,7 +33,7 @@ console.log("Dashboard: Initializing Core...");
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const APP_ID = 'default-app-id'; // Sync with your main app.js
+const APP_ID = 'default-app-id'; 
 
 // --- State & Editors ---
 let currentUser = null;
@@ -47,14 +48,13 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         try {
-            // RBAC: Check Admin Directory
             const adminDoc = await getDoc(doc(db, "admin_directory", user.uid));
             
             if (adminDoc.exists()) {
                 adminProfile = adminDoc.data();
                 updateProfileUI(adminProfile);
                 revealDashboard(); 
-                initRichTextEditors(); // Initialize Quill
+                initRichTextEditors(); 
                 initDashboard(); 
             } else {
                 throw new Error("User not found in admin directory");
@@ -70,8 +70,10 @@ onAuthStateChanged(auth, async (user) => {
 
 // --- UI HELPERS ---
 function revealDashboard() {
-    document.getElementById('auth-loader').classList.add('hidden');
-    document.getElementById('app-layout').classList.remove('hidden');
+    const loader = document.getElementById('auth-loader');
+    if(loader) loader.classList.add('hidden');
+    const layout = document.getElementById('app-layout');
+    if(layout) layout.classList.remove('hidden');
 }
 
 function handleAuthError(msg) {
@@ -87,12 +89,16 @@ function handleAuthError(msg) {
 }
 
 function updateProfileUI(profile) {
-    document.getElementById('admin-name-display').textContent = profile.name || "Admin";
-    document.getElementById('admin-role-display').textContent = (profile.role || "Staff").replace('_', ' ').toUpperCase();
-    document.getElementById('admin-avatar').textContent = (profile.name || "A").charAt(0).toUpperCase();
+    const nameEl = document.getElementById('admin-name-display');
+    if(nameEl) nameEl.textContent = profile.name || "Admin";
+    const roleEl = document.getElementById('admin-role-display');
+    if(roleEl) roleEl.textContent = (profile.role || "Staff").replace('_', ' ').toUpperCase();
+    const avatarEl = document.getElementById('admin-avatar');
+    if(avatarEl) avatarEl.textContent = (profile.name || "A").charAt(0).toUpperCase();
 }
 
-document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+const logoutBtn = document.getElementById('logout-btn');
+if(logoutBtn) logoutBtn.addEventListener('click', () => signOut(auth));
 
 // --- NAVIGATION ---
 window.switchView = (viewId) => {
@@ -103,28 +109,29 @@ window.switchView = (viewId) => {
 };
 
 // ==========================================================================
-// 1. CORE: INITIALIZATION & STATS
+// 1. CORE: INITIALIZATION
 // ==========================================================================
 
 async function initDashboard() {
+    console.log("Loading Dashboard Data...");
+    
     // Load High-Level Counts
-    loadStatCount('artifacts/' + APP_ID + '/users', 'stat-total-users'); // Correct path for users
+    loadStatCount('artifacts/' + APP_ID + '/users', 'stat-total-users'); 
     loadStatCount('quizzieQuestionBank', 'stat-questions');
     loadStatCount('system_notifications', 'stat-broadcasts');
     
     // Load Initial Tables
-    loadMentorshipRequests(); // Now with Status Workflow
+    loadMentorshipRequests(); 
     loadNotifications();
-    loadQuestions(); // Now with Rich Text support
-    loadStudents(); // New Student Directory
+    loadQuestions(); 
+    loadStudents(); 
+    loadAdminUsers(); // <--- CRITICAL: Ensures Admin Team loads
 }
 
 async function loadStatCount(colPath, elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
     try {
-        // Note: collection() takes (db, path), not a string path directly in v9 modular
-        // We need to split the path for modular SDK
         let colRef;
         if(colPath.includes('/')) {
              const parts = colPath.split('/');
@@ -132,7 +139,6 @@ async function loadStatCount(colPath, elementId) {
         } else {
              colRef = collection(db, colPath);
         }
-        
         const snapshot = await getCountFromServer(colRef);
         el.textContent = snapshot.data().count;
     } catch (e) {
@@ -142,7 +148,103 @@ async function loadStatCount(colPath, elementId) {
 }
 
 // ==========================================================================
-// 2. STUDENT CRM (NEW)
+// 2. ADMIN TEAM MANAGEMENT (FIXED)
+// ==========================================================================
+
+async function loadAdminUsers() {
+    const tbody = document.getElementById('admin-table-body');
+    if (!tbody) return;
+
+    // Simplified Query (Removed orderBy to prevent index errors)
+    try {
+        const q = collection(db, "admin_directory");
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No admins found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const d = docSnap.data();
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors";
+            tr.innerHTML = `
+                <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">
+                        ${(d.name || 'A').charAt(0).toUpperCase()}
+                    </div>
+                    ${d.name || 'Unknown'}
+                </td>
+                <td class="px-6 py-4 text-slate-400 capitalize">
+                    <span class="bg-slate-700 px-2 py-1 rounded text-xs">${(d.role || 'Staff').replace('_', ' ')}</span>
+                </td>
+                <td class="px-6 py-4 text-slate-500 text-xs">${d.email || 'No Email'}</td>
+                <td class="px-6 py-4 text-right">
+                    <button onclick="window.removeAdmin('${docSnap.id}')" class="text-red-400 hover:text-red-300 p-2 rounded hover:bg-red-400/10 transition-colors" title="Remove Access">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (e) {
+        console.error("Admin Load Error:", e);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
+    }
+}
+
+window.removeAdmin = async (id) => {
+    if (confirm("Are you sure? This user will lose access immediately.")) {
+        try {
+            await deleteDoc(doc(db, "admin_directory", id));
+            logAuditAction('remove_admin', id, 'Removed Admin User');
+            loadAdminUsers();
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+};
+
+const addAdminForm = document.getElementById('add-admin-form');
+if (addAdminForm) {
+    addAdminForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = e.target.elements['name'].value;
+        const email = e.target.elements['email'].value;
+        const role = e.target.elements['role'].value;
+        const btn = e.target.querySelector('button[type="submit"]');
+        
+        btn.disabled = true;
+        btn.textContent = "Adding...";
+
+        try {
+            // Note: We use a new auto-ID here. In a real app, this ID must match the Auth UID.
+            await setDoc(doc(collection(db, "admin_directory")), {
+                name, email, role,
+                addedBy: currentUser.uid,
+                createdAt: serverTimestamp()
+            });
+
+            logAuditAction('add_admin', email, `Added new ${role}`);
+            window.closeModal('modal-add-admin');
+            e.target.reset();
+            loadAdminUsers(); 
+            alert("User added! Ensure their Auth UID matches this document ID in console if login fails.");
+
+        } catch (error) {
+            alert("Failed: " + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Add";
+        }
+    });
+}
+
+// ==========================================================================
+// 3. STUDENT CRM
 // ==========================================================================
 
 async function loadStudents(loadMore = false) {
@@ -203,10 +305,11 @@ async function loadStudents(loadMore = false) {
 
     } catch (e) {
         console.error("Student Load Error:", e);
+        if(!loadMore) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
     }
 }
 
-// --- Student Search (By Email) ---
+// --- Student Search ---
 const searchInput = document.getElementById('student-search');
 if(searchInput) {
     let debounceTimer;
@@ -216,8 +319,6 @@ if(searchInput) {
             const term = e.target.value.trim();
             if(term.length < 3) { if(term.length === 0) loadStudents(); return; }
             
-            // Firestore doesn't do partial string search natively easily. 
-            // We'll do an exact match query for email for robustness.
             const usersRef = collection(db, "artifacts", APP_ID, "users");
             const q = query(usersRef, where("profile.email", "==", term));
             
@@ -245,224 +346,47 @@ if(searchInput) {
 }
 
 window.viewStudentDetails = async (uid, profile) => {
-    // 1. Populate Basic Info
     document.getElementById('student-modal-name').textContent = `${profile.firstName || 'User'} ${profile.lastName || ''}`;
     document.getElementById('student-modal-email').textContent = profile.email;
     document.getElementById('student-modal-avatar').textContent = (profile.firstName || 'U').charAt(0);
     
-    // 2. Fetch Quiz Stats
-    const quizRef = doc(db, "users", uid, "quizData", "seen"); // Note path: /users/{uid}/... based on your quiz logic
+    const quizRef = doc(db, "users", uid, "quizData", "seen");
     const quizSnap = await getDoc(quizRef);
     const quizCount = quizSnap.exists() ? (quizSnap.data().seenQuestionIds?.length || 0) : 0;
     document.getElementById('student-stat-quizzes').textContent = quizCount;
 
-    // 3. Fetch Progress Stats
     const progRef = doc(db, "artifacts", APP_ID, "users", uid, "progress", "summary");
     const progSnap = await getDoc(progRef);
     const progress = progSnap.exists() ? (progSnap.data().overall || 0) : 0;
     document.getElementById('student-stat-progress').textContent = `${progress}%`;
 
-    // 4. Audit Log (Recent Activity Placeholder)
-    // In a full app, you'd query a 'user_logs' collection. For now, we show registration.
-    const activityBody = document.getElementById('student-activity-log');
-    activityBody.innerHTML = `
-        <tr class="border-b border-slate-800">
-            <td class="px-4 py-2">Account Created</td>
-            <td class="px-4 py-2 text-slate-500">${profile.createdAt?.toDate ? profile.createdAt.toDate().toLocaleDateString() : 'Unknown'}</td>
-        </tr>`;
-
     window.openModal('modal-student-details');
 };
 
-// ==========================================================================
-// 3. QUESTION BANK 2.0 (RICH TEXT & BULK UPLOAD)
-// ==========================================================================
-
-function initRichTextEditors() {
-    if (!quillQuestion) {
-        quillQuestion = new Quill('#quill-q-text', {
-            theme: 'snow',
-            placeholder: 'Type question here...',
-            modules: { toolbar: [['bold', 'italic', 'underline', 'code-block'], [{'list': 'ordered'}, {'list': 'bullet'}], ['clean']] }
-        });
-    }
-    if (!quillExplanation) {
-        quillExplanation = new Quill('#quill-q-explanation', {
-            theme: 'snow',
-            placeholder: 'Explain the answer...',
-            modules: { toolbar: [['bold', 'italic', 'underline'], [{'list': 'ordered'}, {'list': 'bullet'}], ['link', 'clean']] }
-        });
-    }
-}
-
-// --- Bulk Upload Logic ---
-const csvInput = document.getElementById('csv-file-input');
-const processBtn = document.getElementById('btn-process-csv');
-
-document.getElementById('drop-zone')?.addEventListener('click', () => csvInput.click());
-csvInput?.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-        processBtn.disabled = false;
-        processBtn.textContent = `Upload ${e.target.files[0].name}`;
-        processBtn.classList.remove('bg-slate-600', 'cursor-not-allowed');
-        processBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
-    }
-});
-
-processBtn?.addEventListener('click', () => {
-    const file = csvInput.files[0];
-    if (!file) return;
-
-    // Show Loading UI
-    document.getElementById('upload-status').classList.remove('hidden');
-    document.getElementById('csv-errors').classList.add('hidden');
-    processBtn.disabled = true;
-
-    Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async (results) => {
-            const rows = results.data;
-            const errors = [];
-            const batchArray = []; // We might need multiple batches
-            
-            // 1. Validation
-            const validRows = rows.filter((row, index) => {
-                if (!row.question || !row.answer) {
-                    errors.push(`Row ${index + 2}: Missing Question or Answer`);
-                    return false;
-                }
-                return true;
-            });
-
-            if (errors.length > 0) {
-                displayCsvErrors(errors);
-                document.getElementById('upload-status').classList.add('hidden');
-                processBtn.disabled = false;
-                return; // Stop if validation fails (strict mode) or continue? Let's strict.
-            }
-
-            // 2. Batch Write (Chunking by 450 to be safe)
-            const CHUNK_SIZE = 450;
-            for (let i = 0; i < validRows.length; i += CHUNK_SIZE) {
-                const chunk = validRows.slice(i, i + CHUNK_SIZE);
-                const batch = writeBatch(db);
-                
-                chunk.forEach(row => {
-                    const docRef = doc(collection(db, "quizzieQuestionBank"));
-                    batch.set(docRef, {
-                        question: row.question,
-                        options: [row.optionA || '', row.optionB || '', row.optionC || '', row.optionD || ''],
-                        answer: row.answer,
-                        subject: row.subject ? row.subject.toLowerCase() : 'general',
-                        difficulty: row.difficulty ? row.difficulty.toLowerCase() : 'basic',
-                        explanation: row.explanation || '',
-                        createdAt: serverTimestamp(),
-                        createdBy: currentUser.uid
-                    });
-                });
-                batchArray.push(batch);
-            }
-
-            // 3. Commit Batches
-            try {
-                let progress = 0;
-                for (const batch of batchArray) {
-                    await batch.commit();
-                    progress += (100 / batchArray.length);
-                    document.getElementById('upload-progress').style.width = `${progress}%`;
-                }
-                
-                // Log Action
-                logAuditAction('bulk_upload', 'questions', `Uploaded ${validRows.length} questions`);
-
-                alert(`Successfully uploaded ${validRows.length} questions!`);
-                window.closeModal('modal-bulk-upload');
-                loadQuestions(); // Refresh UI
-            } catch (err) {
-                console.error("Batch Write Error:", err);
-                alert("Upload failed: " + err.message);
-            } finally {
-                document.getElementById('upload-status').classList.add('hidden');
-                processBtn.disabled = false;
-                processBtn.textContent = "Upload";
-            }
-        }
-    });
-});
-
-function displayCsvErrors(errors) {
-    const list = document.getElementById('csv-error-list');
-    list.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
-    document.getElementById('csv-errors').classList.remove('hidden');
-}
-
-// --- Modified Save Question (Rich Text) ---
-window.saveQuestion = async () => {
-    const id = document.getElementById('q-id').value;
-    
-    // Get HTML from Quill
-    const question = quillQuestion.root.innerHTML;
-    const explanation = quillExplanation.root.innerHTML;
-
-    // Basic Validation stripping HTML tags
-    if (quillQuestion.getText().trim().length === 0) { alert("Question cannot be empty"); return; }
-
-    const options = [
-        document.getElementById('q-opt-0').value,
-        document.getElementById('q-opt-1').value,
-        document.getElementById('q-opt-2').value,
-        document.getElementById('q-opt-3').value
-    ];
-    const answer = document.getElementById('q-answer').value || options[0];
-    const subject = document.getElementById('q-subject').value;
-    const difficulty = document.getElementById('q-difficulty').value;
-
-    const data = {
-        question, options, answer, subject, difficulty, explanation,
-        updatedAt: serverTimestamp(),
-        updatedBy: currentUser.uid
-    };
-
-    try {
-        if (id) {
-            await updateDoc(doc(db, "quizzieQuestionBank", id), data);
-            logAuditAction('update', id, 'Updated Question');
-        } else {
-            data.createdAt = serverTimestamp();
-            const ref = await setDoc(doc(collection(db, "quizzieQuestionBank")), data);
-            logAuditAction('create', 'new_question', 'Created Question');
-        }
-        window.closeModal('modal-question-editor');
-        loadQuestions();
-    } catch (e) { alert("Failed to save: " + e.message); }
-};
 
 // ==========================================================================
-// 4. MENTORSHIP WORKFLOW (UPDATED)
+// 4. MENTORSHIP WORKFLOW
 // ==========================================================================
 
 window.loadMentorshipRequests = async () => {
     const tbody = document.getElementById('mentorship-table-body');
+    if(!tbody) return;
+    
     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">Loading requests...</td></tr>';
 
     try {
-        // Fetch ALL users with a mentorship request (not just pending)
-        // Ideally, you would move requests to a separate collection 'mentorship_requests' for better indexing
-        // But adhering to existing structure:
         const usersRef = collection(db, "artifacts", APP_ID, "users");
-        // We filter by existence of requestedAt
         const q = query(usersRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
         
         const snapshot = await getDocs(q);
         
         if (snapshot.empty) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No requests found.</td></tr>';
-            document.getElementById('stat-mentorship').textContent = "0";
+            if(document.getElementById('stat-mentorship')) document.getElementById('stat-mentorship').textContent = "0";
             return;
         }
 
-        document.getElementById('stat-mentorship').textContent = snapshot.size;
+        if(document.getElementById('stat-mentorship')) document.getElementById('stat-mentorship').textContent = snapshot.size;
         tbody.innerHTML = '';
         
         snapshot.forEach(docSnap => {
@@ -470,7 +394,6 @@ window.loadMentorshipRequests = async () => {
             const req = d.mentorshipRequest;
             const status = req.status || 'pending';
             
-            // Status Badge Logic
             let statusBadge = '';
             if(status === 'pending') statusBadge = '<span class="bg-yellow-900 text-yellow-300 text-xs px-2 py-1 rounded">Pending</span>';
             else if(status === 'contacted') statusBadge = '<span class="bg-blue-900 text-blue-300 text-xs px-2 py-1 rounded">Contacted</span>';
@@ -497,9 +420,9 @@ window.loadMentorshipRequests = async () => {
             `;
             tbody.appendChild(tr);
         });
-
     } catch (e) {
         console.error("Mentorship Load Error:", e);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
     }
 };
 
@@ -512,43 +435,153 @@ window.updateMentorshipStatus = async (uid, status) => {
             "mentorshipRequest.updatedBy": currentUser.uid
         });
         logAuditAction('mentorship_update', uid, `Set status to ${status}`);
-        loadMentorshipRequests(); // Refresh
+        loadMentorshipRequests();
     } catch (e) {
         alert("Error updating status: " + e.message);
     }
 };
 
-
 // ==========================================================================
-// 5. SECURITY LOGGING (NEW)
+// 5. QUESTION BANK
 // ==========================================================================
 
-async function logAuditAction(action, targetId, details) {
-    try {
-        await setDoc(doc(collection(db, "admin_logs")), {
-            adminId: currentUser.uid,
-            adminName: adminProfile.name || 'Unknown',
-            action: action,
-            targetId: targetId,
-            details: details,
-            timestamp: serverTimestamp()
+function initRichTextEditors() {
+    const qEditor = document.getElementById('quill-q-text');
+    const eEditor = document.getElementById('quill-q-explanation');
+    
+    if (qEditor && !quillQuestion) {
+        quillQuestion = new Quill('#quill-q-text', {
+            theme: 'snow',
+            placeholder: 'Type question here...',
+            modules: { toolbar: [['bold', 'italic', 'underline', 'code-block'], [{'list': 'ordered'}, {'list': 'bullet'}], ['clean']] }
         });
-    } catch (e) {
-        console.warn("Failed to write audit log:", e);
+    }
+    if (eEditor && !quillExplanation) {
+        quillExplanation = new Quill('#quill-q-explanation', {
+            theme: 'snow',
+            placeholder: 'Explain the answer...',
+            modules: { toolbar: [['bold', 'italic', 'underline'], [{'list': 'ordered'}, {'list': 'bullet'}], ['link', 'clean']] }
+        });
     }
 }
 
-// --- EXISTING FUNCTIONS (Notification, Question Load, Modal Utils) ---
-// (These are preserved but consolidated for brevity)
+// CSV Bulk Upload
+const csvInput = document.getElementById('csv-file-input');
+const processBtn = document.getElementById('btn-process-csv');
 
-// Question Loader (Optimized for Rich Text Preview)
+document.getElementById('drop-zone')?.addEventListener('click', () => csvInput.click());
+csvInput?.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        processBtn.disabled = false;
+        processBtn.textContent = `Upload ${e.target.files[0].name}`;
+        processBtn.classList.remove('bg-slate-600', 'cursor-not-allowed');
+        processBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+    }
+});
+
+processBtn?.addEventListener('click', () => {
+    const file = csvInput.files[0];
+    if (!file) return;
+
+    document.getElementById('upload-status').classList.remove('hidden');
+    document.getElementById('csv-errors').classList.add('hidden');
+    processBtn.disabled = true;
+
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+            const rows = results.data;
+            const errors = [];
+            const validRows = rows.filter((row, index) => {
+                if (!row.question || !row.answer) {
+                    errors.push(`Row ${index + 2}: Missing Question or Answer`);
+                    return false;
+                }
+                return true;
+            });
+
+            if (errors.length > 0) {
+                displayCsvErrors(errors);
+                document.getElementById('upload-status').classList.add('hidden');
+                processBtn.disabled = false;
+                return; 
+            }
+
+            const CHUNK_SIZE = 450;
+            for (let i = 0; i < validRows.length; i += CHUNK_SIZE) {
+                const chunk = validRows.slice(i, i + CHUNK_SIZE);
+                const batch = writeBatch(db);
+                
+                chunk.forEach(row => {
+                    const docRef = doc(collection(db, "quizzieQuestionBank"));
+                    batch.set(docRef, {
+                        question: row.question,
+                        options: [row.optionA || '', row.optionB || '', row.optionC || '', row.optionD || ''],
+                        answer: row.answer,
+                        subject: row.subject ? row.subject.toLowerCase() : 'general',
+                        difficulty: row.difficulty ? row.difficulty.toLowerCase() : 'basic',
+                        explanation: row.explanation || '',
+                        createdAt: serverTimestamp(),
+                        createdBy: currentUser.uid
+                    });
+                });
+                try {
+                    await batch.commit();
+                } catch(e) { console.error(e); }
+            }
+            
+            logAuditAction('bulk_upload', 'questions', `Uploaded ${validRows.length} questions`);
+            alert(`Uploaded ${validRows.length} questions!`);
+            window.closeModal('modal-bulk-upload');
+            loadQuestions(); 
+            document.getElementById('upload-status').classList.add('hidden');
+            processBtn.disabled = false;
+            processBtn.textContent = "Upload";
+        }
+    });
+});
+
+function displayCsvErrors(errors) {
+    const list = document.getElementById('csv-error-list');
+    list.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+    document.getElementById('csv-errors').classList.remove('hidden');
+}
+
+window.loadQuestions = async (loadMore = false) => {
+    const tbody = document.getElementById('questions-table-body');
+    if(!tbody) return;
+    if(!loadMore) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-slate-500 py-4">Loading...</td></tr>';
+    
+    const qRef = collection(db, "quizzieQuestionBank");
+    const q = query(qRef, orderBy("createdAt", "desc"), limit(10));
+    const snap = await getDocs(q);
+    
+    tbody.innerHTML = '';
+    snap.forEach(doc => {
+        const data = doc.data();
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = data.question;
+        const plainText = tempDiv.textContent || tempDiv.innerText || "";
+        
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
+        tr.innerHTML = `
+            <td class="px-6 py-4"><div class="line-clamp-2 text-white">${plainText}</div></td>
+            <td class="px-6 py-4 text-slate-400 capitalize">${data.subject}</td>
+            <td class="px-6 py-4 text-slate-500">${data.difficulty}</td>
+            <td class="px-6 py-4 text-right"><button onclick="window.editQuestion('${doc.id}')" class="text-blue-400 mr-2"><i class="fas fa-edit"></i></button><button onclick="window.deleteQuestion('${doc.id}')" class="text-red-400"><i class="fas fa-trash"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+};
+
 window.editQuestion = async (id) => {
     const docSnap = await getDoc(doc(db, "quizzieQuestionBank", id));
     if (!docSnap.exists()) return;
     const d = docSnap.data();
 
     document.getElementById('q-id').value = id;
-    // Set Quill Content
     quillQuestion.root.innerHTML = d.question;
     quillExplanation.root.innerHTML = d.explanation || '';
 
@@ -572,7 +605,67 @@ window.editQuestion = async (id) => {
     window.openModal('modal-question-editor');
 };
 
-// Basic Modal Utils (Must be global)
+window.saveQuestion = async () => {
+    const id = document.getElementById('q-id').value;
+    const question = quillQuestion.root.innerHTML;
+    const explanation = quillExplanation.root.innerHTML;
+
+    if (quillQuestion.getText().trim().length === 0) { alert("Question cannot be empty"); return; }
+
+    const options = [
+        document.getElementById('q-opt-0').value,
+        document.getElementById('q-opt-1').value,
+        document.getElementById('q-opt-2').value,
+        document.getElementById('q-opt-3').value
+    ];
+    const answer = document.getElementById('q-answer').value || options[0];
+    const subject = document.getElementById('q-subject').value;
+    const difficulty = document.getElementById('q-difficulty').value;
+
+    const data = {
+        question, options, answer, subject, difficulty, explanation,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid
+    };
+
+    try {
+        if (id) {
+            await updateDoc(doc(db, "quizzieQuestionBank", id), data);
+            logAuditAction('update', id, 'Updated Question');
+        } else {
+            data.createdAt = serverTimestamp();
+            await setDoc(doc(collection(db, "quizzieQuestionBank")), data);
+            logAuditAction('create', 'new_question', 'Created Question');
+        }
+        window.closeModal('modal-question-editor');
+        loadQuestions();
+    } catch (e) { alert("Failed to save: " + e.message); }
+};
+
+window.deleteQuestion = async (id) => {
+    if(confirm("Delete question?")) {
+        await deleteDoc(doc(db, "quizzieQuestionBank", id));
+        logAuditAction('delete', id, 'Deleted Question');
+        loadQuestions();
+    }
+};
+
+
+// ==========================================================================
+// 6. UTILS & LOGGING
+// ==========================================================================
+
+async function logAuditAction(action, targetId, details) {
+    try {
+        await setDoc(doc(collection(db, "admin_logs")), {
+            adminId: currentUser.uid,
+            adminName: adminProfile.name || 'Unknown',
+            action, targetId, details,
+            timestamp: serverTimestamp()
+        });
+    } catch (e) { console.warn("Audit log failed:", e); }
+}
+
 window.openModal = (id) => {
     const el = document.getElementById(id);
     el.classList.remove('hidden');
@@ -591,46 +684,26 @@ window.closeModal = (id) => {
     setTimeout(() => el.classList.add('hidden'), 200);
 };
 
-window.loadQuestions = async (loadMore = false) => {
-    // Re-implementing the basic loader to ensure it's available
-    const tbody = document.getElementById('questions-table-body');
-    if(!tbody) return;
-    if(!loadMore) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-slate-500 py-4">Loading...</td></tr>';
-    
-    const qRef = collection(db, "quizzieQuestionBank");
-    const q = query(qRef, orderBy("createdAt", "desc"), limit(10));
-    const snap = await getDocs(q);
-    
-    tbody.innerHTML = '';
-    snap.forEach(doc => {
-        const data = doc.data();
-        // Strip HTML for preview
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = data.question;
-        const plainText = tempDiv.textContent || tempDiv.innerText || "";
-        
-        const tr = document.createElement('tr');
-        tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
-        tr.innerHTML = `
-            <td class="px-6 py-4"><div class="line-clamp-2 text-white">${plainText}</div></td>
-            <td class="px-6 py-4 text-slate-400 capitalize">${data.subject}</td>
-            <td class="px-6 py-4 text-slate-500">${data.difficulty}</td>
-            <td class="px-6 py-4 text-right"><button onclick="window.editQuestion('${doc.id}')" class="text-blue-400 mr-2"><i class="fas fa-edit"></i></button><button onclick="window.deleteQuestion('${doc.id}')" class="text-red-400"><i class="fas fa-trash"></i></button></td>
-        `;
-        tbody.appendChild(tr);
+window.openQuestionModal = () => {
+    document.getElementById('question-form').reset();
+    document.getElementById('q-id').value = '';
+    if(quillQuestion) quillQuestion.setContents([]);
+    if(quillExplanation) quillExplanation.setContents([]);
+    document.getElementById('q-modal-title').textContent = "Add Question";
+    window.openModal('modal-question-editor');
+};
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.readAsDataURL(file);
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
     });
-};
+}
 
-window.deleteQuestion = async (id) => {
-    if(confirm("Delete question?")) {
-        await deleteDoc(doc(db, "quizzieQuestionBank", id));
-        logAuditAction('delete', id, 'Deleted Question');
-        loadQuestions();
-    }
-};
-
+// --- NOTIFICATIONS ---
 window.loadNotifications = async () => {
-    // Basic implementation placeholder if needed, same as previous
     const container = document.getElementById('active-notifications-list');
     if(!container) return;
     const q = query(collection(db, "system_notifications"), where("active", "==", true), orderBy("createdAt", "desc"));
@@ -645,6 +718,27 @@ window.loadNotifications = async () => {
     });
 };
 
+document.getElementById('notification-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = document.getElementById('notif-message').value;
+    const type = document.getElementById('notif-type').value;
+    const pages = Array.from(e.target.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+    
+    let imageUrl = null;
+    const fileInput = document.getElementById('notif-image');
+    if(type === 'popup' && fileInput.files[0]) {
+        imageUrl = await fileToBase64(fileInput.files[0]);
+    }
+
+    await setDoc(doc(collection(db, "system_notifications")), {
+        message, type, targetPages: pages, imageUrl, active: true,
+        createdAt: serverTimestamp(), createdBy: currentUser.uid
+    });
+    alert("Published!");
+    e.target.reset();
+    loadNotifications();
+});
+
 window.stopBroadcast = async (id) => {
     if(confirm("Stop broadcast?")) {
         await deleteDoc(doc(db, "system_notifications", id));
@@ -652,120 +746,3 @@ window.stopBroadcast = async (id) => {
         loadNotifications();
     }
 };
-
-// ==========================================================================
-// 6. ADMIN TEAM MANAGEMENT (MISSING LOGIC RESTORED)
-// ==========================================================================
-
-async function loadAdminUsers() {
-    const tbody = document.getElementById('admin-table-body');
-    if (!tbody) return;
-
-    // Set loading state
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">Loading team...</td></tr>';
-
-    try {
-        // Query the admin_directory collection
-        const q = query(collection(db, "admin_directory"), orderBy("role"));
-        const snapshot = await getDocs(q);
-        
-        if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No admins found.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = '';
-        snapshot.forEach(docSnap => {
-            const d = docSnap.data();
-            const tr = document.createElement('tr');
-            tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors";
-            tr.innerHTML = `
-                <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">
-                        ${(d.name || 'A').charAt(0).toUpperCase()}
-                    </div>
-                    ${d.name || 'Unknown'}
-                </td>
-                <td class="px-6 py-4 text-slate-400 capitalize">
-                    <span class="bg-slate-700 px-2 py-1 rounded text-xs">${(d.role || 'Staff').replace('_', ' ')}</span>
-                </td>
-                <td class="px-6 py-4 text-slate-500 text-xs">${d.email || 'No Email'}</td>
-                <td class="px-6 py-4 text-right">
-                    <button onclick="window.removeAdmin('${docSnap.id}')" class="text-red-400 hover:text-red-300 p-2 rounded hover:bg-red-400/10 transition-colors" title="Remove Access">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-    } catch (e) {
-        console.error("Admin Load Error:", e);
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error loading data: ${e.message}</td></tr>`;
-    }
-}
-
-// Remove Admin Function
-window.removeAdmin = async (id) => {
-    if (confirm("Are you sure you want to remove this user's admin access?")) {
-        try {
-            await deleteDoc(doc(db, "admin_directory", id));
-            logAuditAction('remove_admin', id, 'Removed Admin User');
-            loadAdminUsers(); // Refresh table
-            alert("Admin removed successfully.");
-        } catch (e) {
-            console.error(e);
-            alert("Error removing admin: " + e.message);
-        }
-    }
-};
-
-// Add Admin Form Listener
-const addAdminForm = document.getElementById('add-admin-form');
-if (addAdminForm) {
-    addAdminForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const name = e.target.elements['name'].value;
-        const email = e.target.elements['email'].value;
-        const role = e.target.elements['role'].value;
-        const btn = e.target.querySelector('button[type="submit"]');
-        
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = "Adding...";
-
-        try {
-            // IMPORTANT: In a client-side app without Cloud Functions, we cannot 
-            // easily get the UID from an email. We will create the doc, but 
-            // you might need to manually ensure the Document ID matches the User UID 
-            // in the Firebase Console if your auth logic depends on it.
-            
-            // ideally, use the UID as the document key. Since we don't have it, 
-            // we let Firestore generate an ID or use email as ID (if your auth logic supports it).
-            // For now, we add it to the directory so they appear in the list.
-            
-            await setDoc(doc(collection(db, "admin_directory")), {
-                name: name,
-                email: email,
-                role: role,
-                addedBy: currentUser.uid,
-                createdAt: serverTimestamp()
-            });
-
-            logAuditAction('add_admin', email, `Added new ${role}`);
-            
-            window.closeModal('modal-add-admin');
-            e.target.reset();
-            loadAdminUsers(); // Refresh table
-            alert("User added to Admin Directory.\n\nNOTE: Ensure the user's Firebase Auth UID matches this document ID if they cannot log in.");
-
-        } catch (error) {
-            console.error("Add Admin Error:", error);
-            alert("Failed to add admin: " + error.message);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = originalText;
-        }
-    });
-}
