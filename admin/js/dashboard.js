@@ -130,8 +130,8 @@ async function initDashboard() {
     loadAdminUsers(); 
     
     // Activity Logs
-    pruneOldLogs(); // 7-day cleanup
-    loadActivityLogs(); // Load UI
+    pruneOldLogs(); 
+    loadActivityLogs(); 
 }
 
 async function loadStatCount(colPath, elementId) {
@@ -154,7 +154,7 @@ async function loadStatCount(colPath, elementId) {
 }
 
 // ==========================================================================
-// 2. ACTIVITY LOGS & REVERT (FIXED)
+// 2. ACTIVITY LOGS & REVERT
 // ==========================================================================
 
 window.loadActivityLogs = async (loadMore = false) => {
@@ -187,7 +187,7 @@ window.loadActivityLogs = async (loadMore = false) => {
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const date = data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : 'Just now';
-            const canRevert = data.action !== 'revert' && data.action !== 'bulk_upload';
+            const canRevert = data.action !== 'revert' && data.action !== 'bulk_upload'; 
 
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
@@ -217,73 +217,51 @@ window.loadActivityLogs = async (loadMore = false) => {
 async function pruneOldLogs() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
     try {
         const q = query(collection(db, "admin_logs"), where("timestamp", "<", Timestamp.fromDate(sevenDaysAgo)));
         const snapshot = await getDocs(q);
-        
         if (!snapshot.empty) {
             const batch = writeBatch(db);
             snapshot.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
-            console.log(`Pruned ${snapshot.size} old logs.`);
         }
-    } catch (e) {
-        console.warn("Auto-prune failed:", e);
-    }
+    } catch (e) { console.warn("Auto-prune failed:", e); }
 }
 
-// --- UPDATED REVERT LOGIC ---
 window.revertAction = async (logId) => {
     if (!confirm("Attempt to revert this action?")) return;
-    
     try {
         const logDoc = await getDoc(doc(db, "admin_logs", logId));
         if (!logDoc.exists()) throw new Error("Log entry not found.");
-        
         const data = logDoc.data();
         const { action, targetId, collectionName, previousData } = data;
 
         if (action === 'create' || action === 'add_admin') {
-            // To revert create, we delete
             const col = collectionName || (action === 'add_admin' ? 'admin_directory' : 'quizzieQuestionBank');
             if(targetId) await deleteDoc(doc(db, col, targetId));
-            
-        } else if (action === 'delete' || action === 'remove_admin' || action === 'delete_student') {
-            // To revert delete, we restore
+        } else if (action.includes('delete') || action === 'remove_admin') {
             if (!previousData) throw new Error("Cannot revert: Original data was not saved.");
-            
             let col = collectionName;
-            // Fallback logic for older logs if collectionName wasn't saved
             if (!col) {
                 if (action === 'remove_admin') col = 'admin_directory';
                 else if (action === 'delete_student') col = `artifacts/${APP_ID}/users`;
                 else col = 'quizzieQuestionBank';
             }
-            
             await setDoc(doc(db, col, targetId), previousData);
-            
         } else if (action === 'update') {
-            // To revert update, we restore previous state
             if (!previousData) throw new Error("Cannot revert: Previous data was not saved.");
             const col = collectionName || 'quizzieQuestionBank';
             await updateDoc(doc(db, col, targetId), previousData);
         }
 
-        await logAuditAction('revert', logId, `Reverted action: ${data.details}`);
-        
+        await logAuditAction('revert', logId, `Reverted action: ${data.details}`, null, null);
         alert("Action reverted successfully.");
         
-        // Refresh the appropriate view
         loadActivityLogs();
         if(action.includes('student')) loadStudents();
         else if(action.includes('admin')) loadAdminUsers();
         else loadQuestions();
-
-    } catch (e) {
-        console.error(e);
-        alert("Revert failed: " + e.message);
-    }
+    } catch (e) { alert("Revert failed: " + e.message); }
 };
 
 function getActionColor(action) {
@@ -294,7 +272,6 @@ function getActionColor(action) {
     return 'text-slate-300 bg-slate-700';
 }
 
-// --- UPDATED AUDIT LOGGER (Captures Snapshots) ---
 async function logAuditAction(action, targetId, details, collectionName = null, previousData = null) {
     try {
         await setDoc(doc(collection(db, "admin_logs")), {
@@ -314,16 +291,13 @@ async function loadAdminUsers() {
     const tbody = document.getElementById('admin-table-body');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">Loading team...</td></tr>';
-
     try {
         const q = collection(db, "admin_directory");
         const snapshot = await getDocs(q);
-        
         if (snapshot.empty) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No admins found.</td></tr>';
             return;
         }
-
         tbody.innerHTML = '';
         snapshot.forEach(docSnap => {
             const d = docSnap.data();
@@ -331,36 +305,23 @@ async function loadAdminUsers() {
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors";
             tr.innerHTML = `
                 <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">
-                        ${(d.name || 'A').charAt(0).toUpperCase()}
-                    </div>
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">${(d.name || 'A').charAt(0).toUpperCase()}</div>
                     ${d.name || 'Unknown'}
                 </td>
-                <td class="px-6 py-4 text-slate-400 capitalize">
-                    <span class="bg-slate-700 px-2 py-1 rounded text-xs">${(d.role || 'Staff').replace('_', ' ')}</span>
-                </td>
+                <td class="px-6 py-4 text-slate-400 capitalize"><span class="bg-slate-700 px-2 py-1 rounded text-xs">${(d.role || 'Staff').replace('_', ' ')}</span></td>
                 <td class="px-6 py-4 text-slate-500 text-xs">${d.email || 'No Email'}</td>
-                <td class="px-6 py-4 text-right">
-                    <button onclick="window.removeAdmin('${docSnap.id}')" class="text-red-400 hover:text-red-300 p-2 rounded hover:bg-red-400/10 transition-colors" title="Remove Access">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
+                <td class="px-6 py-4 text-right"><button onclick="window.removeAdmin('${docSnap.id}')" class="text-red-400 hover:text-red-300 p-2 rounded hover:bg-red-400/10 transition-colors" title="Remove Access"><i class="fas fa-trash"></i></button></td>
             `;
             tbody.appendChild(tr);
         });
-    } catch (e) {
-        console.error("Admin Load Error:", e);
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
-    }
+    } catch (e) { tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`; }
 }
 
 window.removeAdmin = async (id) => {
     if (confirm("Remove this admin?")) {
         try {
-            // Save snapshot for revert
             const docSnap = await getDoc(doc(db, "admin_directory", id));
             const previousData = docSnap.exists() ? docSnap.data() : null;
-
             await deleteDoc(doc(db, "admin_directory", id));
             logAuditAction('remove_admin', id, 'Removed Admin User', 'admin_directory', previousData);
             loadAdminUsers();
@@ -377,65 +338,47 @@ if (addAdminForm) {
         const role = e.target.elements['role'].value;
         const btn = e.target.querySelector('button[type="submit"]');
         btn.disabled = true; btn.textContent = "Adding...";
-
         try {
             const newRef = doc(collection(db, "admin_directory"));
-            await setDoc(newRef, {
-                name, email, role,
-                addedBy: currentUser.uid,
-                createdAt: serverTimestamp()
-            });
+            await setDoc(newRef, { name, email, role, addedBy: currentUser.uid, createdAt: serverTimestamp() });
             logAuditAction('add_admin', newRef.id, `Added new ${role}`, 'admin_directory');
-            window.closeModal('modal-add-admin');
-            e.target.reset();
-            loadAdminUsers();
+            window.closeModal('modal-add-admin'); e.target.reset(); loadAdminUsers();
         } catch (error) { alert("Failed: " + error.message); } 
         finally { btn.disabled = false; btn.textContent = "Add"; }
     });
 }
 
 // ==========================================================================
-// 4. STUDENT CRM (UPDATED WITH SNAPSHOTS)
+// 4. STUDENT CRM (FIXED VISIBILITY & DELETE)
 // ==========================================================================
 
 async function loadStudents(loadMore = false) {
     const tbody = document.getElementById('students-table-body');
     if (!tbody) return;
-
     if (!loadMore) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">Loading directory...</td></tr>';
         lastStudentSnapshot = null;
     }
-
     try {
         const usersRef = collection(db, "artifacts", APP_ID, "users");
-        let q = query(usersRef, orderBy("profile.createdAt", "desc"), limit(20));
-
-        if (loadMore && lastStudentSnapshot) {
-            q = query(usersRef, orderBy("profile.createdAt", "desc"), startAfter(lastStudentSnapshot), limit(20));
-        }
+        // --- FIX: REMOVED ORDERBY to ensure all docs show even if fields missing ---
+        let q = query(usersRef, limit(20));
+        if (loadMore && lastStudentSnapshot) q = query(usersRef, startAfter(lastStudentSnapshot), limit(20));
 
         const snapshot = await getDocs(q);
-        
         if (!loadMore) tbody.innerHTML = '';
         if (snapshot.empty && !loadMore) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No students found.</td></tr>';
             return;
         }
-
         lastStudentSnapshot = snapshot.docs[snapshot.docs.length - 1];
-
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const p = data.profile || {};
             const date = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'N/A';
-            
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors cursor-pointer";
-            tr.onclick = (e) => {
-                if(!e.target.closest('.delete-btn')) window.viewStudentDetails(docSnap.id, p);
-            };
-            
+            tr.onclick = (e) => { if(!e.target.closest('.delete-btn')) window.viewStudentDetails(docSnap.id, p); };
             tr.innerHTML = `
                 <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">${(p.firstName || 'U').charAt(0)}</div>
@@ -445,18 +388,14 @@ async function loadStudents(loadMore = false) {
                 <td class="px-6 py-4 text-slate-500 text-xs">${date}</td>
                 <td class="px-6 py-4 text-blue-400 text-xs uppercase">${p.optionalSubject || 'None'}</td>
                 <td class="px-6 py-4 text-right space-x-3">
-                    <button onclick="window.deleteStudent('${docSnap.id}', '${p.email}')" class="delete-btn text-red-400 hover:text-red-300 transition-colors" title="Delete User Data">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button onclick="window.deleteStudent('${docSnap.id}', '${p.email}')" class="delete-btn text-red-400 hover:text-red-300 transition-colors" title="Delete User Data"><i class="fas fa-trash"></i></button>
                     <button class="text-slate-500 hover:text-white"><i class="fas fa-chevron-right"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
-        
         const loadBtn = document.getElementById('load-more-students');
         if(loadBtn) loadBtn.style.display = snapshot.size < 20 ? 'none' : 'block';
-
     } catch (e) {
         console.error("Student Load Error:", e);
         if(!loadMore) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
@@ -465,25 +404,18 @@ async function loadStudents(loadMore = false) {
 
 window.deleteStudent = async (uid, email) => {
     if (event) event.stopPropagation();
-    const confirmMsg = `Delete data for ${email}?\n\nThis removes their profile and dashboard settings. This can be reverted from logs.`;
-    if (confirm(confirmMsg)) {
+    if (confirm(`Delete data for ${email}?\n\nThis removes their profile and dashboard settings. This can be reverted from logs.`)) {
         try {
             const docRef = doc(db, "artifacts", APP_ID, "users", uid);
-            
             // --- FIX: Save Snapshot BEFORE Delete ---
             const docSnap = await getDoc(docRef);
             const previousData = docSnap.exists() ? docSnap.data() : null;
 
             await deleteDoc(docRef);
-            
-            // Log with data and collection path
             logAuditAction('delete_student', uid, `Deleted profile for ${email}`, `artifacts/${APP_ID}/users`, previousData);
-            
             loadStudents();
             alert("Student data deleted.");
-        } catch (e) {
-            alert("Failed to delete: " + e.message);
-        }
+        } catch (e) { alert("Failed to delete: " + e.message); }
     }
 };
 
@@ -531,7 +463,6 @@ window.viewStudentDetails = async (uid, profile) => {
     window.openModal('modal-student-details');
 };
 
-
 // ==========================================================================
 // 5. MENTORSHIP WORKFLOW
 // ==========================================================================
@@ -540,7 +471,6 @@ window.loadMentorshipRequests = async () => {
     const tbody = document.getElementById('mentorship-table-body');
     if(!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">Loading requests...</td></tr>';
-
     try {
         const usersRef = collection(db, "artifacts", APP_ID, "users");
         const q = query(usersRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
@@ -560,7 +490,6 @@ window.loadMentorshipRequests = async () => {
             let statusBadge = status === 'pending' ? '<span class="bg-yellow-900 text-yellow-300 text-xs px-2 py-1 rounded">Pending</span>' : 
                               status === 'contacted' ? '<span class="bg-blue-900 text-blue-300 text-xs px-2 py-1 rounded">Contacted</span>' : 
                               '<span class="bg-green-900 text-green-300 text-xs px-2 py-1 rounded">Done</span>';
-
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors";
             tr.innerHTML = `
@@ -581,10 +510,7 @@ window.loadMentorshipRequests = async () => {
             `;
             tbody.appendChild(tr);
         });
-    } catch (e) {
-        console.error("Mentorship Load Error:", e);
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
-    }
+    } catch (e) { tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`; }
 };
 
 window.updateMentorshipStatus = async (uid, status) => {
@@ -610,9 +536,8 @@ window.deleteMentorshipRequest = async (uid) => {
 };
 
 // ==========================================================================
-// 6. QUESTION BANK
+// 6. QUESTION BANK & UTILS
 // ==========================================================================
-
 function initRichTextEditors() {
     const qEditor = document.getElementById('quill-q-text');
     if (qEditor && !quillQuestion) {
@@ -697,6 +622,28 @@ window.loadQuestions = async (loadMore = false) => {
     });
 };
 
+window.editQuestion = async (id) => {
+    const docSnap = await getDoc(doc(db, "quizzieQuestionBank", id));
+    if (!docSnap.exists()) return;
+    const d = docSnap.data();
+    document.getElementById('q-id').value = id;
+    quillQuestion.root.innerHTML = d.question;
+    quillExplanation.root.innerHTML = d.explanation || '';
+    document.getElementById('q-opt-0').value = d.options[0] || '';
+    document.getElementById('q-opt-1').value = d.options[1] || '';
+    document.getElementById('q-opt-2').value = d.options[2] || '';
+    document.getElementById('q-opt-3').value = d.options[3] || '';
+    document.getElementById('q-subject').value = d.subject;
+    const select = document.getElementById('q-answer');
+    select.innerHTML = '';
+    d.options.forEach((opt, i) => {
+        const o = document.createElement('option'); o.value = opt; o.textContent = `Option ${String.fromCharCode(65+i)}`; select.appendChild(o);
+    });
+    select.value = d.answer;
+    document.getElementById('q-modal-title').textContent = "Edit Question";
+    window.openModal('modal-question-editor');
+};
+
 window.saveQuestion = async () => {
     const id = document.getElementById('q-id').value;
     const question = quillQuestion.root.innerHTML;
@@ -707,20 +654,17 @@ window.saveQuestion = async () => {
     const subject = document.getElementById('q-subject').value;
     const difficulty = document.getElementById('q-difficulty').value;
     const data = { question, options, answer, subject, difficulty, explanation, updatedAt: serverTimestamp(), updatedBy: currentUser.uid };
-
     try {
         if (id) {
-            // Save Snapshot for revert
             const oldSnap = await getDoc(doc(db, "quizzieQuestionBank", id));
             await updateDoc(doc(db, "quizzieQuestionBank", id), data);
             logAuditAction('update', id, 'Updated Question', 'quizzieQuestionBank', oldSnap.data());
         } else {
             data.createdAt = serverTimestamp();
-            const ref = await setDoc(doc(collection(db, "quizzieQuestionBank")), data);
+            await setDoc(doc(collection(db, "quizzieQuestionBank")), data);
             logAuditAction('create', 'new_question', 'Created Question', 'quizzieQuestionBank');
         }
-        window.closeModal('modal-question-editor');
-        loadQuestions();
+        window.closeModal('modal-question-editor'); loadQuestions();
     } catch (e) { alert("Failed: " + e.message); }
 };
 
@@ -733,7 +677,6 @@ window.deleteQuestion = async (id) => {
     }
 };
 
-// --- NOTIFICATIONS ---
 window.loadNotifications = async () => {
     const container = document.getElementById('active-notifications-list');
     if(!container) return;
@@ -757,11 +700,8 @@ document.getElementById('notification-form')?.addEventListener('submit', async (
     let imageUrl = null;
     const fileInput = document.getElementById('notif-image');
     if(type === 'popup' && fileInput.files[0]) imageUrl = await fileToBase64(fileInput.files[0]);
-    
     await setDoc(doc(collection(db, "system_notifications")), { message, type, targetPages: pages, imageUrl, active: true, createdAt: serverTimestamp(), createdBy: currentUser.uid });
-    alert("Published!");
-    e.target.reset();
-    loadNotifications();
+    alert("Published!"); e.target.reset(); loadNotifications();
 });
 
 window.stopBroadcast = async (id) => {
@@ -772,27 +712,7 @@ window.stopBroadcast = async (id) => {
     }
 };
 
-// --- Global Utils ---
-window.openModal = (id) => {
-    const el = document.getElementById(id);
-    el.classList.remove('hidden');
-    requestAnimationFrame(() => { el.classList.remove('opacity-0'); el.querySelector('div').classList.remove('scale-95'); el.querySelector('div').classList.add('scale-100'); });
-};
-window.closeModal = (id) => {
-    const el = document.getElementById(id);
-    el.classList.add('opacity-0');
-    el.querySelector('div').classList.remove('scale-100'); el.querySelector('div').classList.add('scale-95');
-    setTimeout(() => el.classList.add('hidden'), 200);
-};
-window.openQuestionModal = () => {
-    document.getElementById('question-form').reset(); document.getElementById('q-id').value = '';
-    if(quillQuestion) quillQuestion.setContents([]); if(quillExplanation) quillExplanation.setContents([]);
-    document.getElementById('q-modal-title').textContent = "Add Question";
-    window.openModal('modal-question-editor');
-};
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const r = new FileReader(); r.readAsDataURL(file);
-        r.onload = () => resolve(r.result); r.onerror = reject;
-    });
-}
+window.openModal = (id) => { const el = document.getElementById(id); el.classList.remove('hidden'); requestAnimationFrame(() => { el.classList.remove('opacity-0'); el.querySelector('div').classList.remove('scale-95'); el.querySelector('div').classList.add('scale-100'); }); };
+window.closeModal = (id) => { const el = document.getElementById(id); el.classList.add('opacity-0'); el.querySelector('div').classList.remove('scale-100'); el.querySelector('div').classList.add('scale-95'); setTimeout(() => el.classList.add('hidden'), 200); };
+window.openQuestionModal = () => { document.getElementById('question-form').reset(); document.getElementById('q-id').value = ''; if(quillQuestion) quillQuestion.setContents([]); if(quillExplanation) quillExplanation.setContents([]); document.getElementById('q-modal-title').textContent = "Add Question"; window.openModal('modal-question-editor'); };
+function fileToBase64(file) { return new Promise((resolve, reject) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); r.onerror = reject; }); }
