@@ -635,50 +635,77 @@
                     <div class="quiz-step-group" data-step="2">
                         <h4 class="text-xl font-bold text-slate-800 mb-4">Choose a Subject</h4>
                         
-                        <div id="gs-sectional-group" class="grid grid-cols-2 gap-3">
+                        <div id="gs-sectional-group" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="history" class="peer hidden" checked>
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">History</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-landmark"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">History</div>
+                                </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="geography" class="peer hidden">
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">Geography</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-globe-asia"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Geography</div>
+                                </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="polity" class="peer hidden">
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">Polity</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-balance-scale"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Polity</div>
+                                </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="economy" class="peer hidden">
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">Economy</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-rupee-sign"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Economy</div>
+                                </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="environment" class="peer hidden">
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">Environment</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-leaf"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Environment</div>
+                                </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="science-tech" class="peer hidden">
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">Science & Tech</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-atom"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Science & Tech</div>
+                                </div>
                             </label>
                         </div>
 
-                        <div id="csat-sectional-group" class="grid grid-cols-2 gap-3 hidden">
+                        <div id="csat-sectional-group" class="grid grid-cols-2 sm:grid-cols-3 gap-3 hidden">
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="quant" class="peer hidden" checked>
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">Quantitative Aptitude</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-calculator"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Quant</div>
+                                </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="reasoning" class="peer hidden">
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">Logical Reasoning</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-brain"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Reasoning</div>
+                                </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="reading" class="peer hidden">
-                                <span class="block p-3 border border-slate-200 rounded-lg text-center hover:border-blue-400 hover:bg-blue-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">Reading Comprehension</span>
+                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-book-reader"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Reading</div>
+                                </div>
                             </label>
                         </div>
 
                         <div class="mt-6 flex justify-between">
-                            <button type="button" class="prev-step-btn px-6 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 transition-colors">Back</button>
+                            <button type="button" class="prev-step-btn border border-slate-300 text-slate-700 hover:bg-slate-100 px-6 py-2 rounded-lg font-medium transition-colors">Back</button>
                             <button type="button" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Next <i class="fas fa-arrow-right ml-2"></i></button>
                         </div>
                     </div>
@@ -692,27 +719,36 @@
                                 <div class="flex space-x-4">
                                     <label class="cursor-pointer flex-1">
                                         <input type="radio" name="difficulty" value="basic" class="peer hidden" checked>
-                                        <div class="p-3 border rounded-lg text-center peer-checked:bg-green-100 peer-checked:text-green-700 peer-checked:border-green-500 hover:bg-slate-50">Basic</div>
+                                        <div class="p-3 border-2 border-slate-200 rounded-lg text-center hover:border-green-500 peer-checked:bg-green-100 peer-checked:text-green-800 peer-checked:border-green-500 transition-all font-medium text-slate-600">Basic</div>
                                     </label>
                                     <label class="cursor-pointer flex-1">
                                         <input type="radio" name="difficulty" value="advanced" class="peer hidden">
-                                        <div class="p-3 border rounded-lg text-center peer-checked:bg-red-100 peer-checked:text-red-700 peer-checked:border-red-500 hover:bg-slate-50">Advanced</div>
+                                        <div class="p-3 border-2 border-slate-200 rounded-lg text-center hover:border-red-500 peer-checked:bg-red-100 peer-checked:text-red-800 peer-checked:border-red-500 transition-all font-medium text-slate-600">Advanced</div>
                                     </label>
                                 </div>
                             </div>
 
                             <div id="num-questions-group">
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Number of Questions</label>
-                                <select name="num_questions" class="w-full p-2 border rounded-lg bg-white">
-                                    <option value="5">5 Questions (Quick)</option>
-                                    <option value="10" selected>10 Questions (Standard)</option>
-                                    <option value="20">20 Questions (Intense)</option>
-                                </select>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="num_questions" value="5" class="peer hidden">
+                                        <div class="p-2 border-2 border-slate-200 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">5</div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="num_questions" value="10" class="peer hidden" checked>
+                                        <div class="p-2 border-2 border-slate-200 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">10</div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="num_questions" value="20" class="peer hidden">
+                                        <div class="p-2 border-2 border-slate-200 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">20</div>
+                                    </label>
+                                </div>
                             </div>
 
                             <div id="question-type-group">
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Question Style</label>
-                                <select name="question_type" class="w-full p-2 border rounded-lg bg-white">
+                                <select name="question_type" class="w-full p-3 border-2 border-slate-200 rounded-lg bg-white focus:border-blue-500 focus:outline-none transition-colors">
                                     <option value="blend" selected>Balanced Blend</option>
                                     <option value="factual">Factual / Direct</option>
                                     <option value="analytical">Statement Based (Analytical)</option>
@@ -721,7 +757,7 @@
                         </div>
 
                         <div class="mt-6 flex justify-between">
-                            <button type="button" class="prev-step-btn px-6 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 transition-colors">Back</button>
+                            <button type="button" class="prev-step-btn border border-slate-300 text-slate-700 hover:bg-slate-100 px-6 py-2 rounded-lg font-medium transition-colors">Back</button>
                             <button type="button" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Review <i class="fas fa-arrow-right ml-2"></i></button>
                         </div>
                     </div>
@@ -738,7 +774,7 @@
                             </button>
                         </div>
                         <div class="flex justify-start">
-                            <button type="button" class="prev-step-btn px-6 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 transition-colors">Back</button>
+                            <button type="button" class="prev-step-btn border border-slate-300 text-slate-700 hover:bg-slate-100 px-6 py-2 rounded-lg font-medium transition-colors">Back</button>
                         </div>
                     </div>
                 </form>
@@ -751,7 +787,7 @@
             </div>
 
             <div id="quiz-footer" class="p-4 border-t bg-slate-50 flex justify-between items-center hidden">
-                <button id="prev-q-btn" class="text-slate-600 hover:text-blue-600 font-semibold disabled:opacity-50">
+                <button id="prev-q-btn" class="border border-slate-300 text-slate-700 hover:bg-slate-100 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-arrow-left mr-2"></i> Previous
                 </button>
                 <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
