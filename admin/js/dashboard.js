@@ -36,7 +36,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- CONFIGURATION ---
-// Ensure this matches what is used in js/app.js
+// Ensure this matches the ID used in js/app.js and js/auth.js
 const APP_ID = 'default-app-id'; 
 
 // --- State & Editors ---
@@ -121,7 +121,8 @@ async function initDashboard() {
     console.log("Loading Dashboard Data...");
     
     // Load High-Level Counts
-    loadStatCount('users', 'stat-total-users'); 
+    // FIX: Pointing to the correct collection path for users
+    loadStatCount(`artifacts/${APP_ID}/users`, 'stat-total-users'); 
     loadStatCount('quizzieQuestionBank', 'stat-questions');
     loadStatCount('system_notifications', 'stat-broadcasts');
     
@@ -145,6 +146,7 @@ async function loadStatCount(colPath, elementId) {
         let colRef;
         if(colPath.includes('/')) {
              const parts = colPath.split('/');
+             // artifacts/default-app-id/users
              colRef = collection(db, parts[0], parts[1], parts[2]);
         } else {
              colRef = collection(db, colPath);
@@ -152,13 +154,13 @@ async function loadStatCount(colPath, elementId) {
         const snapshot = await getCountFromServer(colRef);
         el.textContent = snapshot.data().count;
     } catch (e) {
-        // Silent fail for stats
+        console.warn(`Failed to load stats for ${colPath}:`, e);
         el.textContent = "-";
     }
 }
 
 // ==========================================================================
-// 2. ACTIVITY LOGS & REVERT (FIXED)
+// 2. ACTIVITY LOGS & REVERT (ROBUST RESTORE)
 // ==========================================================================
 
 window.loadActivityLogs = async (loadMore = false) => {
@@ -191,7 +193,7 @@ window.loadActivityLogs = async (loadMore = false) => {
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const date = data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : 'Just now';
-            // Disable revert for irreversible actions
+            // Disable revert for irreversible actions like bulk uploads
             const canRevert = data.action !== 'revert' && data.action !== 'bulk_upload' && data.action !== 'stop_broadcast'; 
 
             const tr = document.createElement('tr');
@@ -243,12 +245,12 @@ window.revertAction = async (logId) => {
         const { action, targetId, collectionName, previousData } = data;
 
         // Logic:
-        // 1. Identify the Collection.
+        // 1. Identify the Collection. Use what was saved in log, or fallback logic.
         let colPath = collectionName;
         if (!colPath) {
             // Fallback for legacy logs
             if (action.includes('admin')) colPath = 'admin_directory';
-            else if (action.includes('student') || action.includes('mentorship')) colPath = 'users'; 
+            else if (action.includes('student') || action.includes('mentorship')) colPath = `artifacts/${APP_ID}/users`; 
             else colPath = 'quizzieQuestionBank';
         }
 
@@ -259,9 +261,8 @@ window.revertAction = async (logId) => {
             if(targetId) await deleteDoc(doc(db, colPath, targetId));
             
         } else if (action === 'delete_student') {
-            // To revert student deletion, we need to Restore
+            // FIX: Revert student deletion -> Restore the data
             if (!previousData) throw new Error("Cannot revert: Original data was not saved.");
-            // Restore to the specific path it was deleted from
             await setDoc(doc(db, colPath, targetId), previousData);
 
         } else if (action === 'remove_admin' || action === 'delete') {
@@ -285,13 +286,15 @@ window.revertAction = async (logId) => {
         await logAuditAction('revert', logId, `Reverted action: ${data.details}`, null, null);
         alert("Action reverted successfully.");
         
-        // Force refresh ALL tables to be safe, with a small delay to allow DB propagation
+        // Force refresh ALL tables to be safe, with a small delay
         setTimeout(() => {
             loadActivityLogs();
             loadStudents();
             loadAdminUsers();
             loadMentorshipRequests();
             loadQuestions();
+            // Also refresh stats
+            loadStatCount(`artifacts/${APP_ID}/users`, 'stat-total-users');
         }, 500);
 
     } catch (e) {
@@ -407,11 +410,11 @@ async function loadStudents(loadMore = false) {
     }
 
     try {
-        // 1. Fetch from ARTIFACTS path
+        // 1. Fetch from ARTIFACTS path (The main source from Frontend)
         const artifactsRef = collection(db, "artifacts", APP_ID, "users");
         const q1 = query(artifactsRef, limit(50));
         
-        // 2. Fetch from ROOT path
+        // 2. Fetch from ROOT path (Legacy/Alternative)
         const rootRef = collection(db, "users");
         const q2 = query(rootRef, limit(50)); 
 
@@ -425,7 +428,7 @@ async function loadStudents(loadMore = false) {
             // Handle both nested 'profile' and flat structure safely
             let p = data.profile || data; 
             
-            // ### FIX: Handle empty profile object appropriately ###
+            // FIX: Robust check for profile existence
             if (!p || Object.keys(p).length === 0) {
                 p = { name: "Unknown User", email: doc.id, createdAt: null };
             }
@@ -437,8 +440,16 @@ async function loadStudents(loadMore = false) {
                 else if (p.joinedAt && p.joinedAt.toDate) createdAt = p.joinedAt.toDate();
             } catch(e) { /* Ignore date error */ }
             
-            // Deduplication Logic: Prefer 'root' if duplicate, or merge
-            if (!studentMap.has(doc.id) || (studentMap.get(doc.id).source === 'artifacts' && source === 'root')) {
+            // Deduplication Logic: Prefer 'artifacts' if both exist (assuming artifacts is newer/correct)
+            if (!studentMap.has(doc.id)) {
+                studentMap.set(doc.id, { 
+                    id: doc.id, 
+                    data: p, 
+                    created: createdAt,
+                    source: source 
+                });
+            } else if (source === 'artifacts') {
+                // If we found it in artifacts, overwrite whatever we found in root
                 studentMap.set(doc.id, { 
                     id: doc.id, 
                     data: p, 
@@ -528,7 +539,11 @@ window.deleteStudent = async (uid, email, source) => {
             await logAuditAction('delete_student', uid, `Deleted profile for ${email}`, collectionPath, previousData);
             
             // Force refresh with delay
-            setTimeout(loadStudents, 500);
+            setTimeout(() => {
+                loadStudents();
+                loadStatCount(`artifacts/${APP_ID}/users`, 'stat-total-users');
+            }, 500);
+            
             alert("Student data deleted.");
         } catch (e) { alert("Failed to delete: " + e.message); }
     }
@@ -612,7 +627,7 @@ window.viewStudentDetails = async (uid, profile) => {
 };
 
 // ==========================================================================
-// 5. MENTORSHIP WORKFLOW
+// 5. MENTORSHIP WORKFLOW (FIXED: DUAL PATH + REVERT SUPPORT)
 // ==========================================================================
 
 window.loadMentorshipRequests = async () => {
@@ -623,21 +638,33 @@ window.loadMentorshipRequests = async () => {
     try {
         // 1. Fetch from Artifacts
         const artifactsRef = collection(db, "artifacts", APP_ID, "users");
-        const q1 = query(artifactsRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
+        // FIX: orderBy needs index, if missing, use basic query first
+        let q1; 
+        try {
+             q1 = query(artifactsRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
+        } catch(e) {
+             q1 = query(artifactsRef, limit(50));
+        }
         
         // 2. Fetch from Root
         const rootRef = collection(db, "users");
-        const q2 = query(rootRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
+        let q2;
+        try {
+             q2 = query(rootRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
+        } catch (e) {
+             q2 = query(rootRef, limit(50));
+        }
 
-        // Execute both
+        // Execute both safely
         const [snap1, snap2] = await Promise.all([
-            getDocs(q1).catch(() => getDocs(query(artifactsRef, limit(50)))), 
-            getDocs(q2).catch(() => getDocs(query(rootRef, limit(50))))
+            getDocs(q1).catch(e => { console.warn(e); return { forEach: ()=>{} }; }), 
+            getDocs(q2).catch(e => { console.warn(e); return { forEach: ()=>{} }; })
         ]);
 
         // 3. Merge
         const requests = [];
         const processReq = (doc, source) => {
+            if(!doc.data) return;
             const d = doc.data();
             const req = d.mentorshipRequest;
             if (req) {
@@ -726,9 +753,7 @@ window.deleteMentorshipRequest = async (uid, source) => {
             const docSnap = await getDoc(docRef);
             const previousData = docSnap.exists() ? docSnap.data() : null;
             
-            // Use deleteField() to remove ONLY the mentorship part
             await updateDoc(docRef, { mentorshipRequest: deleteField() });
-            
             logAuditAction('mentorship_delete', uid, 'Deleted Mentorship Request', collectionPath, previousData);
             setTimeout(loadMentorshipRequests, 500);
         } catch (e) { alert("Error deleting: " + e.message); }
