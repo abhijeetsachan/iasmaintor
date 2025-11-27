@@ -338,6 +338,7 @@ if (addAdminForm) {
         const role = e.target.elements['role'].value;
         const btn = e.target.querySelector('button[type="submit"]');
         btn.disabled = true; btn.textContent = "Adding...";
+
         try {
             const newRef = doc(collection(db, "admin_directory"));
             await setDoc(newRef, { name, email, role, addedBy: currentUser.uid, createdAt: serverTimestamp() });
@@ -349,7 +350,7 @@ if (addAdminForm) {
 }
 
 // ==========================================================================
-// 4. STUDENT CRM (FIXED VISIBILITY & DELETE)
+// 4. STUDENT CRM (FIXED: Newest First)
 // ==========================================================================
 
 async function loadStudents(loadMore = false) {
@@ -361,11 +362,26 @@ async function loadStudents(loadMore = false) {
     }
     try {
         const usersRef = collection(db, "artifacts", APP_ID, "users");
-        // --- FIX: REMOVED ORDERBY to ensure all docs show even if fields missing ---
-        let q = query(usersRef, limit(20));
-        if (loadMore && lastStudentSnapshot) q = query(usersRef, startAfter(lastStudentSnapshot), limit(20));
+        
+        // --- FIX: Restore Sort, but allow fallback if index missing ---
+        let q;
+        try {
+            q = query(usersRef, orderBy("profile.createdAt", "desc"), limit(20));
+            if (loadMore && lastStudentSnapshot) q = query(usersRef, orderBy("profile.createdAt", "desc"), startAfter(lastStudentSnapshot), limit(20));
+        } catch(e) {
+            console.warn("Sort failed (missing index?), falling back to unsorted.", e);
+            q = query(usersRef, limit(20)); // Fallback
+        }
 
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(q).catch(async (err) => {
+            if (err.message.includes('requires an index')) {
+                console.warn("Index missing. Fetching unsorted.");
+                const fallbackQ = query(usersRef, limit(20));
+                return await getDocs(fallbackQ);
+            }
+            throw err;
+        });
+
         if (!loadMore) tbody.innerHTML = '';
         if (snapshot.empty && !loadMore) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No students found.</td></tr>';
@@ -404,10 +420,10 @@ async function loadStudents(loadMore = false) {
 
 window.deleteStudent = async (uid, email) => {
     if (event) event.stopPropagation();
-    if (confirm(`Delete data for ${email}?\n\nThis removes their profile and dashboard settings. This can be reverted from logs.`)) {
+    const confirmMsg = `Delete data for ${email}?\n\nThis removes their profile and dashboard settings. This can be reverted from logs.`;
+    if (confirm(confirmMsg)) {
         try {
             const docRef = doc(db, "artifacts", APP_ID, "users", uid);
-            // --- FIX: Save Snapshot BEFORE Delete ---
             const docSnap = await getDoc(docRef);
             const previousData = docSnap.exists() ? docSnap.data() : null;
 
@@ -620,28 +636,6 @@ window.loadQuestions = async (loadMore = false) => {
         `;
         tbody.appendChild(tr);
     });
-};
-
-window.editQuestion = async (id) => {
-    const docSnap = await getDoc(doc(db, "quizzieQuestionBank", id));
-    if (!docSnap.exists()) return;
-    const d = docSnap.data();
-    document.getElementById('q-id').value = id;
-    quillQuestion.root.innerHTML = d.question;
-    quillExplanation.root.innerHTML = d.explanation || '';
-    document.getElementById('q-opt-0').value = d.options[0] || '';
-    document.getElementById('q-opt-1').value = d.options[1] || '';
-    document.getElementById('q-opt-2').value = d.options[2] || '';
-    document.getElementById('q-opt-3').value = d.options[3] || '';
-    document.getElementById('q-subject').value = d.subject;
-    const select = document.getElementById('q-answer');
-    select.innerHTML = '';
-    d.options.forEach((opt, i) => {
-        const o = document.createElement('option'); o.value = opt; o.textContent = `Option ${String.fromCharCode(65+i)}`; select.appendChild(o);
-    });
-    select.value = d.answer;
-    document.getElementById('q-modal-title').textContent = "Edit Question";
-    window.openModal('modal-question-editor');
 };
 
 window.saveQuestion = async () => {
