@@ -154,12 +154,9 @@ async function loadStatCount(colPath, elementId) {
 }
 
 // ==========================================================================
-// 2. ACTIVITY LOGS & REVERT (NEW)
+// 2. ACTIVITY LOGS & REVERT (FIXED)
 // ==========================================================================
 
-/**
- * Loads the activity logs into the table.
- */
 window.loadActivityLogs = async (loadMore = false) => {
     const tbody = document.getElementById('logs-table-body');
     if (!tbody) return;
@@ -170,7 +167,6 @@ window.loadActivityLogs = async (loadMore = false) => {
     }
 
     try {
-        // Query: Order by time desc, limit 20
         let q = query(collection(db, "admin_logs"), orderBy("timestamp", "desc"), limit(20));
 
         if (loadMore && lastLogSnapshot) {
@@ -191,7 +187,7 @@ window.loadActivityLogs = async (loadMore = false) => {
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const date = data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : 'Just now';
-            const canRevert = data.action !== 'revert' && data.action !== 'bulk_upload'; // Prevent infinite revert loops or complex bulk reverts
+            const canRevert = data.action !== 'revert' && data.action !== 'bulk_upload';
 
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
@@ -218,9 +214,6 @@ window.loadActivityLogs = async (loadMore = false) => {
     }
 };
 
-/**
- * Deletes logs older than 7 days.
- */
 async function pruneOldLogs() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -236,13 +229,11 @@ async function pruneOldLogs() {
             console.log(`Pruned ${snapshot.size} old logs.`);
         }
     } catch (e) {
-        console.warn("Auto-prune failed (likely permissions):", e);
+        console.warn("Auto-prune failed:", e);
     }
 }
 
-/**
- * Attempts to undo a specific action.
- */
+// --- UPDATED REVERT LOGIC ---
 window.revertAction = async (logId) => {
     if (!confirm("Attempt to revert this action?")) return;
     
@@ -253,33 +244,40 @@ window.revertAction = async (logId) => {
         const data = logDoc.data();
         const { action, targetId, collectionName, previousData } = data;
 
-        // Revert Logic based on Action Type
         if (action === 'create' || action === 'add_admin') {
-            // To revert creation, we delete the document
-            const col = collectionName || (action === 'add_admin' ? 'admin_directory' : 'quizzieQuestionBank'); // Inference fallback
+            // To revert create, we delete
+            const col = collectionName || (action === 'add_admin' ? 'admin_directory' : 'quizzieQuestionBank');
             if(targetId) await deleteDoc(doc(db, col, targetId));
             
-        } else if (action === 'delete' || action === 'remove_admin') {
-            // To revert deletion, we restore the data (if captured)
+        } else if (action === 'delete' || action === 'remove_admin' || action === 'delete_student') {
+            // To revert delete, we restore
             if (!previousData) throw new Error("Cannot revert: Original data was not saved.");
-            const col = collectionName || (action === 'remove_admin' ? 'admin_directory' : 'quizzieQuestionBank');
+            
+            let col = collectionName;
+            // Fallback logic for older logs if collectionName wasn't saved
+            if (!col) {
+                if (action === 'remove_admin') col = 'admin_directory';
+                else if (action === 'delete_student') col = `artifacts/${APP_ID}/users`;
+                else col = 'quizzieQuestionBank';
+            }
+            
             await setDoc(doc(db, col, targetId), previousData);
             
         } else if (action === 'update') {
-            // To revert update, we restore previous data
+            // To revert update, we restore previous state
             if (!previousData) throw new Error("Cannot revert: Previous data was not saved.");
             const col = collectionName || 'quizzieQuestionBank';
             await updateDoc(doc(db, col, targetId), previousData);
         }
 
-        // Log the Revert itself
-        await logAuditAction('revert', logId, `Reverted action: ${data.details}`, null, null);
+        await logAuditAction('revert', logId, `Reverted action: ${data.details}`);
         
         alert("Action reverted successfully.");
         
-        // Refresh relevant tables
+        // Refresh the appropriate view
         loadActivityLogs();
-        if(action.includes('admin')) loadAdminUsers();
+        if(action.includes('student')) loadStudents();
+        else if(action.includes('admin')) loadAdminUsers();
         else loadQuestions();
 
     } catch (e) {
@@ -296,20 +294,13 @@ function getActionColor(action) {
     return 'text-slate-300 bg-slate-700';
 }
 
-/**
- * Central Logger.
- * NOW CAPTURES SNAPSHOTS for revert functionality.
- */
+// --- UPDATED AUDIT LOGGER (Captures Snapshots) ---
 async function logAuditAction(action, targetId, details, collectionName = null, previousData = null) {
     try {
         await setDoc(doc(collection(db, "admin_logs")), {
             adminId: currentUser.uid,
             adminName: adminProfile.name || 'Unknown',
-            action, 
-            targetId, 
-            details, 
-            collectionName,
-            previousData, // Save snapshot for revert
+            action, targetId, details, collectionName, previousData,
             timestamp: serverTimestamp()
         });
     } catch (e) { console.warn("Audit log failed:", e); }
@@ -366,7 +357,7 @@ async function loadAdminUsers() {
 window.removeAdmin = async (id) => {
     if (confirm("Remove this admin?")) {
         try {
-            // Snapshot before delete
+            // Save snapshot for revert
             const docSnap = await getDoc(doc(db, "admin_directory", id));
             const previousData = docSnap.exists() ? docSnap.data() : null;
 
@@ -404,7 +395,7 @@ if (addAdminForm) {
 }
 
 // ==========================================================================
-// 4. STUDENT CRM
+// 4. STUDENT CRM (UPDATED WITH SNAPSHOTS)
 // ==========================================================================
 
 async function loadStudents(loadMore = false) {
@@ -474,12 +465,20 @@ async function loadStudents(loadMore = false) {
 
 window.deleteStudent = async (uid, email) => {
     if (event) event.stopPropagation();
-    const confirmMsg = `Delete data for ${email}?\n\nThis removes their profile and dashboard settings.`;
+    const confirmMsg = `Delete data for ${email}?\n\nThis removes their profile and dashboard settings. This can be reverted from logs.`;
     if (confirm(confirmMsg)) {
         try {
-            // Snapshot before delete for audit (could be large, so maybe just log ID)
-            await deleteDoc(doc(db, "artifacts", APP_ID, "users", uid));
-            logAuditAction('delete_student', uid, `Deleted profile for ${email}`);
+            const docRef = doc(db, "artifacts", APP_ID, "users", uid);
+            
+            // --- FIX: Save Snapshot BEFORE Delete ---
+            const docSnap = await getDoc(docRef);
+            const previousData = docSnap.exists() ? docSnap.data() : null;
+
+            await deleteDoc(docRef);
+            
+            // Log with data and collection path
+            logAuditAction('delete_student', uid, `Deleted profile for ${email}`, `artifacts/${APP_ID}/users`, previousData);
+            
             loadStudents();
             alert("Student data deleted.");
         } catch (e) {
