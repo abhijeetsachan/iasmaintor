@@ -281,8 +281,10 @@ async function loadStudents(loadMore = false) {
             
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors cursor-pointer";
+            
+            // Click row to view details (excluding the delete button)
             tr.onclick = (e) => {
-                if(!e.target.closest('button')) window.viewStudentDetails(docSnap.id, p);
+                if(!e.target.closest('.delete-btn')) window.viewStudentDetails(docSnap.id, p);
             };
             
             tr.innerHTML = `
@@ -293,7 +295,10 @@ async function loadStudents(loadMore = false) {
                 <td class="px-6 py-4 text-slate-400">${p.email}</td>
                 <td class="px-6 py-4 text-slate-500 text-xs">${date}</td>
                 <td class="px-6 py-4 text-blue-400 text-xs uppercase">${p.optionalSubject || 'None'}</td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-right space-x-3">
+                    <button onclick="window.deleteStudent('${docSnap.id}', '${p.email}')" class="delete-btn text-red-400 hover:text-red-300 transition-colors" title="Delete User Data">
+                        <i class="fas fa-trash"></i>
+                    </button>
                     <button class="text-slate-500 hover:text-white"><i class="fas fa-chevron-right"></i></button>
                 </td>
             `;
@@ -305,9 +310,38 @@ async function loadStudents(loadMore = false) {
 
     } catch (e) {
         console.error("Student Load Error:", e);
-        if(!loadMore) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
     }
 }
+
+// ==========================================================================
+// NEW: DELETE STUDENT FUNCTION
+// ==========================================================================
+
+window.deleteStudent = async (uid, email) => {
+    // Stop the row click event from firing
+    if (event) event.stopPropagation();
+
+    const confirmMsg = `Are you sure you want to delete the data for ${email}?\n\n` + 
+                       `This will remove their profile and dashboard settings from the database.\n` +
+                       `(Note: This does not delete the Auth account itself, only the stored data)`;
+
+    if (confirm(confirmMsg)) {
+        try {
+            // Delete the document from artifacts/default-app-id/users/{uid}
+            await deleteDoc(doc(db, "artifacts", APP_ID, "users", uid));
+            
+            // Log the action for security
+            logAuditAction('delete_student', uid, `Deleted profile for ${email}`);
+            
+            // Refresh the table
+            loadStudents();
+            alert("Student data deleted successfully.");
+        } catch (e) {
+            console.error("Delete Error:", e);
+            alert("Failed to delete data: " + e.message);
+        }
+    }
+};
 
 // --- Student Search ---
 const searchInput = document.getElementById('student-search');
