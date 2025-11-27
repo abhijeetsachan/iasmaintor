@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="css/style.css">
     
     <script>
-        // Check for dark mode preference immediately to prevent flash
+        // Check for dark mode preference immediately
         (function() {
             try {
                 const theme = localStorage.getItem('iasmaintor-theme');
@@ -591,15 +591,15 @@
     </div>
 
     <div id="success-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-       <div class="rounded-lg shadow-2xl p-8 text-center modal-content bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
+       <div class="rounded-lg shadow-2xl p-8 text-center modal-content">
             <div class="svg-container w-24 h-24 mx-auto mb-4">
                 <svg class="ft-green-tick" xmlns="http://www.w3.org/2000/svg" height="100" width="100" viewBox="0 0 48 48" aria-hidden="true">
                     <circle class="circle" fill="none" stroke="#22c55e" stroke-width="3" cx="24" cy="24" r="22"/>
                     <path class="tick" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M14 27l5.917 4.917L34 17"/>
                 </svg>
             </div>
-            <h3 class="text-2xl font-bold">Registration Successful!</h3>
-            <p class="text-slate-500 dark:text-slate-400 mt-2">Welcome to iasmaintor!</p>
+            <h3 class="text-2xl font-bold text-slate-800">Registration Successful!</h3>
+            <p class="text-slate-500 mt-2">Welcome to iasmaintor!</p>
         </div>
     </div>
 
@@ -637,14 +637,14 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="cursor-pointer">
                                 <input type="radio" name="main_subject" value="gs" class="peer hidden" checked>
-                                <div class="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group bg-white dark:bg-slate-800">
+                                <div class="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-500 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all text-center group">
                                     <div class="text-3xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-book-open"></i></div>
                                     <div class="font-semibold text-slate-700 dark:text-slate-300 peer-checked:!text-white">General Studies</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="main_subject" value="csat" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group bg-white dark:bg-slate-800">
+                                <div class="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-500 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all text-center group">
                                     <div class="text-3xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-calculator"></i></div>
                                     <div class="font-semibold text-slate-700 dark:text-slate-300 peer-checked:!text-white">CSAT (Aptitude)</div>
                                 </div>
@@ -661,43 +661,43 @@
                         <div id="gs-sectional-group" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="history" class="peer hidden" checked>
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-landmark text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-landmark text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">History</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="geography" class="peer hidden">
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-globe-asia text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-globe-asia text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Geography</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="polity" class="peer hidden">
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-balance-scale text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-balance-scale text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Polity</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="economy" class="peer hidden">
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-indian-rupee-sign text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-indian-rupee-sign text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Economy</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="environment" class="peer hidden">
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-leaf text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-leaf text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Environment</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="science-tech" class="peer hidden">
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-atom text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-atom text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Science & Tech</span>
                                 </div>
                             </label>
@@ -706,22 +706,22 @@
                         <div id="csat-sectional-group" class="grid grid-cols-2 sm:grid-cols-3 gap-3 hidden">
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="quant" class="peer hidden" checked>
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-calculator text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-calculator text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Quant</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="reasoning" class="peer hidden">
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-brain text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-brain text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Reasoning</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="reading" class="peer hidden">
-                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
-                                    <i class="fas fa-book-reader text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                <div class="p-3 h-20 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 bg-white dark:bg-slate-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 dark:peer-checked:border-blue-600 transition-all group">
+                                    <i class="fas fa-book-reader text-lg mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
                                     <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Reading</span>
                                 </div>
                             </label>
