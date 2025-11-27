@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/style.css">
     
     <script>
+        // Check for dark mode preference immediately to prevent flash
         (function() {
             try {
                 const theme = localStorage.getItem('iasmaintor-theme');
@@ -22,25 +23,47 @@
         })();
     </script>
     
-    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        /* Custom Scrollbar for Modal content */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* slate-300 */
+            border-radius: 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #94a3b8; /* slate-400 */
+        }
+        /* Dark mode scrollbar */
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #475569; /* slate-600 */
+        }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #64748b; /* slate-500 */
+        }
+    </style>
 
+    <link rel="icon" type="image/png" href="favicon.png">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#3b82f6">
-
 </head>
-<body class="text-slate-800">
+<body class="text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
 
-    <header id="header" class="bg-slate-50/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+    <header id="header" class="bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-slate-200 dark:border-slate-800">
         <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-4 flex justify-between items-center">
-            <a href="#" class="logo-container text-2xl font-bold text-slate-900">iasm<span class="ai-gradient">AI</span>ntor</a>
+            <a href="#" class="logo-container text-2xl font-bold text-slate-900 dark:text-white">iasm<span class="ai-gradient">AI</span>ntor</a>
             <nav class="hidden md:flex items-center space-x-8">
-                <a href="#features" class="text-slate-600 hover:text-blue-600 transition-colors">Features</a>
-                <a href="#how-it-works" class="text-slate-600 hover:text-blue-600 transition-colors">How It Works</a>
-                <a href="#testimonials" class="text-slate-600 hover:text-blue-600 transition-colors">Testimonials</a>
+                <a href="#features" class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Features</a>
+                <a href="#how-it-works" class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">How It Works</a>
+                <a href="#testimonials" class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Testimonials</a>
             </nav>
             <div class="flex items-center space-x-4">
                 
-                <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle theme">
+                <button id="theme-toggle-btn" class="theme-toggle-btn text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" title="Toggle theme">
                     <i class="fas fa-moon icon-moon"></i>
                     <i class="fas fa-sun icon-sun"></i>
                 </button>
@@ -59,31 +82,31 @@
                         <span id="user-avatar" class="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center">
                             <i class="fas fa-user text-xl"></i>
                         </span>
-                        <span id="user-greeting" class="font-semibold text-slate-700 hidden md:inline"></span>
-                        <svg class="w-5 h-5 text-slate-500 hidden md:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <span id="user-greeting" class="font-semibold text-slate-700 dark:text-slate-300 hidden md:inline"></span>
+                        <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
-                        <a href="#dashboard" id="dropdown-dashboard-link" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Dashboard</a>
-                        <a href="#" id="my-account-btn" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Account</a>
-                        <div class="border-t border-slate-200 my-1"></div>
-                        <button id="dropdown-logout-btn" class="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-slate-100">Logout</button>
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
+                        <a href="#dashboard" id="dropdown-dashboard-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">My Dashboard</a>
+                        <a href="#" id="my-account-btn" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">My Account</a>
+                        <div class="border-t border-slate-200 dark:border-slate-700 my-1"></div>
+                        <button id="dropdown-logout-btn" class="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-slate-100 dark:hover:bg-slate-700">Logout</button>
                     </div>
                 </div>
             </div>
-            <button id="mobile-menu-button" class="md:hidden text-slate-800">
+            <button id="mobile-menu-button" class="md:hidden text-slate-800 dark:text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
             </button>
         </div>
-        <div id="mobile-menu" class="hidden md:hidden px-4 sm:px-6 md:px-8 lg:px-12 pb-4 space-y-2">
-            <a href="#features" class="block py-2 text-slate-600 hover:text-blue-600">Features</a>
-            <a href="#how-it-works" class="block py-2 text-slate-600 hover:text-blue-600">How It Works</a>
-            <a href="#testimonials" class="block py-2 text-slate-600 hover:text-blue-600">Testimonials</a>
-            <hr class="border-slate-200 my-2">
+        <div id="mobile-menu" class="hidden md:hidden px-4 sm:px-6 md:px-8 lg:px-12 pb-4 space-y-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <a href="#features" class="block py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">Features</a>
+            <a href="#how-it-works" class="block py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">How It Works</a>
+            <a href="#testimonials" class="block py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">Testimonials</a>
+            <hr class="border-slate-200 dark:border-slate-700 my-2">
             
             <div class="flex justify-between items-center my-2">
-                <span class="text-slate-600">Toggle Theme:</span>
+                <span class="text-slate-600 dark:text-slate-400">Toggle Theme:</span>
                 <button id="theme-toggle-btn-mobile" class="theme-toggle-btn" title="Toggle theme">
                     <i class="fas fa-moon icon-moon"></i>
                     <i class="fas fa-sun icon-sun"></i>
@@ -100,7 +123,7 @@
             </div>
             <div id="mobile-user-actions" class="hidden space-y-2">
                  <a href="#dashboard" class="block py-2 text-blue-600 font-semibold">My Dashboard</a>
-                 <a href="#" id="mobile-my-account-btn" class="block py-2 text-slate-600 hover:text-blue-600">My Account</a>
+                 <a href="#" id="mobile-my-account-btn" class="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600">My Account</a>
                  <button id="mobile-logout-btn" class="w-full bg-red-500 text-white text-center px-5 py-2 rounded-lg font-semibold">Logout</button>
             </div>
         </div>
@@ -111,10 +134,10 @@
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="grid md:grid-cols-2 gap-12 items-center">
                     <div class="text-center md:text-left">
-                        <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 leading-tight mb-4">
+                        <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white leading-tight mb-4">
                             Prepare <span class="gradient-text">Smarter</span>, Not Harder for UPSC
                         </h1>
-                        <p class="text-lg text-slate-600 mb-8 max-w-xl mx-auto md:mx-0">
+                        <p class="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-xl mx-auto md:mx-0">
                             Your personalized AI mentor for cracking the Civil Services Exam. Get dynamic syllabus tracker, Mains answer feedback, and integrated resources—all in one place.
                         </p>
                         <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
@@ -161,39 +184,39 @@
 
         <section id="features" class="py-12 md:py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">The Ultimate Toolkit for Success in UPSC CSE</h2>
-                <p class="text-slate-600 max-w-3xl mx-auto mb-12">Stop juggling countless resources. We bring everything you need into one intelligent platform, designed to optimize your preparation.</p>
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">The Ultimate Toolkit for Success in UPSC CSE</h2>
+                <p class="text-slate-600 dark:text-slate-400 max-w-3xl mx-auto mb-12">Stop juggling countless resources. We bring everything you need into one intelligent platform, designed to optimize your preparation.</p>
                 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div id="quizzie-feature-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer">
+                    <div id="quizzie-feature-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
                         <div class="bg-rose-100 text-rose-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <i class="fas fa-question text-3xl"></i>
                         </div>
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Quizzie - AI Quiz Module</h3>
-                        <p class="text-slate-500">Generate UPSC-style quizzes based on subject, difficulty, and question type.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Quizzie - AI Quiz Module</h3>
+                        <p class="text-slate-500 dark:text-slate-400">Generate UPSC-style quizzes based on subject, difficulty, and question type.</p>
                     </div>
-                    <a href="/maintor.html" target="_blank" rel="noopener noreferrer" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
+                    <a href="/maintor.html" target="_blank" rel="noopener noreferrer" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg" style="transition-delay: 150ms;">
                         <div class="bg-green-100 text-green-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Mains Answer Evaluation</h3>
-                        <p class="text-slate-500">Get instant, data-driven feedback on your answer structure, content, and relevance.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Mains Answer Evaluation</h3>
+                        <p class="text-slate-500 dark:text-slate-400">Get instant, data-driven feedback on your answer structure, content, and relevance.</p>
                     </a>
-                    <div id="current-affairs-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 300ms;">
+                    <div id="current-affairs-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg" style="transition-delay: 300ms;">
                         <div class="bg-indigo-100 text-indigo-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6" /></svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Integrated Current Affairs</h3>
-                        <p class="text-slate-500">Daily news linked directly to syllabus topics, with notes and revision quizzes.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Integrated Current Affairs</h3>
+                        <p class="text-slate-500 dark:text-slate-400">Daily news linked directly to syllabus topics, with notes and revision quizzes.</p>
                     </div>
-                    <a href="tracker.html" target="_blank" id="syllabus-feature-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 450ms;">
+                    <a href="tracker.html" target="_blank" id="syllabus-feature-card" class="feature-card dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg" style="transition-delay: 450ms;">
                         <div class="bg-blue-100 text-blue-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A2 2 0 012 15.382V8.618a2 2 0 011.553-1.9l6-3a2 2 0 011.789 0l6 3A2 2 0 0119 8.618v6.764a2 2 0 01-1.553 1.9L12 20.618a2 2 0 01-1.789 0L9 20z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15V9m0 0l-3 3m3-3l3 3" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">UPSC Syllabus Navigator</h3>
-                        <p class="text-slate-500">Track your progress on every micro-topic with our dynamic tracker.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">UPSC Syllabus Navigator</h3>
+                        <p class="text-slate-500 dark:text-slate-400">Track your progress on every micro-topic with our dynamic tracker.</p>
                     </a>
                     </div>
             </div>
@@ -201,26 +224,26 @@
 
         <section id="dashboard" class="hidden py-12 md:py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
-                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-8 text-center">My Preparation Dashboard</h2>
+                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-8 text-center">My Preparation Dashboard</h2>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     
-                    <div id="syllabus-progress-container" class="dashboard-card p-8 rounded-xl">
-                        <h3 class="text-2xl font-semibold mb-4">My Syllabus Progress</h3>
-                        <p class="text-slate-500 mb-6">
+                    <div id="syllabus-progress-container" class="dashboard-card p-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
+                        <h3 class="text-2xl font-semibold mb-4 text-slate-800 dark:text-white">My Syllabus Progress</h3>
+                        <p class="text-slate-500 dark:text-slate-400 mb-6">
                             A real-time summary of your progress from the Syllabus Navigator.
                         </p>
                         
                         <div id="dashboard-progress-bars" class="space-y-4">
-                            <p class="text-slate-500">Loading progress...</p>
+                            <p class="text-slate-500 dark:text-slate-400">Loading progress...</p>
                         </div>
                     </div>
 
-                    <div id="revision-reminder-container" class="dashboard-card p-8 rounded-xl">
-                        <h3 class="text-2xl font-semibold mb-4">Revision Reminders</h3>
-                        <p class="text-slate-500 mb-6">A light list of topics due for revision. Visit the <a href="tracker.html" target="_blank" class="text-blue-600 hover:underline">Full Tracker</a> for details.</p>
+                    <div id="revision-reminder-container" class="dashboard-card p-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
+                        <h3 class="text-2xl font-semibold mb-4 text-slate-800 dark:text-white">Revision Reminders</h3>
+                        <p class="text-slate-500 dark:text-slate-400 mb-6">A light list of topics due for revision. Visit the <a href="tracker.html" target="_blank" class="text-blue-600 hover:underline">Full Tracker</a> for details.</p>
                         <div id="revision-reminder-list" class="space-y-3">
-                            <p class="text-slate-500">Loading reminders...</p>
+                            <p class="text-slate-500 dark:text-slate-400">Loading reminders...</p>
                         </div>
                     </div>
 
@@ -231,24 +254,24 @@
         <section id="how-it-works" class="py-12 md:py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Your Path to Success in 3 Simple Steps</h2>
-                    <p class="text-slate-600 max-w-2xl mx-auto">We've simplified the journey. Focus on what matters most: learning and improving.</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Your Path to Success in 3 Simple Steps</h2>
+                    <p class="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">We've simplified the journey. Focus on what matters most: learning and improving.</p>
                 </div>
                 <div class="grid md:grid-cols-3 gap-8">
-                    <div class="dashboard-card text-center p-8 fade-in-up">
+                    <div class="dashboard-card text-center p-8 fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
                         <div class="step-circle">1</div>
-                        <h3 class="text-xl font-semibold text-slate-900 mt-6 mb-2">Track Your Syllabus</h3>
-                        <p class="text-slate-500">Open the Syllabus Navigator, see the entire official syllabus, and mark your progress topic-by-topic.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mt-6 mb-2">Track Your Syllabus</h3>
+                        <p class="text-slate-500 dark:text-slate-400">Open the Syllabus Navigator, see the entire official syllabus, and mark your progress topic-by-topic.</p>
                     </div>
-                    <div class="dashboard-card text-center p-8 fade-in-up" style="transition-delay: 200ms;">
+                    <div class="dashboard-card text-center p-8 fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg" style="transition-delay: 200ms;">
                         <div class="step-circle">2</div>
-                        <h3 class="text-xl font-semibold text-slate-900 mt-6 mb-2">Practice & Evaluate</h3>
-                        <p class="text-slate-500">Use the AI Quiz module to test your knowledge and the Mains Evaluator to refine your writing.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mt-6 mb-2">Practice & Evaluate</h3>
+                        <p class="text-slate-500 dark:text-slate-400">Use the AI Quiz module to test your knowledge and the Mains Evaluator to refine your writing.</p>
                     </div>
-                    <div class="dashboard-card text-center p-8 fade-in-up" style="transition-delay: 400ms;">
+                    <div class="dashboard-card text-center p-8 fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg" style="transition-delay: 400ms;">
                         <div class="step-circle">3</div>
-                        <h3 class="text-xl font-semibold text-slate-900 mt-6 mb-2">Save, Track & Improve</h3>
-                        <p class="text-slate-500">Save your syllabus progress to your dashboard. Monitor your completion and conquer weaknesses.</p>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mt-6 mb-2">Save, Track & Improve</h3>
+                        <p class="text-slate-500 dark:text-slate-400">Save your syllabus progress to your dashboard. Monitor your completion and conquer weaknesses.</p>
                     </div>
                 </div>
             </div>
@@ -257,8 +280,8 @@
         <section id="testimonials" class="py-12 md:py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
                 <div class="text-center mb-12">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">What Our Aspirants Say</h2>
-                    <p class="text-slate-600 max-w-2xl mx-auto">Success stories from those who chose the smarter way.</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">What Our Aspirants Say</h2>
+                    <p class="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Success stories from those who chose the smarter way.</p>
                 </div>
                 
                 <div class="testimonial-carousel-container">
@@ -266,52 +289,52 @@
                         <div id="testimonial-carousel-track" class="testimonial-carousel-track">
                             
                             <div class="testimonial-card-wrapper">
-                                <div class="testimonial-card dashboard-card rounded-xl p-8">
-                                    <p class="text-slate-600 mb-6">"iasmaintor's syllabus tracker is a game-changer. It removed all the guesswork and helped me cover the syllabus in a structured manner. For the first time, I feel in control of my preparation."</p>
+                                <div class="testimonial-card dashboard-card rounded-xl p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
+                                    <p class="text-slate-600 dark:text-slate-400 mb-6">"iasmaintor's syllabus tracker is a game-changer. It removed all the guesswork and helped me cover the syllabus in a structured manner. For the first time, I feel in control of my preparation."</p>
                                     <div class="flex items-center">
                                         <img src="https://placehold.co/48x48/e0e7ff/3730a3?text=PS" alt="Priya Sharma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
                                         <div>
-                                            <h4 class="font-semibold text-slate-900">Priya Sharma</h4>
-                                            <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                                            <h4 class="font-semibold text-slate-900 dark:text-white">Priya Sharma</h4>
+                                            <p class="text-slate-500 dark:text-slate-400 text-sm">UPSC Aspirant</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
                             <div class="testimonial-card-wrapper">
-                                <div class="testimonial-card dashboard-card rounded-xl p-8">
-                                    <p class="text-slate-600 mb-6">"The instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure. The AI points out flaws I never would have noticed on my own."</p>
+                                <div class="testimonial-card dashboard-card rounded-xl p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
+                                    <p class="text-slate-600 dark:text-slate-400 mb-6">"The instant feedback on mains answers is incredible. I've seen a massive improvement in my writing style and structure. The AI points out flaws I never would have noticed on my own."</p>
                                     <div class="flex items-center">
                                          <img src="https://placehold.co/48x48/d1fae5/047857?text=RP" alt="Rajdeep Pandey" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
                                         <div>
-                                            <h4 class="font-semibold text-slate-900">Rajdeep Pandey</h4>
-                                            <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                                            <h4 class="font-semibold text-slate-900 dark:text-white">Rajdeep Pandey</h4>
+                                            <p class="text-slate-500 dark:text-slate-400 text-sm">UPSC Aspirant</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
                             <div class="testimonial-card-wrapper">
-                                <div class="testimonial-card dashboard-card rounded-xl p-8">
-                                    <p class="text-slate-600 mb-6">"Drona, the AI mentor, is incredible. Getting instant, 24/7 clarification on complex topics has been a game-changer for my preparation. It's like having a dedicated expert on call. Highly recommended!"</p>
+                                <div class="testimonial-card dashboard-card rounded-xl p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
+                                    <p class="text-slate-600 dark:text-slate-400 mb-6">"Drona, the AI mentor, is incredible. Getting instant, 24/7 clarification on complex topics has been a game-changer for my preparation. It's like having a dedicated expert on call. Highly recommended!"</p>
                                     <div class="flex items-center">
                                          <img src="https://placehold.co/48x48/fce7f3/831843?text=AV" alt="Anjali Verma" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
                                         <div>
-                                            <h4 class="font-semibold text-slate-900">Anjali Verma</h4>
-                                            <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                                            <h4 class="font-semibold text-slate-900 dark:text-white">Anjali Verma</h4>
+                                            <p class="text-slate-500 dark:text-slate-400 text-sm">UPSC Aspirant</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
                              <div class="testimonial-card-wrapper">
-                                <div class="testimonial-card dashboard-card rounded-xl p-8">
-                                    <p class="text-slate-600 mb-6">"The Quizzie module is addictive. It's the best way to revise prelims topics. The AI-generated questions are high quality and really test my understanding."</p>
+                                <div class="testimonial-card dashboard-card rounded-xl p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
+                                    <p class="text-slate-600 dark:text-slate-400 mb-6">"The Quizzie module is addictive. It's the best way to revise prelims topics. The AI-generated questions are high quality and really test my understanding."</p>
                                     <div class="flex items-center">
                                          <img src="https://placehold.co/48x48/fef3c7/854d0e?text=MK" alt="Mohan Kumar" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/48x48?text=User';">
                                         <div>
-                                            <h4 class="font-semibold text-slate-900">Mohan Kumar</h4>
-                                            <p class="text-slate-500 text-sm">UPSC Aspirant</p>
+                                            <h4 class="font-semibold text-slate-900 dark:text-white">Mohan Kumar</h4>
+                                            <p class="text-slate-500 dark:text-slate-400 text-sm">UPSC Aspirant</p>
                                         </div>
                                     </div>
                                 </div>
@@ -326,25 +349,25 @@
 
         <section id="who-we-are" class="py-12 md:py-20">
             <div class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Who We Are</h2>
-                <p class="text-slate-600 max-w-3xl mx-auto mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Who We Are</h2>
+                <p class="text-slate-600 dark:text-slate-400 max-w-3xl mx-auto mb-12">
                     We’re a small team of dreamers behind iasmAIntor — an AI-powered tool built to make your UPSC prep smarter, simpler, and a little more creative. Our journey started with one shared goal: to make UPSC preparation less overwhelming and more effective for every aspirant.
                 </p>
                 <div class="grid md:grid-cols-3 gap-8 text-left">
-                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Ashish</h3>
-                        <p class="text-slate-500">has appeared in the UPSC Mains four times, is a tech graduate, and has worked with several leading EdTech firms in the UPSC prep space.</p>
+                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg">
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Ashish</h3>
+                        <p class="text-slate-500 dark:text-slate-400">has appeared in the UPSC Mains four times, is a tech graduate, and has worked with several leading EdTech firms in the UPSC prep space.</p>
                     </div>
-                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Abhijeet</h3>
-                        <p class="text-slate-500">a tech graduate from Delhi University, brings his expertise from working at a leading EdTech company, where he manages tech and innovation.</p>
+                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg" style="transition-delay: 150ms;">
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Abhijeet</h3>
+                        <p class="text-slate-500 dark:text-slate-400">a tech graduate from Delhi University, brings his expertise from working at a leading EdTech company, where he manages tech and innovation.</p>
                     </div>
-                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
-                        <h3 class="text-xl font-semibold text-slate-900 mb-2">Rajdeep</h3>
-                        <p class="text-slate-500">a St. Stephen’s graduate and fellow UPSC aspirant, works as a Content Strategist in the EdTech space, ensuring what you learn is not just accurate but engaging too.</p>
+                    <div class="dashboard-card p-8 rounded-xl hover:-translate-y-2 transition-all duration-300 fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg" style="transition-delay: 300ms;">
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Rajdeep</h3>
+                        <p class="text-slate-500 dark:text-slate-400">a St. Stephen’s graduate and fellow UPSC aspirant, works as a Content Strategist in the EdTech space, ensuring what you learn is not just accurate but engaging too.</p>
                     </div>
                 </div>
-                <p class="text-slate-600 max-w-3xl mx-auto mt-12">
+                <p class="text-slate-600 dark:text-slate-400 max-w-3xl mx-auto mt-12">
                     Together, we’ve built iasmAIntor to bring the best of experience, technology, and strategy to your UPSC journey.
                 </p>
             </div>
@@ -360,46 +383,46 @@
     </main>
 
     <div id="mentorship-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+        <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8 bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
             <div class="flex justify-between items-start mb-4">
-                <h2 class="text-2xl font-bold text-slate-800">Request 1:1 Mentorship</h2>
-                <button id="close-mentorship-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
+                <h2 class="text-2xl font-bold">Request 1:1 Mentorship</h2>
+                <button id="close-mentorship-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-3xl leading-none">&times;</button>
             </div>
             <div id="mentorship-error" class="bg-red-100 text-red-700 p-3 rounded-md mb-4 hidden"></div>
-            <p class="text-center text-slate-500 mb-6">Fill out your details below and we'll get in touch to schedule your free session.</p>
+            <p class="text-center text-slate-500 dark:text-slate-400 mb-6">Fill out your details below and we'll get in touch to schedule your free session.</p>
             <form id="mentorship-form">
                 <div class="mb-4">
-                    <label for="mentorship-name" class="block text-slate-700 text-sm font-semibold mb-2">Full Name</label>
-                    <input type="text" id="mentorship-name" placeholder="Your Full Name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                    <label for="mentorship-name" class="block text-sm font-semibold mb-2">Full Name</label>
+                    <input type="text" id="mentorship-name" placeholder="Your Full Name" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
                 </div>
                 <div class="mb-4">
-                    <label for="mentorship-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address (from your account)</label>
-                    <input type="email" id="mentorship-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 cursor-not-allowed" readonly>
+                    <label for="mentorship-email" class="block text-sm font-semibold mb-2">Email Address (from your account)</label>
+                    <input type="email" id="mentorship-email" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700 dark:text-slate-400 cursor-not-allowed" readonly>
                 </div>
                 <div class="mb-4">
-                    <label for="mentorship-phone" class="block text-slate-700 text-sm font-semibold mb-2">Phone Number</label>
-                    <input type="tel" id="mentorship-phone" placeholder="Your 10-digit mobile number" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                    <label for="mentorship-phone" class="block text-sm font-semibold mb-2">Phone Number</label>
+                    <input type="tel" id="mentorship-phone" placeholder="Your 10-digit mobile number" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
                 </div>
                 <div class="mb-6">
-                    <label for="mentorship-details" class="block text-slate-700 text-sm font-semibold mb-2">Tell us about your preparation (Optional)</label>
-                    <textarea id="mentorship-details" rows="3" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="e.g., your optional subject, number of attempts, specific challenges..."></textarea>
+                    <label for="mentorship-details" class="block text-sm font-semibold mb-2">Tell us about your preparation (Optional)</label>
+                    <textarea id="mentorship-details" rows="3" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="e.g., your optional subject, number of attempts, specific challenges..."></textarea>
                 </div>
                 <button type="submit" id="mentorship-submit-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Submit Request</button>
             </form>
         </div>
     </div>
     <div id="chatbot-container" class="fixed bottom-5 right-5 z-[100]">
-        <div id="chatbot-window" class="hidden absolute bottom-[80px] right-0 w-80 sm:w-96 h-[500px] rounded-lg shadow-2xl flex flex-col overflow-hidden border border-slate-300">
+        <div id="chatbot-window" class="hidden absolute bottom-[80px] right-0 w-80 sm:w-96 h-[500px] rounded-lg shadow-2xl flex flex-col overflow-hidden border border-slate-300 dark:border-slate-700">
             <div class="bg-blue-600 text-white p-3 flex justify-between items-center flex-shrink-0">
                 <h3 class="font-semibold text-lg flex items-center">
                     <i class="fas fa-chess-knight mr-2"></i> Drona
                 </h3>
                 <button id="chatbot-close" class="text-blue-200 hover:text-white">&times;</button>
             </div>
-            <div id="chatbot-messages" class="flex-1 p-3 overflow-y-auto space-y-3">
+            <div id="chatbot-messages" class="flex-1 p-3 overflow-y-auto space-y-3 bg-slate-50 dark:bg-slate-900">
                 </div>
-            <form id="chatbot-form" class="border-t border-slate-200 p-2 flex items-center flex-shrink-0">
-                <input type="text" id="chatbot-input" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask Drona a question..." required>
+            <form id="chatbot-form" class="border-t border-slate-200 dark:border-slate-700 p-2 flex items-center flex-shrink-0 bg-white dark:bg-slate-800">
+                <input type="text" id="chatbot-input" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white" placeholder="Ask Drona a question..." required>
                 <button type="submit" class="ml-2 bg-blue-600 text-white p-2 rounded-full h-10 w-10 flex-shrink-0 flex items-center justify-center transition-transform hover:scale-110">
                     <i class="fas fa-paper-plane"></i>
                 </button>
@@ -408,7 +431,7 @@
         
         <button id="chatbot-toggle" class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110">
             <i class="fas fa-chess-knight text-3xl"></i>
-            <span id="chatbot-greeting-bubble" class="hidden absolute bottom-14 right-14 w-64 p-3 rounded-lg shadow-md text-slate-800 text-sm border border-slate-200" style="transform-origin: bottom right;">
+            <span id="chatbot-greeting-bubble" class="hidden absolute bottom-14 right-14 w-64 p-3 rounded-lg shadow-md text-slate-800 text-sm border border-slate-200 bg-white" style="transform-origin: bottom right;">
                 </span>
         </button>
     </div>
@@ -465,102 +488,102 @@
     </footer>
 
     <div id="auth-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+        <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8 bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
             <div class="flex justify-end">
-                <button id="close-auth-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
+                <button id="close-auth-modal" class="text-slate-400 hover:text-slate-800 dark:hover:text-white text-3xl leading-none">&times;</button>
             </div>
             <div id="auth-error" class="bg-red-100 text-red-700 p-3 rounded-md mb-4 hidden"></div>
             <div id="login-view">
-                <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Welcome Back</h2>
-                <p class="text-center text-slate-500 mb-8">Please enter your details to log in.</p>
+                <h2 class="text-3xl font-bold text-center mb-2">Welcome Back</h2>
+                <p class="text-center text-slate-500 dark:text-slate-400 mb-8">Please enter your details to log in.</p>
                 <form id="login-form">
                     <div class="mb-4">
-                        <label for="login-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
-                        <input type="email" id="login-email" placeholder="e.g., user@example.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                        <label for="login-email" class="block text-sm font-semibold mb-2">Email Address</label>
+                        <input type="email" id="login-email" placeholder="e.g., user@example.com" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
                     </div>
                     <div class="mb-6">
                         <div class="flex justify-between items-center mb-2">
-                            <label for="login-password" class="block text-slate-700 text-sm font-semibold">Password</label>
-                            <button type="button" id="forgot-password-btn" class="text-sm text-blue-600 hover:underline">Forgot Password?</button>
+                            <label for="login-password" class="block text-sm font-semibold">Password</label>
+                            <button type="button" id="forgot-password-btn" class="text-sm text-blue-600 hover:underline dark:text-blue-400">Forgot Password?</button>
                         </div>
-                        <input type="password" id="login-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                        <input type="password" id="login-password" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
                     </div>
                     <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Log In</button>
                 </form>
-                <p class="text-center text-sm text-slate-600 mt-8">
+                <p class="text-center text-sm text-slate-600 dark:text-slate-400 mt-8">
                     Don't have an account?
-                    <button id="auth-switch-to-signup" class="font-semibold text-blue-600 hover:underline">Sign Up</button>
+                    <button id="auth-switch-to-signup" class="font-semibold text-blue-600 hover:underline dark:text-blue-400">Sign Up</button>
                 </p>
             </div>
             <div id="signup-view" class="hidden">
-                 <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Create Your Account</h2>
-                 <p class="text-center text-slate-500 mb-8">Get started on your UPSC journey.</p>
+                 <h2 class="text-3xl font-bold text-center mb-2">Create Your Account</h2>
+                 <p class="text-center text-slate-500 dark:text-slate-400 mb-8">Get started on your UPSC journey.</p>
                 <form id="signup-form">
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label for="signup-first-name" class="block text-slate-700 text-sm font-semibold mb-2">First Name</label>
-                            <input type="text" id="signup-first-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            <label for="signup-first-name" class="block text-sm font-semibold mb-2">First Name</label>
+                            <input type="text" id="signup-first-name" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                         </div>
                         <div>
-                            <label for="signup-last-name" class="block text-slate-700 text-sm font-semibold mb-2">Last Name</label>
-                            <input type="text" id="signup-last-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            <label for="signup-last-name" class="block text-sm font-semibold mb-2">Last Name</label>
+                            <input type="text" id="signup-last-name" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                         </div>
                     </div>
                      <div class="mb-4">
-                        <label for="signup-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
-                        <input type="email" id="signup-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <label for="signup-email" class="block text-sm font-semibold mb-2">Email Address</label>
+                        <input type="email" id="signup-email" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     </div>
                     <div class="mb-6">
-                        <label for="signup-password" class="block text-slate-700 text-sm font-semibold mb-2">Password</label>
-                        <input type="password" id="signup-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required minlength="6">
-                        <p class="text-xs text-slate-500 mt-1">Minimum 6 characters.</p>
+                        <label for="signup-password" class="block text-sm font-semibold mb-2">Password</label>
+                        <input type="password" id="signup-password" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required minlength="6">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Minimum 6 characters.</p>
                     </div>
                     <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Create Account</button>
                 </form>
-                <p class="text-center text-sm text-slate-600 mt-8">
+                <p class="text-center text-sm text-slate-600 dark:text-slate-400 mt-8">
                     Already have an account?
-                    <button id="auth-switch-to-login" class="font-semibold text-blue-600 hover:underline">Log In</button>
+                    <button id="auth-switch-to-login" class="font-semibold text-blue-600 hover:underline dark:text-blue-400">Log In</button>
                 </p>
             </div>
             <div id="forgot-password-view" class="hidden">
-                 <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Reset Password</h2>
-                 <p class="text-center text-slate-500 mb-8">Enter your email to receive a password reset link.</p>
+                 <h2 class="text-3xl font-bold text-center mb-2">Reset Password</h2>
+                 <p class="text-center text-slate-500 dark:text-slate-400 mb-8">Enter your email to receive a password reset link.</p>
                 <form id="forgot-password-form">
                     <div class="mb-4">
-                        <label for="reset-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
-                        <input type="email" id="reset-email" placeholder="e.g., user@example.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
+                        <label for="reset-email" class="block text-sm font-semibold mb-2">Email Address</label>
+                        <input type="email" id="reset-email" placeholder="e.g., user@example.com" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required>
                     </div>
                     <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Send Reset Link</button>
                 </form>
-                <p class="text-center text-sm text-slate-600 mt-8">
+                <p class="text-center text-sm text-slate-600 dark:text-slate-400 mt-8">
                     Remembered your password?
-                    <button id="auth-switch-to-login-from-reset" class="font-semibold text-blue-600 hover:underline">Back to Log In</button>
+                    <button id="auth-switch-to-login-from-reset" class="font-semibold text-blue-600 hover:underline dark:text-blue-400">Back to Log In</button>
                 </p>
             </div>
         </div>
     </div>
 
     <div id="account-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-       <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8">
+       <div class="rounded-lg shadow-2xl w-full max-w-md modal-content p-8 bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
             <div class="flex justify-between items-start mb-4">
-                <h2 class="text-2xl font-bold text-slate-800">My Account</h2>
-                <button id="close-account-modal" class="text-slate-400 hover:text-slate-800 text-3xl leading-none">&times;</button>
+                <h2 class="text-2xl font-bold">My Account</h2>
+                <button id="close-account-modal" class="text-slate-400 hover:text-slate-800 dark:hover:text-white text-3xl leading-none">&times;</button>
             </div>
             <div id="account-error" class="bg-red-100 text-red-700 p-3 rounded-md mb-4 hidden"></div>
             <form id="account-form">
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label for="account-first-name" class="block text-slate-700 text-sm font-semibold mb-2">First Name</label>
-                        <input type="text" id="account-first-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <label for="account-first-name" class="block text-sm font-semibold mb-2">First Name</label>
+                        <input type="text" id="account-first-name" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     </div>
                     <div>
-                        <label for="account-last-name" class="block text-slate-700 text-sm font-semibold mb-2">Last Name</label>
-                        <input type="text" id="account-last-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <label for="account-last-name" class="block text-sm font-semibold mb-2">Last Name</label>
+                        <input type="text" id="account-last-name" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     </div>
                 </div>
                 <div class="mb-6">
-                    <label for="account-email" class="block text-slate-700 text-sm font-semibold mb-2">Email Address</label>
-                    <input type="email" id="account-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 cursor-not-allowed" readonly>
+                    <label for="account-email" class="block text-sm font-semibold mb-2">Email Address</label>
+                    <input type="email" id="account-email" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700 dark:text-slate-400 cursor-not-allowed" readonly>
                 </div>
                 <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Save Changes</button>
             </form>
@@ -568,40 +591,40 @@
     </div>
 
     <div id="success-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-       <div class="rounded-lg shadow-2xl p-8 text-center modal-content">
+       <div class="rounded-lg shadow-2xl p-8 text-center modal-content bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
             <div class="svg-container w-24 h-24 mx-auto mb-4">
                 <svg class="ft-green-tick" xmlns="http://www.w3.org/2000/svg" height="100" width="100" viewBox="0 0 48 48" aria-hidden="true">
                     <circle class="circle" fill="none" stroke="#22c55e" stroke-width="3" cx="24" cy="24" r="22"/>
                     <path class="tick" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M14 27l5.917 4.917L34 17"/>
                 </svg>
             </div>
-            <h3 class="text-2xl font-bold text-slate-800">Registration Successful!</h3>
-            <p class="text-slate-500 mt-2">Welcome to iasmaintor!</p>
+            <h3 class="text-2xl font-bold">Registration Successful!</h3>
+            <p class="text-slate-500 dark:text-slate-400 mt-2">Welcome to iasmaintor!</p>
         </div>
     </div>
 
-    <div id="quizzie-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden modal-content">
-            <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+    <div id="quizzie-modal" class="modal fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden modal-content border border-slate-200 dark:border-slate-700">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
                 <div class="flex items-center space-x-2">
-                    <span class="bg-indigo-100 text-indigo-600 p-2 rounded-lg">
+                    <span class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 p-2 rounded-lg">
                         <i class="fas fa-brain"></i>
                     </span>
-                    <h3 class="text-lg font-bold text-slate-800">Quizzie AI</h3>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Quizzie AI</h3>
                 </div>
-                <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <button id="close-quizzie-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
 
-            <div id="quizzie-content" class="p-6 overflow-y-auto flex-1">
+            <div id="quizzie-content" class="p-6 overflow-y-auto flex-1 custom-scrollbar">
                 
                 <div id="quiz-progress-container" class="mb-6">
-                    <div class="flex justify-between text-xs font-semibold text-slate-500 mb-2">
+                    <div class="flex justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
                         <span id="quiz-progress-text">Step 1 of 4</span>
                         <span>Configuration</span>
                     </div>
-                    <div class="w-full bg-slate-200 rounded-full h-2">
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                         <div id="quiz-progress-indicator" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 25%"></div>
                     </div>
                 </div>
@@ -610,72 +633,72 @@
                     <input type="hidden" name="test_type" value="sectional">
 
                     <div class="quiz-step-group active" data-step="1">
-                        <h4 class="text-xl font-bold text-slate-800 mb-4">What do you want to practice?</h4>
+                        <h4 class="text-xl font-bold text-slate-800 dark:text-white mb-4">What do you want to practice?</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="cursor-pointer">
                                 <input type="radio" name="main_subject" value="gs" class="peer hidden" checked>
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                <div class="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group bg-white dark:bg-slate-800">
                                     <div class="text-3xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-book-open"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">General Studies</div>
+                                    <div class="font-semibold text-slate-700 dark:text-slate-300 peer-checked:!text-white">General Studies</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="main_subject" value="csat" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
+                                <div class="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group bg-white dark:bg-slate-800">
                                     <div class="text-3xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-calculator"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">CSAT (Aptitude)</div>
+                                    <div class="font-semibold text-slate-700 dark:text-slate-300 peer-checked:!text-white">CSAT (Aptitude)</div>
                                 </div>
                             </label>
                         </div>
                         <div class="mt-6 flex justify-end">
-                            <button type="button" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Next <i class="fas fa-arrow-right ml-2"></i></button>
+                            <button type="button" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">Next <i class="fas fa-arrow-right ml-2"></i></button>
                         </div>
                     </div>
 
                     <div class="quiz-step-group" data-step="2">
-                        <h4 class="text-xl font-bold text-slate-800 mb-4">Choose a Subject</h4>
+                        <h4 class="text-xl font-bold text-slate-800 dark:text-white mb-4">Choose a Subject</h4>
                         
                         <div id="gs-sectional-group" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="history" class="peer hidden" checked>
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-landmark"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">History</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-landmark text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">History</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="geography" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-globe-asia"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Geography</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-globe-asia text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Geography</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="polity" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-balance-scale"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Polity</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-balance-scale text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Polity</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="economy" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-rupee-sign"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Economy</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-indian-rupee-sign text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Economy</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="environment" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-leaf"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Environment</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-leaf text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Environment</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="gs_subject" value="science-tech" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-atom"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Science & Tech</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-atom text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Science & Tech</span>
                                 </div>
                             </label>
                         </div>
@@ -683,72 +706,76 @@
                         <div id="csat-sectional-group" class="grid grid-cols-2 sm:grid-cols-3 gap-3 hidden">
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="quant" class="peer hidden" checked>
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-calculator"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Quant</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-calculator text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Quant</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="reasoning" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-brain"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Reasoning</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-brain text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Reasoning</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="csat_subject" value="reading" class="peer hidden">
-                                <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all text-center group">
-                                    <div class="text-2xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"><i class="fas fa-book-reader"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:!text-white">Reading</div>
+                                <div class="p-3 h-24 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all group bg-white dark:bg-slate-800">
+                                    <i class="fas fa-book-reader text-xl mb-1 text-slate-400 group-hover:text-blue-500 peer-checked:!text-white"></i>
+                                    <span class="font-medium text-sm text-slate-600 dark:text-slate-300 peer-checked:!text-white">Reading</span>
                                 </div>
                             </label>
                         </div>
 
                         <div class="mt-6 flex justify-between">
-                            <button type="button" class="prev-step-btn border border-slate-300 text-slate-700 hover:bg-slate-100 px-6 py-2 rounded-lg font-medium transition-colors">Back</button>
-                            <button type="button" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Next <i class="fas fa-arrow-right ml-2"></i></button>
+                            <button type="button" class="prev-step-btn border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 px-5 py-2 rounded-lg font-medium transition-colors flex items-center">
+                                <i class="fas fa-arrow-left mr-2"></i> Back
+                            </button>
+                            <button type="button" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
+                                Next <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
                         </div>
                     </div>
 
                     <div class="quiz-step-group" data-step="3">
-                        <h4 class="text-xl font-bold text-slate-800 mb-4">Configure Test</h4>
+                        <h4 class="text-xl font-bold text-slate-800 dark:text-white mb-4">Configure Test</h4>
                         
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Difficulty Level</label>
+                                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Difficulty Level</label>
                                 <div class="flex space-x-4">
                                     <label class="cursor-pointer flex-1">
                                         <input type="radio" name="difficulty" value="basic" class="peer hidden" checked>
-                                        <div class="p-3 border-2 border-slate-200 rounded-lg text-center hover:border-green-500 peer-checked:bg-green-100 peer-checked:text-green-800 peer-checked:border-green-500 transition-all font-medium text-slate-600">Basic</div>
+                                        <div class="p-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-center hover:border-green-500 peer-checked:bg-green-100 dark:peer-checked:bg-green-900/30 peer-checked:text-green-700 dark:peer-checked:text-green-400 peer-checked:border-green-500 transition-all font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800">Basic</div>
                                     </label>
                                     <label class="cursor-pointer flex-1">
                                         <input type="radio" name="difficulty" value="advanced" class="peer hidden">
-                                        <div class="p-3 border-2 border-slate-200 rounded-lg text-center hover:border-red-500 peer-checked:bg-red-100 peer-checked:text-red-800 peer-checked:border-red-500 transition-all font-medium text-slate-600">Advanced</div>
+                                        <div class="p-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-center hover:border-red-500 peer-checked:bg-red-100 dark:peer-checked:bg-red-900/30 peer-checked:text-red-700 dark:peer-checked:text-red-400 peer-checked:border-red-500 transition-all font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800">Advanced</div>
                                     </label>
                                 </div>
                             </div>
 
                             <div id="num-questions-group">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Number of Questions</label>
+                                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Number of Questions</label>
                                 <div class="grid grid-cols-3 gap-3">
                                     <label class="cursor-pointer">
                                         <input type="radio" name="num_questions" value="5" class="peer hidden">
-                                        <div class="p-2 border-2 border-slate-200 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">5</div>
+                                        <div class="p-2 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800">5</div>
                                     </label>
                                     <label class="cursor-pointer">
                                         <input type="radio" name="num_questions" value="10" class="peer hidden" checked>
-                                        <div class="p-2 border-2 border-slate-200 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">10</div>
+                                        <div class="p-2 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800">10</div>
                                     </label>
                                     <label class="cursor-pointer">
                                         <input type="radio" name="num_questions" value="20" class="peer hidden">
-                                        <div class="p-2 border-2 border-slate-200 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600">20</div>
+                                        <div class="p-2 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-center hover:border-blue-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800">20</div>
                                     </label>
                                 </div>
                             </div>
 
                             <div id="question-type-group">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Question Style</label>
-                                <select name="question_type" class="w-full p-3 border-2 border-slate-200 rounded-lg bg-white focus:border-blue-500 focus:outline-none transition-colors">
+                                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Question Style</label>
+                                <select name="question_type" class="w-full p-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors">
                                     <option value="blend" selected>Balanced Blend</option>
                                     <option value="factual">Factual / Direct</option>
                                     <option value="analytical">Statement Based (Analytical)</option>
@@ -757,47 +784,51 @@
                         </div>
 
                         <div class="mt-6 flex justify-between">
-                            <button type="button" class="prev-step-btn border border-slate-300 text-slate-700 hover:bg-slate-100 px-6 py-2 rounded-lg font-medium transition-colors">Back</button>
-                            <button type="button" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Review <i class="fas fa-arrow-right ml-2"></i></button>
+                            <button type="button" class="prev-step-btn border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 px-5 py-2 rounded-lg font-medium transition-colors flex items-center">
+                                <i class="fas fa-arrow-left mr-2"></i> Back
+                            </button>
+                            <button type="button" class="next-step-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
+                                Review <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
                         </div>
                     </div>
 
                     <div class="quiz-step-group" data-step="4">
                         <div class="text-center py-8">
-                            <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                            <div class="w-20 h-20 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
                                 <i class="fas fa-rocket"></i>
                             </div>
-                            <h4 class="text-2xl font-bold text-slate-800 mb-2">Ready to Start?</h4>
-                            <p class="text-slate-500 mb-8">The AI will generate a unique set of questions based on your preferences.</p>
+                            <h4 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Ready to Start?</h4>
+                            <p class="text-slate-500 dark:text-slate-400 mb-8">The AI will generate a unique set of questions based on your preferences.</p>
                             <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition-transform hover:scale-[1.02] shadow-lg">
                                 Generate Quiz
                             </button>
                         </div>
                         <div class="flex justify-start">
-                            <button type="button" class="prev-step-btn border border-slate-300 text-slate-700 hover:bg-slate-100 px-6 py-2 rounded-lg font-medium transition-colors">Back</button>
+                            <button type="button" class="prev-step-btn border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 px-5 py-2 rounded-lg font-medium transition-colors flex items-center">
+                                <i class="fas fa-arrow-left mr-2"></i> Back
+                            </button>
                         </div>
                     </div>
                 </form>
 
-                <div id="quiz-active-view" class="hidden">
-                    </div>
+                <div id="quiz-active-view" class="hidden"></div>
 
-                <div id="quiz-result" class="hidden">
-                    </div>
+                <div id="quiz-result" class="hidden"></div>
             </div>
 
-            <div id="quiz-footer" class="p-4 border-t bg-slate-50 flex justify-between items-center hidden">
-                <button id="prev-q-btn" class="border border-slate-300 text-slate-700 hover:bg-slate-100 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <div id="quiz-footer" class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex justify-between items-center hidden">
+                <button id="prev-q-btn" class="border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-arrow-left mr-2"></i> Previous
                 </button>
-                <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                <button id="next-q-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
                     Next <i class="fas fa-arrow-right ml-2"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+    <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-[105]"></div>
 
     <script type="module" src="js/app.js"></script>
     <script type="module" src="js/notification-loader.js"></script>
