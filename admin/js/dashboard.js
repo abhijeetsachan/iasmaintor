@@ -804,3 +804,166 @@ window.stopBroadcast = async (id) => {
         loadNotifications();
     }
 };
+
+
+// ==========================================================================
+// 7. ACTIVITY LOGS & REVERT (NEW)
+// ==========================================================================
+
+/**
+ * Loads the activity logs into the table.
+ */
+window.loadActivityLogs = async (loadMore = false) => {
+    const tbody = document.getElementById('logs-table-body');
+    if (!tbody) return;
+
+    if (!loadMore) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">Loading logs...</td></tr>';
+        lastLogSnapshot = null;
+    }
+
+    try {
+        // Query: Order by time desc, limit 20
+        let q = query(collection(db, "admin_logs"), orderBy("timestamp", "desc"), limit(20));
+
+        if (loadMore && lastLogSnapshot) {
+            q = query(collection(db, "admin_logs"), orderBy("timestamp", "desc"), startAfter(lastLogSnapshot), limit(20));
+        }
+
+        const snapshot = await getDocs(q);
+        
+        if (!loadMore) tbody.innerHTML = '';
+        
+        if (snapshot.empty && !loadMore) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No recent activity.</td></tr>';
+            return;
+        }
+
+        lastLogSnapshot = snapshot.docs[snapshot.docs.length - 1];
+
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const date = data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : 'Just now';
+            const canRevert = data.action !== 'revert' && data.action !== 'bulk_upload'; // Prevent infinite revert loops or complex bulk reverts
+
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
+            tr.innerHTML = `
+                <td class="px-6 py-4 text-white text-sm">${data.adminName}</td>
+                <td class="px-6 py-4">
+                    <span class="text-xs uppercase px-2 py-1 rounded font-bold ${getActionColor(data.action)}">${data.action}</span>
+                </td>
+                <td class="px-6 py-4 text-slate-400 text-sm max-w-xs truncate" title="${data.details}">${data.details}</td>
+                <td class="px-6 py-4 text-slate-500 text-xs">${date}</td>
+                <td class="px-6 py-4 text-right">
+                    ${canRevert ? `<button onclick="window.revertAction('${docSnap.id}')" class="text-yellow-500 hover:text-yellow-400 text-xs border border-yellow-500/30 px-2 py-1 rounded hover:bg-yellow-500/10">Revert</button>` : '<span class="text-slate-600 text-xs">-</span>'}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const loadBtn = document.getElementById('load-more-logs');
+        if(loadBtn) loadBtn.style.display = snapshot.size < 20 ? 'none' : 'block';
+
+    } catch (e) {
+        console.error("Log Load Error:", e);
+        if(!loadMore) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
+    }
+};
+
+/**
+ * Deletes logs older than 7 days.
+ */
+async function pruneOldLogs() {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    try {
+        const q = query(collection(db, "admin_logs"), where("timestamp", "<", Timestamp.fromDate(sevenDaysAgo)));
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+            const batch = writeBatch(db);
+            snapshot.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            console.log(`Pruned ${snapshot.size} old logs.`);
+        }
+    } catch (e) {
+        console.warn("Auto-prune failed (likely permissions):", e);
+    }
+}
+
+/**
+ * Attempts to undo a specific action.
+ */
+window.revertAction = async (logId) => {
+    if (!confirm("Attempt to revert this action?")) return;
+    
+    try {
+        const logDoc = await getDoc(doc(db, "admin_logs", logId));
+        if (!logDoc.exists()) throw new Error("Log entry not found.");
+        
+        const data = logDoc.data();
+        const { action, targetId, collectionName, previousData } = data;
+
+        // Revert Logic based on Action Type
+        if (action === 'create' || action === 'add_admin') {
+            // To revert creation, we delete the document
+            const col = collectionName || (action === 'add_admin' ? 'admin_directory' : 'quizzieQuestionBank'); // Inference fallback
+            if(targetId) await deleteDoc(doc(db, col, targetId));
+            
+        } else if (action === 'delete' || action === 'remove_admin') {
+            // To revert deletion, we restore the data (if captured)
+            if (!previousData) throw new Error("Cannot revert: Original data was not saved.");
+            const col = collectionName || (action === 'remove_admin' ? 'admin_directory' : 'quizzieQuestionBank');
+            await setDoc(doc(db, col, targetId), previousData);
+            
+        } else if (action === 'update') {
+            // To revert update, we restore previous data
+            if (!previousData) throw new Error("Cannot revert: Previous data was not saved.");
+            const col = collectionName || 'quizzieQuestionBank';
+            await updateDoc(doc(db, col, targetId), previousData);
+        }
+
+        // Log the Revert itself
+        await logAuditAction('revert', logId, `Reverted action: ${data.details}`, null, null);
+        
+        alert("Action reverted successfully.");
+        
+        // Refresh relevant tables
+        loadActivityLogs();
+        if(action.includes('admin')) loadAdminUsers();
+        else loadQuestions();
+
+    } catch (e) {
+        console.error(e);
+        alert("Revert failed: " + e.message);
+    }
+};
+
+function getActionColor(action) {
+    if (action.includes('delete') || action.includes('remove')) return 'text-red-400 bg-red-900/30';
+    if (action.includes('create') || action.includes('add')) return 'text-green-400 bg-green-900/30';
+    if (action.includes('update')) return 'text-blue-400 bg-blue-900/30';
+    if (action === 'revert') return 'text-yellow-400 bg-yellow-900/30';
+    return 'text-slate-300 bg-slate-700';
+}
+
+/**
+ * Central Logger.
+ * NOW CAPTURES SNAPSHOTS for revert functionality.
+ */
+async function logAuditAction(action, targetId, details, collectionName = null, previousData = null) {
+    try {
+        await setDoc(doc(collection(db, "admin_logs")), {
+            adminId: currentUser.uid,
+            adminName: adminProfile.name || 'Unknown',
+            action, 
+            targetId, 
+            details, 
+            collectionName,
+            previousData, // Save snapshot for revert
+            timestamp: serverTimestamp()
+        });
+    } catch (e) { console.warn("Audit log failed:", e); }
+}
