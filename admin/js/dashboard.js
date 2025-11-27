@@ -34,6 +34,9 @@ console.log("Dashboard: Initializing Core...");
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// --- CONFIGURATION ---
+// Ensure this matches what is used in js/app.js
 const APP_ID = 'default-app-id'; 
 
 // --- State & Editors ---
@@ -155,7 +158,7 @@ async function loadStatCount(colPath, elementId) {
 }
 
 // ==========================================================================
-// 2. ACTIVITY LOGS & REVERT (ROBUST RESTORE)
+// 2. ACTIVITY LOGS & REVERT (FIXED)
 // ==========================================================================
 
 window.loadActivityLogs = async (loadMore = false) => {
@@ -188,7 +191,8 @@ window.loadActivityLogs = async (loadMore = false) => {
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const date = data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : 'Just now';
-            const canRevert = data.action !== 'revert' && data.action !== 'bulk_upload'; 
+            // Disable revert for irreversible actions
+            const canRevert = data.action !== 'revert' && data.action !== 'bulk_upload' && data.action !== 'stop_broadcast'; 
 
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
@@ -239,12 +243,12 @@ window.revertAction = async (logId) => {
         const { action, targetId, collectionName, previousData } = data;
 
         // Logic:
-        // 1. Identify the Collection. Use what was saved in log, or fallback logic.
+        // 1. Identify the Collection.
         let colPath = collectionName;
         if (!colPath) {
             // Fallback for legacy logs
             if (action.includes('admin')) colPath = 'admin_directory';
-            else if (action.includes('student')) colPath = 'users'; // Default to root users
+            else if (action.includes('student') || action.includes('mentorship')) colPath = 'users'; 
             else colPath = 'quizzieQuestionBank';
         }
 
@@ -254,13 +258,26 @@ window.revertAction = async (logId) => {
             // To revert creation, we DELETE the document
             if(targetId) await deleteDoc(doc(db, colPath, targetId));
             
-        } else if (action.includes('delete') || action === 'remove_admin') {
-            // To revert deletion, we RESTORE the previous data
+        } else if (action === 'delete_student') {
+            // To revert student deletion, we need to Restore
             if (!previousData) throw new Error("Cannot revert: Original data was not saved.");
+            // Restore to the specific path it was deleted from
             await setDoc(doc(db, colPath, targetId), previousData);
-            
+
+        } else if (action === 'remove_admin' || action === 'delete') {
+             // Generic delete revert
+             if (!previousData) throw new Error("Cannot revert: Original data was not saved.");
+             await setDoc(doc(db, colPath, targetId), previousData);
+
+        } else if (action === 'mentorship_delete') {
+            // Revert mentorship request deletion -> Restore the field
+            if (!previousData) throw new Error("Cannot revert: Previous data was not saved.");
+            // We use setDoc with merge to ensure we don't overwrite other new fields, 
+            // but we ensure the mentorshipRequest object is put back.
+            await setDoc(doc(db, colPath, targetId), previousData, { merge: true });
+
         } else if (action === 'update' || action === 'mentorship_update') {
-            // To revert update, we RESTORE previous data
+            // To revert update, we RESTORE previous data using updateDoc
             if (!previousData) throw new Error("Cannot revert: Previous data was not saved.");
             await updateDoc(doc(db, colPath, targetId), previousData);
         }
@@ -268,12 +285,14 @@ window.revertAction = async (logId) => {
         await logAuditAction('revert', logId, `Reverted action: ${data.details}`, null, null);
         alert("Action reverted successfully.");
         
-        // Force refresh ALL tables to be safe
-        loadActivityLogs();
-        loadStudents();
-        loadAdminUsers();
-        loadMentorshipRequests();
-        loadQuestions();
+        // Force refresh ALL tables to be safe, with a small delay to allow DB propagation
+        setTimeout(() => {
+            loadActivityLogs();
+            loadStudents();
+            loadAdminUsers();
+            loadMentorshipRequests();
+            loadQuestions();
+        }, 500);
 
     } catch (e) {
         console.error("Revert Error:", e);
@@ -390,37 +409,42 @@ async function loadStudents(loadMore = false) {
     try {
         // 1. Fetch from ARTIFACTS path
         const artifactsRef = collection(db, "artifacts", APP_ID, "users");
-        const q1 = query(artifactsRef, limit(50)); // Removed orderBy to be safe from index errors
-        const snapshot1 = await getDocs(q1);
-
+        const q1 = query(artifactsRef, limit(50));
+        
         // 2. Fetch from ROOT path
         const rootRef = collection(db, "users");
-        const q2 = query(rootRef, limit(50)); // Removed orderBy to be safe
-        const snapshot2 = await getDocs(q2);
+        const q2 = query(rootRef, limit(50)); 
+
+        const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
 
         // 3. Merge & Deduplicate Results
         const studentMap = new Map();
 
         const processDoc = (doc, source) => {
             const data = doc.data();
-            // Handle both nested 'profile' and flat structure
-            const p = data.profile || data; 
+            // Handle both nested 'profile' and flat structure safely
+            let p = data.profile || data; 
             
-            // Basic Validation: Must have email or name
-            if (p && (p.email || p.name || p.firstName)) {
-                // Normalize Dates
-                const createdAt = p.createdAt?.toDate ? p.createdAt.toDate() : 
-                                 (p.joinedAt?.toDate ? p.joinedAt.toDate() : new Date(0));
-                
-                // Deduplication Logic: Prefer 'root' if duplicate, or merge
-                if (!studentMap.has(doc.id) || (studentMap.get(doc.id).source === 'artifacts' && source === 'root')) {
-                    studentMap.set(doc.id, { 
-                        id: doc.id, 
-                        data: p, 
-                        created: createdAt,
-                        source: source 
-                    });
-                }
+            // ### FIX: Handle empty profile object appropriately ###
+            if (!p || Object.keys(p).length === 0) {
+                p = { name: "Unknown User", email: doc.id, createdAt: null };
+            }
+
+            // Normalize Dates (Robust check)
+            let createdAt = new Date(0);
+            try {
+                if (p.createdAt && p.createdAt.toDate) createdAt = p.createdAt.toDate();
+                else if (p.joinedAt && p.joinedAt.toDate) createdAt = p.joinedAt.toDate();
+            } catch(e) { /* Ignore date error */ }
+            
+            // Deduplication Logic: Prefer 'root' if duplicate, or merge
+            if (!studentMap.has(doc.id) || (studentMap.get(doc.id).source === 'artifacts' && source === 'root')) {
+                studentMap.set(doc.id, { 
+                    id: doc.id, 
+                    data: p, 
+                    created: createdAt,
+                    source: source 
+                });
             }
         };
 
@@ -439,33 +463,37 @@ async function loadStudents(loadMore = false) {
 
         // 5. Render
         students.forEach(student => {
-            const p = student.data;
-            const displayName = p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown User';
-            const email = p.email || 'No Email';
-            const dateStr = student.created.getTime() > 0 ? student.created.toLocaleDateString() : 'N/A';
-            const optional = p.optionalSubject || 'None';
+            try {
+                const p = student.data;
+                const displayName = p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown User';
+                const email = p.email || 'No Email';
+                const dateStr = student.created.getTime() > 0 ? student.created.toLocaleDateString() : 'N/A';
+                const optional = p.optionalSubject || 'None';
 
-            const tr = document.createElement('tr');
-            tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors cursor-pointer";
-            tr.onclick = (e) => { if(!e.target.closest('.delete-btn')) window.viewStudentDetails(student.id, p); };
-            
-            tr.innerHTML = `
-                <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
-                        ${displayName.charAt(0).toUpperCase()}
-                    </div>
-                    ${displayName}
-                    ${student.source === 'root' ? '<span class="text-xs text-yellow-600 ml-1" title="From root DB">(R)</span>' : ''}
-                </td>
-                <td class="px-6 py-4 text-slate-400">${email}</td>
-                <td class="px-6 py-4 text-slate-500 text-xs">${dateStr}</td>
-                <td class="px-6 py-4 text-blue-400 text-xs uppercase">${optional}</td>
-                <td class="px-6 py-4 text-right space-x-3">
-                    <button onclick="window.deleteStudent('${student.id}', '${email}', '${student.source}')" class="delete-btn text-red-400 hover:text-red-300 transition-colors" title="Delete User Data"><i class="fas fa-trash"></i></button>
-                    <button class="text-slate-500 hover:text-white"><i class="fas fa-chevron-right"></i></button>
-                </td>
-            `;
-            tbody.appendChild(tr);
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors cursor-pointer";
+                tr.onclick = (e) => { if(!e.target.closest('.delete-btn')) window.viewStudentDetails(student.id, p); };
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                            ${displayName.charAt(0).toUpperCase()}
+                        </div>
+                        ${displayName}
+                        ${student.source === 'root' ? '<span class="text-xs text-yellow-600 ml-1" title="From root DB">(R)</span>' : ''}
+                    </td>
+                    <td class="px-6 py-4 text-slate-400">${email}</td>
+                    <td class="px-6 py-4 text-slate-500 text-xs">${dateStr}</td>
+                    <td class="px-6 py-4 text-blue-400 text-xs uppercase">${optional}</td>
+                    <td class="px-6 py-4 text-right space-x-3">
+                        <button onclick="window.deleteStudent('${student.id}', '${email}', '${student.source}')" class="delete-btn text-red-400 hover:text-red-300 transition-colors" title="Delete User Data"><i class="fas fa-trash"></i></button>
+                        <button class="text-slate-500 hover:text-white"><i class="fas fa-chevron-right"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            } catch (renderErr) {
+                console.warn("Skipping malformed student row:", renderErr);
+            }
         });
 
         // Hide "Load More" since we merged manually
@@ -499,7 +527,8 @@ window.deleteStudent = async (uid, email, source) => {
             // 4. Log for Revert (Pass collectionPath and previousData)
             await logAuditAction('delete_student', uid, `Deleted profile for ${email}`, collectionPath, previousData);
             
-            loadStudents();
+            // Force refresh with delay
+            setTimeout(loadStudents, 500);
             alert("Student data deleted.");
         } catch (e) { alert("Failed to delete: " + e.message); }
     }
@@ -558,27 +587,32 @@ if(searchInput) {
 window.viewStudentDetails = async (uid, profile) => {
     const displayName = profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'User';
     document.getElementById('student-modal-name').textContent = displayName;
-    document.getElementById('student-modal-email').textContent = profile.email;
+    document.getElementById('student-modal-email').textContent = profile.email || 'N/A';
     document.getElementById('student-modal-avatar').textContent = displayName.charAt(0).toUpperCase();
     
-    const quizRef = doc(db, "users", uid, "quizData", "seen");
-    const quizSnap = await getDoc(quizRef);
-    document.getElementById('student-stat-quizzes').textContent = quizSnap.exists() ? (quizSnap.data().seenQuestionIds?.length || 0) : 0;
+    // Quiz Stats
+    try {
+        const quizRef = doc(db, "users", uid, "quizData", "seen");
+        const quizSnap = await getDoc(quizRef);
+        document.getElementById('student-stat-quizzes').textContent = quizSnap.exists() ? (quizSnap.data().seenQuestionIds?.length || 0) : 0;
+    } catch(e) { document.getElementById('student-stat-quizzes').textContent = '-'; }
     
-    // Try fetching progress from both locations
-    let progRef = doc(db, "users", uid, "progress", "summary");
-    let progSnap = await getDoc(progRef);
-    if(!progSnap.exists()) {
-        progRef = doc(db, "artifacts", APP_ID, "users", uid, "progress", "summary");
-        progSnap = await getDoc(progRef);
-    }
-    
-    document.getElementById('student-stat-progress').textContent = `${progSnap.exists() ? (progSnap.data().overall || 0) : 0}%`;
+    // Progress Stats (Try both locations)
+    try {
+        let progRef = doc(db, "users", uid, "progress", "summary");
+        let progSnap = await getDoc(progRef);
+        if(!progSnap.exists()) {
+            progRef = doc(db, "artifacts", APP_ID, "users", uid, "progress", "summary");
+            progSnap = await getDoc(progRef);
+        }
+        document.getElementById('student-stat-progress').textContent = `${progSnap.exists() ? (progSnap.data().overall || 0) : 0}%`;
+    } catch(e) { document.getElementById('student-stat-progress').textContent = '-'; }
+
     window.openModal('modal-student-details');
 };
 
 // ==========================================================================
-// 5. MENTORSHIP WORKFLOW (FIXED: DUAL PATH + REVERT SUPPORT)
+// 5. MENTORSHIP WORKFLOW
 // ==========================================================================
 
 window.loadMentorshipRequests = async () => {
@@ -678,7 +712,7 @@ window.updateMentorshipStatus = async (uid, status, source) => {
             "mentorshipRequest.updatedBy": currentUser.uid
         });
         logAuditAction('mentorship_update', uid, `Set status to ${status}`, collectionPath, previousData);
-        loadMentorshipRequests();
+        setTimeout(loadMentorshipRequests, 500);
     } catch (e) { alert("Error updating status: " + e.message); }
 };
 
@@ -692,9 +726,11 @@ window.deleteMentorshipRequest = async (uid, source) => {
             const docSnap = await getDoc(docRef);
             const previousData = docSnap.exists() ? docSnap.data() : null;
             
+            // Use deleteField() to remove ONLY the mentorship part
             await updateDoc(docRef, { mentorshipRequest: deleteField() });
+            
             logAuditAction('mentorship_delete', uid, 'Deleted Mentorship Request', collectionPath, previousData);
-            loadMentorshipRequests();
+            setTimeout(loadMentorshipRequests, 500);
         } catch (e) { alert("Error deleting: " + e.message); }
     }
 };
