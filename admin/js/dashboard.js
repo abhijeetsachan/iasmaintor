@@ -138,17 +138,24 @@ async function loadStatCount(colPath, elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
     try {
-        // Try simple count on root first
-        const snapshot = await getCountFromServer(collection(db, "users"));
+        // Handle both root and nested paths for stats
+        let colRef;
+        if(colPath.includes('/')) {
+             const parts = colPath.split('/');
+             colRef = collection(db, parts[0], parts[1], parts[2]);
+        } else {
+             colRef = collection(db, colPath);
+        }
+        const snapshot = await getCountFromServer(colRef);
         el.textContent = snapshot.data().count;
     } catch (e) {
-        console.warn(`Stats error:`, e);
+        // Silent fail for stats
         el.textContent = "-";
     }
 }
 
 // ==========================================================================
-// 2. ACTIVITY LOGS & REVERT
+// 2. ACTIVITY LOGS & REVERT (ROBUST RESTORE)
 // ==========================================================================
 
 window.loadActivityLogs = async (loadMore = false) => {
@@ -227,36 +234,51 @@ window.revertAction = async (logId) => {
     try {
         const logDoc = await getDoc(doc(db, "admin_logs", logId));
         if (!logDoc.exists()) throw new Error("Log entry not found.");
+        
         const data = logDoc.data();
         const { action, targetId, collectionName, previousData } = data;
 
+        // Logic:
+        // 1. Identify the Collection. Use what was saved in log, or fallback logic.
+        let colPath = collectionName;
+        if (!colPath) {
+            // Fallback for legacy logs
+            if (action.includes('admin')) colPath = 'admin_directory';
+            else if (action.includes('student')) colPath = 'users'; // Default to root users
+            else colPath = 'quizzieQuestionBank';
+        }
+
+        console.log(`Reverting ${action} on ${colPath}/${targetId}`);
+
         if (action === 'create' || action === 'add_admin') {
-            const col = collectionName || (action === 'add_admin' ? 'admin_directory' : 'quizzieQuestionBank');
-            if(targetId) await deleteDoc(doc(db, col, targetId));
+            // To revert creation, we DELETE the document
+            if(targetId) await deleteDoc(doc(db, colPath, targetId));
+            
         } else if (action.includes('delete') || action === 'remove_admin') {
+            // To revert deletion, we RESTORE the previous data
             if (!previousData) throw new Error("Cannot revert: Original data was not saved.");
-            let col = collectionName;
-            if (!col) {
-                if (action === 'remove_admin') col = 'admin_directory';
-                else if (action === 'delete_student') col = 'users'; // Root collection
-                else col = 'quizzieQuestionBank';
-            }
-            await setDoc(doc(db, col, targetId), previousData);
-        } else if (action === 'update') {
+            await setDoc(doc(db, colPath, targetId), previousData);
+            
+        } else if (action === 'update' || action === 'mentorship_update') {
+            // To revert update, we RESTORE previous data
             if (!previousData) throw new Error("Cannot revert: Previous data was not saved.");
-            const col = collectionName || 'quizzieQuestionBank';
-            await updateDoc(doc(db, col, targetId), previousData);
+            await updateDoc(doc(db, colPath, targetId), previousData);
         }
 
         await logAuditAction('revert', logId, `Reverted action: ${data.details}`, null, null);
         alert("Action reverted successfully.");
         
+        // Force refresh ALL tables to be safe
         loadActivityLogs();
-        if(action.includes('student')) loadStudents();
-        else if(action.includes('admin')) loadAdminUsers();
-        else if(action.includes('mentorship')) loadMentorshipRequests();
-        else loadQuestions();
-    } catch (e) { alert("Revert failed: " + e.message); }
+        loadStudents();
+        loadAdminUsers();
+        loadMentorshipRequests();
+        loadQuestions();
+
+    } catch (e) {
+        console.error("Revert Error:", e);
+        alert("Revert failed: " + e.message);
+    }
 };
 
 function getActionColor(action) {
@@ -267,12 +289,20 @@ function getActionColor(action) {
     return 'text-slate-300 bg-slate-700';
 }
 
+/**
+ * CRITICAL: Audit Logger
+ * Saves snapshots so 'delete' actions can be undone.
+ */
 async function logAuditAction(action, targetId, details, collectionName = null, previousData = null) {
     try {
         await setDoc(doc(collection(db, "admin_logs")), {
             adminId: currentUser.uid,
             adminName: adminProfile.name || 'Unknown',
-            action, targetId, details, collectionName, previousData,
+            action, 
+            targetId, 
+            details, 
+            collectionName, 
+            previousData, // Stores the snapshot of data BEFORE change
             timestamp: serverTimestamp()
         });
     } catch (e) { console.warn("Audit log failed:", e); }
@@ -333,6 +363,7 @@ if (addAdminForm) {
         const role = e.target.elements['role'].value;
         const btn = e.target.querySelector('button[type="submit"]');
         btn.disabled = true; btn.textContent = "Adding...";
+
         try {
             const newRef = doc(collection(db, "admin_directory"));
             await setDoc(newRef, { name, email, role, addedBy: currentUser.uid, createdAt: serverTimestamp() });
@@ -344,37 +375,51 @@ if (addAdminForm) {
 }
 
 // ==========================================================================
-// 4. STUDENT CRM
+// 4. STUDENT CRM (FIXED: ROBUST FETCHING & DELETE)
 // ==========================================================================
 
 async function loadStudents(loadMore = false) {
     const tbody = document.getElementById('students-table-body');
     if (!tbody) return;
     
-    // Only clear table if not "Load More"
     if (!loadMore) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">Scanning databases...</td></tr>';
+        lastStudentSnapshot = null; // Reset pagination on fresh load
     }
 
     try {
         // 1. Fetch from ARTIFACTS path
         const artifactsRef = collection(db, "artifacts", APP_ID, "users");
-        const snapshot1 = await getDocs(query(artifactsRef, limit(50)));
+        const q1 = query(artifactsRef, limit(50)); // Removed orderBy to be safe from index errors
+        const snapshot1 = await getDocs(q1);
 
         // 2. Fetch from ROOT path
         const rootRef = collection(db, "users");
-        const snapshot2 = await getDocs(query(rootRef, limit(50)));
+        const q2 = query(rootRef, limit(50)); // Removed orderBy to be safe
+        const snapshot2 = await getDocs(q2);
 
-        // 3. Merge Results
+        // 3. Merge & Deduplicate Results
         const studentMap = new Map();
 
         const processDoc = (doc, source) => {
             const data = doc.data();
-            const p = data.profile || data;
-            if (p && p.email) {
-                const createdAt = p.createdAt?.toDate ? p.createdAt.toDate() : new Date(0);
-                if (!studentMap.has(doc.id) || (studentMap.get(doc.id).source === 'root' && source === 'artifacts')) {
-                    studentMap.set(doc.id, { id: doc.id, data: p, created: createdAt, source: source });
+            // Handle both nested 'profile' and flat structure
+            const p = data.profile || data; 
+            
+            // Basic Validation: Must have email or name
+            if (p && (p.email || p.name || p.firstName)) {
+                // Normalize Dates
+                const createdAt = p.createdAt?.toDate ? p.createdAt.toDate() : 
+                                 (p.joinedAt?.toDate ? p.joinedAt.toDate() : new Date(0));
+                
+                // Deduplication Logic: Prefer 'root' if duplicate, or merge
+                if (!studentMap.has(doc.id) || (studentMap.get(doc.id).source === 'artifacts' && source === 'root')) {
+                    studentMap.set(doc.id, { 
+                        id: doc.id, 
+                        data: p, 
+                        created: createdAt,
+                        source: source 
+                    });
                 }
             }
         };
@@ -382,7 +427,7 @@ async function loadStudents(loadMore = false) {
         snapshot1.forEach(d => processDoc(d, 'artifacts'));
         snapshot2.forEach(d => processDoc(d, 'root'));
 
-        // 4. Sort Client-Side
+        // 4. Sort Client-Side (Newest First)
         const students = Array.from(studentMap.values()).sort((a, b) => b.created - a.created);
 
         if (!loadMore) tbody.innerHTML = '';
@@ -395,29 +440,35 @@ async function loadStudents(loadMore = false) {
         // 5. Render
         students.forEach(student => {
             const p = student.data;
-            const dateStr = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : (student.created.getTime() > 0 ? student.created.toLocaleDateString() : 'N/A');
-            
+            const displayName = p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown User';
+            const email = p.email || 'No Email';
+            const dateStr = student.created.getTime() > 0 ? student.created.toLocaleDateString() : 'N/A';
+            const optional = p.optionalSubject || 'None';
+
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors cursor-pointer";
             tr.onclick = (e) => { if(!e.target.closest('.delete-btn')) window.viewStudentDetails(student.id, p); };
+            
             tr.innerHTML = `
                 <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">${(p.firstName || 'U').charAt(0).toUpperCase()}</div>
-                    ${p.firstName || 'Unknown'} ${p.lastName || ''}
-                    ${student.source === 'root' ? '<span class="text-xs text-yellow-500" title="Data in root collection">(Migrated)</span>' : ''}
+                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                        ${displayName.charAt(0).toUpperCase()}
+                    </div>
+                    ${displayName}
+                    ${student.source === 'root' ? '<span class="text-xs text-yellow-600 ml-1" title="From root DB">(R)</span>' : ''}
                 </td>
-                <td class="px-6 py-4 text-slate-400">${p.email}</td>
+                <td class="px-6 py-4 text-slate-400">${email}</td>
                 <td class="px-6 py-4 text-slate-500 text-xs">${dateStr}</td>
-                <td class="px-6 py-4 text-blue-400 text-xs uppercase">${p.optionalSubject || 'None'}</td>
+                <td class="px-6 py-4 text-blue-400 text-xs uppercase">${optional}</td>
                 <td class="px-6 py-4 text-right space-x-3">
-                    <button onclick="window.deleteStudent('${student.id}', '${p.email}', '${student.source}')" class="delete-btn text-red-400 hover:text-red-300 transition-colors" title="Delete User Data"><i class="fas fa-trash"></i></button>
+                    <button onclick="window.deleteStudent('${student.id}', '${email}', '${student.source}')" class="delete-btn text-red-400 hover:text-red-300 transition-colors" title="Delete User Data"><i class="fas fa-trash"></i></button>
                     <button class="text-slate-500 hover:text-white"><i class="fas fa-chevron-right"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
 
-        // Hide load more for now since we are doing client-side merge of top 50
+        // Hide "Load More" since we merged manually
         const loadBtn = document.getElementById('load-more-students');
         if(loadBtn) loadBtn.style.display = 'none'; 
 
@@ -434,15 +485,20 @@ window.deleteStudent = async (uid, email, source) => {
             const collectionPath = source === 'root' ? 'users' : `artifacts/${APP_ID}/users`;
             const docRef = doc(db, collectionPath, uid);
             
+            // 1. Snapshot BEFORE Delete
             const docSnap = await getDoc(docRef);
             const previousData = docSnap.exists() ? docSnap.data() : null;
 
+            // 2. Delete
             await deleteDoc(docRef);
-            // Clean up the other path too
+            
+            // 3. Clean up duplicate path if it exists
             const altPath = source === 'root' ? `artifacts/${APP_ID}/users` : 'users';
             await deleteDoc(doc(db, altPath, uid)).catch(() => {}); 
 
-            logAuditAction('delete_student', uid, `Deleted profile for ${email}`, collectionPath, previousData);
+            // 4. Log for Revert (Pass collectionPath and previousData)
+            await logAuditAction('delete_student', uid, `Deleted profile for ${email}`, collectionPath, previousData);
+            
             loadStudents();
             alert("Student data deleted.");
         } catch (e) { alert("Failed to delete: " + e.message); }
@@ -458,43 +514,58 @@ if(searchInput) {
             const term = e.target.value.trim();
             if(term.length < 3) { if(term.length === 0) loadStudents(); return; }
             
+            // Search BOTH paths
             const q1 = query(collection(db, "artifacts", APP_ID, "users"), where("profile.email", "==", term));
             const q2 = query(collection(db, "users"), where("profile.email", "==", term)); 
-            
-            const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+            // Try flat structure search too
+            const q3 = query(collection(db, "users"), where("email", "==", term));
+
+            const [snap1, snap2, snap3] = await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
             
             const tbody = document.getElementById('students-table-body');
             tbody.innerHTML = '';
             
-            if(snap1.empty && snap2.empty) {
+            if(snap1.empty && snap2.empty && snap3.empty) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No exact email match found.</td></tr>';
             } else {
                 const renderRes = (docSnap, source) => {
                      const data = docSnap.data();
                      const p = data.profile || data;
+                     const displayName = p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown';
                      const date = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'N/A';
+                     
                      const tr = document.createElement('tr');
                      tr.className = "border-b border-slate-800 hover:bg-slate-800/50 cursor-pointer";
                      tr.onclick = () => window.viewStudentDetails(docSnap.id, p);
-                     tr.innerHTML = `<td class="px-6 py-4 text-white">${p.firstName} ${p.lastName}</td><td class="px-6 py-4 text-slate-400">${p.email}</td><td class="px-6 py-4 text-slate-500">${date}</td><td class="px-6 py-4 text-blue-400">${p.optionalSubject || 'None'}</td><td class="px-6 py-4 text-right"><i class="fas fa-chevron-right"></i></td>`;
+                     tr.innerHTML = `
+                        <td class="px-6 py-4 text-white">${displayName}</td>
+                        <td class="px-6 py-4 text-slate-400">${p.email}</td>
+                        <td class="px-6 py-4 text-slate-500">${date}</td>
+                        <td class="px-6 py-4 text-blue-400">${p.optionalSubject || 'None'}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="window.deleteStudent('${docSnap.id}', '${p.email}', '${source}')" class="delete-btn text-red-400"><i class="fas fa-trash"></i></button>
+                        </td>`;
                      tbody.appendChild(tr);
                 };
                 snap1.forEach(d => renderRes(d, 'artifacts'));
                 snap2.forEach(d => renderRes(d, 'root'));
+                snap3.forEach(d => renderRes(d, 'root'));
             }
         }, 800);
     });
 }
 
 window.viewStudentDetails = async (uid, profile) => {
-    document.getElementById('student-modal-name').textContent = `${profile.firstName || 'User'} ${profile.lastName || ''}`;
+    const displayName = profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'User';
+    document.getElementById('student-modal-name').textContent = displayName;
     document.getElementById('student-modal-email').textContent = profile.email;
-    document.getElementById('student-modal-avatar').textContent = (profile.firstName || 'U').charAt(0);
+    document.getElementById('student-modal-avatar').textContent = displayName.charAt(0).toUpperCase();
     
     const quizRef = doc(db, "users", uid, "quizData", "seen");
     const quizSnap = await getDoc(quizRef);
     document.getElementById('student-stat-quizzes').textContent = quizSnap.exists() ? (quizSnap.data().seenQuestionIds?.length || 0) : 0;
     
+    // Try fetching progress from both locations
     let progRef = doc(db, "users", uid, "progress", "summary");
     let progSnap = await getDoc(progRef);
     if(!progSnap.exists()) {
@@ -507,7 +578,7 @@ window.viewStudentDetails = async (uid, profile) => {
 };
 
 // ==========================================================================
-// 5. MENTORSHIP WORKFLOW (FIXED: DUAL PATH FETCH)
+// 5. MENTORSHIP WORKFLOW (FIXED: DUAL PATH + REVERT SUPPORT)
 // ==========================================================================
 
 window.loadMentorshipRequests = async () => {
@@ -518,26 +589,24 @@ window.loadMentorshipRequests = async () => {
     try {
         // 1. Fetch from Artifacts
         const artifactsRef = collection(db, "artifacts", APP_ID, "users");
-        // Use simple limit query if orderBy fails (robustness)
-        let q1 = query(artifactsRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
+        const q1 = query(artifactsRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
         
         // 2. Fetch from Root
         const rootRef = collection(db, "users");
-        let q2 = query(rootRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
+        const q2 = query(rootRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
 
-        // Execute both safely
+        // Execute both
         const [snap1, snap2] = await Promise.all([
             getDocs(q1).catch(() => getDocs(query(artifactsRef, limit(50)))), 
             getDocs(q2).catch(() => getDocs(query(rootRef, limit(50))))
         ]);
 
-        // 3. Merge and Filter
+        // 3. Merge
         const requests = [];
         const processReq = (doc, source) => {
             const d = doc.data();
             const req = d.mentorshipRequest;
             if (req) {
-                // Normalize date for sorting
                 req.requestedAtTime = req.requestedAt?.toDate ? req.requestedAt.toDate().getTime() : 0;
                 requests.push({ id: doc.id, data: d, req: req, source: source });
             }
@@ -546,7 +615,6 @@ window.loadMentorshipRequests = async () => {
         snap1.forEach(d => processReq(d, 'artifacts'));
         snap2.forEach(d => processReq(d, 'root'));
 
-        // 4. Sort (Newest First)
         requests.sort((a, b) => b.req.requestedAtTime - a.req.requestedAtTime);
 
         if (requests.length === 0) {
@@ -598,12 +666,18 @@ window.loadMentorshipRequests = async () => {
 window.updateMentorshipStatus = async (uid, status, source) => {
     try {
         const collectionPath = source === 'root' ? 'users' : `artifacts/${APP_ID}/users`;
-        await updateDoc(doc(db, collectionPath, uid), {
+        
+        // Snapshot before update
+        const docRef = doc(db, collectionPath, uid);
+        const docSnap = await getDoc(docRef);
+        const previousData = docSnap.exists() ? docSnap.data() : null;
+        
+        await updateDoc(docRef, {
             "mentorshipRequest.status": status,
             "mentorshipRequest.updatedAt": serverTimestamp(),
             "mentorshipRequest.updatedBy": currentUser.uid
         });
-        logAuditAction('mentorship_update', uid, `Set status to ${status}`, collectionPath);
+        logAuditAction('mentorship_update', uid, `Set status to ${status}`, collectionPath, previousData);
         loadMentorshipRequests();
     } catch (e) { alert("Error updating status: " + e.message); }
 };
@@ -612,15 +686,14 @@ window.deleteMentorshipRequest = async (uid, source) => {
     if (confirm("Delete this request? Cannot be undone.")) {
         try {
             const collectionPath = source === 'root' ? 'users' : `artifacts/${APP_ID}/users`;
+            const docRef = doc(db, collectionPath, uid);
             
-            // Capture snapshot first? 
-            // For simplicity on revert, we might just delete the field.
-            // But for true revert, we'd need the full object.
-            // Let's keep it simple: deleteField() is hard to revert perfectly without snapshotting the whole user doc.
-            // We'll accept this limitation for now or just rely on the user not deleting accidentally.
+            // Snapshot before delete
+            const docSnap = await getDoc(docRef);
+            const previousData = docSnap.exists() ? docSnap.data() : null;
             
-            await updateDoc(doc(db, collectionPath, uid), { mentorshipRequest: deleteField() });
-            logAuditAction('mentorship_delete', uid, 'Deleted Mentorship Request', collectionPath);
+            await updateDoc(docRef, { mentorshipRequest: deleteField() });
+            logAuditAction('mentorship_delete', uid, 'Deleted Mentorship Request', collectionPath, previousData);
             loadMentorshipRequests();
         } catch (e) { alert("Error deleting: " + e.message); }
     }
