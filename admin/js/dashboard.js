@@ -399,7 +399,7 @@ window.viewStudentDetails = async (uid, profile) => {
 
 
 // ==========================================================================
-// 4. MENTORSHIP WORKFLOW
+// 4. MENTORSHIP WORKFLOW (UPDATED WITH DELETE)
 // ==========================================================================
 
 window.loadMentorshipRequests = async () => {
@@ -410,6 +410,7 @@ window.loadMentorshipRequests = async () => {
 
     try {
         const usersRef = collection(db, "artifacts", APP_ID, "users");
+        // Query users who have a 'mentorshipRequest' field
         const q = query(usersRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
         
         const snapshot = await getDocs(q);
@@ -426,8 +427,11 @@ window.loadMentorshipRequests = async () => {
         snapshot.forEach(docSnap => {
             const d = docSnap.data();
             const req = d.mentorshipRequest;
+            if (!req) return; // Skip if field is missing/deleted
+
             const status = req.status || 'pending';
             
+            // Status Badge Logic
             let statusBadge = '';
             if(status === 'pending') statusBadge = '<span class="bg-yellow-900 text-yellow-300 text-xs px-2 py-1 rounded">Pending</span>';
             else if(status === 'contacted') statusBadge = '<span class="bg-blue-900 text-blue-300 text-xs px-2 py-1 rounded">Contacted</span>';
@@ -447,9 +451,12 @@ window.loadMentorshipRequests = async () => {
                     ${req.requestedAt?.toDate ? req.requestedAt.toDate().toLocaleDateString() : 'N/A'}
                     <div class="mt-1">${statusBadge}</div>
                 </td>
-                <td class="px-6 py-4 text-right space-x-2">
-                    ${status !== 'contacted' ? `<button onclick="updateMentorshipStatus('${docSnap.id}', 'contacted')" class="text-blue-400 hover:underline text-xs">Mark Contacted</button>` : ''}
-                    ${status !== 'closed' ? `<button onclick="updateMentorshipStatus('${docSnap.id}', 'closed')" class="text-green-400 hover:underline text-xs">Close</button>` : ''}
+                <td class="px-6 py-4 text-right flex items-center justify-end gap-3">
+                    ${status !== 'contacted' ? `<button onclick="updateMentorshipStatus('${docSnap.id}', 'contacted')" class="text-blue-400 hover:text-blue-300 text-xs font-medium">Mark Contacted</button>` : ''}
+                    ${status !== 'closed' ? `<button onclick="updateMentorshipStatus('${docSnap.id}', 'closed')" class="text-green-400 hover:text-green-300 text-xs font-medium">Close</button>` : ''}
+                    <button onclick="deleteMentorshipRequest('${docSnap.id}')" class="text-red-500 hover:text-red-400 transition-colors p-1" title="Delete Request">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -472,6 +479,23 @@ window.updateMentorshipStatus = async (uid, status) => {
         loadMentorshipRequests();
     } catch (e) {
         alert("Error updating status: " + e.message);
+    }
+};
+
+window.deleteMentorshipRequest = async (uid) => {
+    if (confirm("Are you sure you want to delete this request? This cannot be undone.")) {
+        try {
+            const docRef = doc(db, "artifacts", APP_ID, "users", uid);
+            // Using deleteField() removes only the 'mentorshipRequest' map from the document
+            await updateDoc(docRef, {
+                mentorshipRequest: deleteField()
+            });
+            logAuditAction('mentorship_delete', uid, 'Deleted Mentorship Request');
+            loadMentorshipRequests(); // Refresh UI
+        } catch (e) {
+            console.error(e);
+            alert("Error deleting request: " + e.message);
+        }
     }
 };
 
