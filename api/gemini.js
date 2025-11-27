@@ -29,7 +29,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: { message: "Missing or invalid 'contents' in request body." } });
     }
 
-    const GOOGLE_API_URL = `httpsa://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     try {
         // 3. Forward the payload to Google
