@@ -652,3 +652,120 @@ window.stopBroadcast = async (id) => {
         loadNotifications();
     }
 };
+
+// ==========================================================================
+// 6. ADMIN TEAM MANAGEMENT (MISSING LOGIC RESTORED)
+// ==========================================================================
+
+async function loadAdminUsers() {
+    const tbody = document.getElementById('admin-table-body');
+    if (!tbody) return;
+
+    // Set loading state
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">Loading team...</td></tr>';
+
+    try {
+        // Query the admin_directory collection
+        const q = query(collection(db, "admin_directory"), orderBy("role"));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No admins found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const d = docSnap.data();
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors";
+            tr.innerHTML = `
+                <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">
+                        ${(d.name || 'A').charAt(0).toUpperCase()}
+                    </div>
+                    ${d.name || 'Unknown'}
+                </td>
+                <td class="px-6 py-4 text-slate-400 capitalize">
+                    <span class="bg-slate-700 px-2 py-1 rounded text-xs">${(d.role || 'Staff').replace('_', ' ')}</span>
+                </td>
+                <td class="px-6 py-4 text-slate-500 text-xs">${d.email || 'No Email'}</td>
+                <td class="px-6 py-4 text-right">
+                    <button onclick="window.removeAdmin('${docSnap.id}')" class="text-red-400 hover:text-red-300 p-2 rounded hover:bg-red-400/10 transition-colors" title="Remove Access">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (e) {
+        console.error("Admin Load Error:", e);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error loading data: ${e.message}</td></tr>`;
+    }
+}
+
+// Remove Admin Function
+window.removeAdmin = async (id) => {
+    if (confirm("Are you sure you want to remove this user's admin access?")) {
+        try {
+            await deleteDoc(doc(db, "admin_directory", id));
+            logAuditAction('remove_admin', id, 'Removed Admin User');
+            loadAdminUsers(); // Refresh table
+            alert("Admin removed successfully.");
+        } catch (e) {
+            console.error(e);
+            alert("Error removing admin: " + e.message);
+        }
+    }
+};
+
+// Add Admin Form Listener
+const addAdminForm = document.getElementById('add-admin-form');
+if (addAdminForm) {
+    addAdminForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = e.target.elements['name'].value;
+        const email = e.target.elements['email'].value;
+        const role = e.target.elements['role'].value;
+        const btn = e.target.querySelector('button[type="submit"]');
+        
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Adding...";
+
+        try {
+            // IMPORTANT: In a client-side app without Cloud Functions, we cannot 
+            // easily get the UID from an email. We will create the doc, but 
+            // you might need to manually ensure the Document ID matches the User UID 
+            // in the Firebase Console if your auth logic depends on it.
+            
+            // ideally, use the UID as the document key. Since we don't have it, 
+            // we let Firestore generate an ID or use email as ID (if your auth logic supports it).
+            // For now, we add it to the directory so they appear in the list.
+            
+            await setDoc(doc(collection(db, "admin_directory")), {
+                name: name,
+                email: email,
+                role: role,
+                addedBy: currentUser.uid,
+                createdAt: serverTimestamp()
+            });
+
+            logAuditAction('add_admin', email, `Added new ${role}`);
+            
+            window.closeModal('modal-add-admin');
+            e.target.reset();
+            loadAdminUsers(); // Refresh table
+            alert("User added to Admin Directory.\n\nNOTE: Ensure the user's Firebase Auth UID matches this document ID if they cannot log in.");
+
+        } catch (error) {
+            console.error("Add Admin Error:", error);
+            alert("Failed to add admin: " + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    });
+}
