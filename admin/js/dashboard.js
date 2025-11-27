@@ -34,7 +34,7 @@ console.log("Dashboard: Initializing Core...");
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const APP_ID = 'default-app-id'; 
+// const APP_ID = 'default-app-id'; // Not needed for root collections
 
 // --- State & Editors ---
 let currentUser = null;
@@ -118,7 +118,8 @@ async function initDashboard() {
     console.log("Loading Dashboard Data...");
     
     // Load High-Level Counts
-    loadStatCount('artifacts/' + APP_ID + '/users', 'stat-total-users'); 
+    // FIX: Pointed to root 'users' collection
+    loadStatCount('users', 'stat-total-users'); 
     loadStatCount('quizzieQuestionBank', 'stat-questions');
     loadStatCount('system_notifications', 'stat-broadcasts');
     
@@ -244,7 +245,8 @@ window.revertAction = async (logId) => {
             let col = collectionName;
             if (!col) {
                 if (action === 'remove_admin') col = 'admin_directory';
-                else if (action === 'delete_student') col = `artifacts/${APP_ID}/users`;
+                // FIX: Correct fallback path for root users collection
+                else if (action === 'delete_student') col = 'users'; 
                 else col = 'quizzieQuestionBank';
             }
             await setDoc(doc(db, col, targetId), previousData);
@@ -338,7 +340,6 @@ if (addAdminForm) {
         const role = e.target.elements['role'].value;
         const btn = e.target.querySelector('button[type="submit"]');
         btn.disabled = true; btn.textContent = "Adding...";
-
         try {
             const newRef = doc(collection(db, "admin_directory"));
             await setDoc(newRef, { name, email, role, addedBy: currentUser.uid, createdAt: serverTimestamp() });
@@ -350,36 +351,35 @@ if (addAdminForm) {
 }
 
 // ==========================================================================
-// 4. STUDENT CRM (FIXED: Newest First + Robust Fallback)
+// 4. STUDENT CRM (FIXED PATH: 'users')
 // ==========================================================================
 
 async function loadStudents(loadMore = false) {
     const tbody = document.getElementById('students-table-body');
     if (!tbody) return;
-
     if (!loadMore) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">Loading directory...</td></tr>';
         lastStudentSnapshot = null;
     }
-
     try {
-        const usersRef = collection(db, "artifacts", APP_ID, "users");
+        // --- FIX: Pointing to root 'users' collection ---
+        const usersRef = collection(db, "users");
         
-        // --- ATTEMPT 1: SORTED (Requires Index) ---
-        let q = query(usersRef, orderBy("profile.createdAt", "desc"), limit(20));
-        if (loadMore && lastStudentSnapshot) {
-            q = query(usersRef, orderBy("profile.createdAt", "desc"), startAfter(lastStudentSnapshot), limit(20));
+        let q;
+        try {
+            q = query(usersRef, orderBy("profile.createdAt", "desc"), limit(20));
+            if (loadMore && lastStudentSnapshot) q = query(usersRef, orderBy("profile.createdAt", "desc"), startAfter(lastStudentSnapshot), limit(20));
+        } catch(e) {
+            console.warn("Sort failed, falling back.", e);
+            q = query(usersRef, limit(20)); 
         }
 
-        // Catch index errors here
         const snapshot = await getDocs(q).catch(async (err) => {
-            if (err.message.includes('requires an index') || err.message.includes('failed-precondition')) {
-                console.warn("Sort index missing. Falling back to unsorted list. Check console for creation link.");
-                // --- ATTEMPT 2: UNSORTED (Fallback) ---
-                const fallbackQ = query(usersRef, limit(20));
-                return await getDocs(fallbackQ);
+            if (err.message.includes('index')) {
+                console.warn("Index missing. Fetching unsorted.");
+                return await getDocs(query(usersRef, limit(20)));
             }
-            throw err; // Re-throw other errors
+            throw err;
         });
 
         if (!loadMore) tbody.innerHTML = '';
@@ -387,14 +387,13 @@ async function loadStudents(loadMore = false) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No students found.</td></tr>';
             return;
         }
-
         lastStudentSnapshot = snapshot.docs[snapshot.docs.length - 1];
-
+        
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
-            const p = data.profile || {};
+            // Handle case where profile might be missing (direct document structure)
+            const p = data.profile || data; 
             const date = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'N/A';
-            
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors cursor-pointer";
             tr.onclick = (e) => { if(!e.target.closest('.delete-btn')) window.viewStudentDetails(docSnap.id, p); };
@@ -403,7 +402,7 @@ async function loadStudents(loadMore = false) {
                     <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">${(p.firstName || 'U').charAt(0)}</div>
                     ${p.firstName || 'Unknown'} ${p.lastName || ''}
                 </td>
-                <td class="px-6 py-4 text-slate-400">${p.email}</td>
+                <td class="px-6 py-4 text-slate-400">${p.email || 'No Email'}</td>
                 <td class="px-6 py-4 text-slate-500 text-xs">${date}</td>
                 <td class="px-6 py-4 text-blue-400 text-xs uppercase">${p.optionalSubject || 'None'}</td>
                 <td class="px-6 py-4 text-right space-x-3">
@@ -413,10 +412,8 @@ async function loadStudents(loadMore = false) {
             `;
             tbody.appendChild(tr);
         });
-        
         const loadBtn = document.getElementById('load-more-students');
         if(loadBtn) loadBtn.style.display = snapshot.size < 20 ? 'none' : 'block';
-
     } catch (e) {
         console.error("Student Load Error:", e);
         if(!loadMore) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
@@ -425,21 +422,19 @@ async function loadStudents(loadMore = false) {
 
 window.deleteStudent = async (uid, email) => {
     if (event) event.stopPropagation();
-    const confirmMsg = `Delete data for ${email}?\n\nThis removes their profile and dashboard settings. This can be reverted from logs.`;
-    if (confirm(confirmMsg)) {
+    if (confirm(`Delete data for ${email}?\n\nThis removes their profile and dashboard settings. This can be reverted.`)) {
         try {
-            const docRef = doc(db, "artifacts", APP_ID, "users", uid);
-            // --- FIX: Save Snapshot BEFORE Delete ---
+            // --- FIX: Point to root 'users' collection ---
+            const docRef = doc(db, "users", uid);
             const docSnap = await getDoc(docRef);
             const previousData = docSnap.exists() ? docSnap.data() : null;
 
             await deleteDoc(docRef);
-            logAuditAction('delete_student', uid, `Deleted profile for ${email}`, `artifacts/${APP_ID}/users`, previousData);
+            // Pass 'users' as collection name
+            logAuditAction('delete_student', uid, `Deleted profile for ${email}`, `users`, previousData);
             loadStudents();
             alert("Student data deleted.");
-        } catch (e) {
-            alert("Failed to delete: " + e.message);
-        }
+        } catch (e) { alert("Failed to delete: " + e.message); }
     }
 };
 
@@ -451,7 +446,8 @@ if(searchInput) {
         debounceTimer = setTimeout(async () => {
             const term = e.target.value.trim();
             if(term.length < 3) { if(term.length === 0) loadStudents(); return; }
-            const usersRef = collection(db, "artifacts", APP_ID, "users");
+            // --- FIX: Point to root 'users' collection ---
+            const usersRef = collection(db, "users");
             const q = query(usersRef, where("profile.email", "==", term));
             const tbody = document.getElementById('students-table-body');
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">Searching...</td></tr>';
@@ -461,7 +457,8 @@ if(searchInput) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No exact email match found.</td></tr>';
             } else {
                 snap.forEach(docSnap => {
-                     const p = docSnap.data().profile || {};
+                     const data = docSnap.data();
+                     const p = data.profile || data;
                      const date = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'N/A';
                      const tr = document.createElement('tr');
                      tr.className = "border-b border-slate-800 hover:bg-slate-800/50 cursor-pointer";
@@ -481,9 +478,21 @@ window.viewStudentDetails = async (uid, profile) => {
     const quizRef = doc(db, "users", uid, "quizData", "seen");
     const quizSnap = await getDoc(quizRef);
     document.getElementById('student-stat-quizzes').textContent = quizSnap.exists() ? (quizSnap.data().seenQuestionIds?.length || 0) : 0;
-    const progRef = doc(db, "artifacts", APP_ID, "users", uid, "progress", "summary");
+    // --- FIX: Point to root 'users' collection path for progress ---
+    // Note: The original structure used artifacts for some data, but if we are standardizing on root 'users',
+    // we should check if progress is also there. Assuming standardization:
+    const progRef = doc(db, "users", uid, "progress", "summary"); 
     const progSnap = await getDoc(progRef);
-    document.getElementById('student-stat-progress').textContent = `${progSnap.exists() ? (progSnap.data().overall || 0) : 0}%`;
+    
+    // Fallback check to old artifacts path if root path empty
+    if (!progSnap.exists()) {
+         const oldProgRef = doc(db, "artifacts", APP_ID, "users", uid, "progress", "summary");
+         const oldProgSnap = await getDoc(oldProgRef);
+         document.getElementById('student-stat-progress').textContent = `${oldProgSnap.exists() ? (oldProgSnap.data().overall || 0) : 0}%`;
+    } else {
+         document.getElementById('student-stat-progress').textContent = `${(progSnap.data().overall || 0)}%`;
+    }
+
     window.openModal('modal-student-details');
 };
 
@@ -496,20 +505,32 @@ window.loadMentorshipRequests = async () => {
     if(!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">Loading requests...</td></tr>';
     try {
-        const usersRef = collection(db, "artifacts", APP_ID, "users");
+        // --- FIX: Point to root 'users' collection ---
+        const usersRef = collection(db, "users");
         const q = query(usersRef, orderBy("mentorshipRequest.requestedAt", "desc"), limit(50));
-        const snapshot = await getDocs(q);
+        
+        // Fallback if index missing
+        const snapshot = await getDocs(q).catch(async () => {
+             // If sort fails, just get recent documents without sort (less ideal but works)
+             return await getDocs(query(usersRef, limit(50)));
+        });
+
         if (snapshot.empty) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No requests found.</td></tr>';
             if(document.getElementById('stat-mentorship')) document.getElementById('stat-mentorship').textContent = "0";
             return;
         }
-        if(document.getElementById('stat-mentorship')) document.getElementById('stat-mentorship').textContent = snapshot.size;
+        
+        // Count actual requests (since we query all users, many won't have requests)
+        let count = 0;
         tbody.innerHTML = '';
+        
         snapshot.forEach(docSnap => {
             const d = docSnap.data();
             const req = d.mentorshipRequest;
             if (!req) return; 
+            count++;
+
             const status = req.status || 'pending';
             let statusBadge = status === 'pending' ? '<span class="bg-yellow-900 text-yellow-300 text-xs px-2 py-1 rounded">Pending</span>' : 
                               status === 'contacted' ? '<span class="bg-blue-900 text-blue-300 text-xs px-2 py-1 rounded">Contacted</span>' : 
@@ -534,12 +555,17 @@ window.loadMentorshipRequests = async () => {
             `;
             tbody.appendChild(tr);
         });
+        
+        if(document.getElementById('stat-mentorship')) document.getElementById('stat-mentorship').textContent = count;
+        if (count === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No requests found.</td></tr>';
+
     } catch (e) { tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`; }
 };
 
 window.updateMentorshipStatus = async (uid, status) => {
     try {
-        await updateDoc(doc(db, "artifacts", APP_ID, "users", uid), {
+        // --- FIX: Point to root 'users' ---
+        await updateDoc(doc(db, "users", uid), {
             "mentorshipRequest.status": status,
             "mentorshipRequest.updatedAt": serverTimestamp(),
             "mentorshipRequest.updatedBy": currentUser.uid
@@ -552,7 +578,8 @@ window.updateMentorshipStatus = async (uid, status) => {
 window.deleteMentorshipRequest = async (uid) => {
     if (confirm("Delete this request? Cannot be undone.")) {
         try {
-            await updateDoc(doc(db, "artifacts", APP_ID, "users", uid), { mentorshipRequest: deleteField() });
+            // --- FIX: Point to root 'users' ---
+            await updateDoc(doc(db, "users", uid), { mentorshipRequest: deleteField() });
             logAuditAction('mentorship_delete', uid, 'Deleted Mentorship Request');
             loadMentorshipRequests();
         } catch (e) { alert("Error deleting: " + e.message); }
