@@ -350,36 +350,36 @@ if (addAdminForm) {
 }
 
 // ==========================================================================
-// 4. STUDENT CRM (FIXED: Newest First)
+// 4. STUDENT CRM (FIXED: Newest First + Robust Fallback)
 // ==========================================================================
 
 async function loadStudents(loadMore = false) {
     const tbody = document.getElementById('students-table-body');
     if (!tbody) return;
+
     if (!loadMore) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">Loading directory...</td></tr>';
         lastStudentSnapshot = null;
     }
+
     try {
         const usersRef = collection(db, "artifacts", APP_ID, "users");
         
-        // --- FIX: Restore Sort, but allow fallback if index missing ---
-        let q;
-        try {
-            q = query(usersRef, orderBy("profile.createdAt", "desc"), limit(20));
-            if (loadMore && lastStudentSnapshot) q = query(usersRef, orderBy("profile.createdAt", "desc"), startAfter(lastStudentSnapshot), limit(20));
-        } catch(e) {
-            console.warn("Sort failed (missing index?), falling back to unsorted.", e);
-            q = query(usersRef, limit(20)); // Fallback
+        // --- ATTEMPT 1: SORTED (Requires Index) ---
+        let q = query(usersRef, orderBy("profile.createdAt", "desc"), limit(20));
+        if (loadMore && lastStudentSnapshot) {
+            q = query(usersRef, orderBy("profile.createdAt", "desc"), startAfter(lastStudentSnapshot), limit(20));
         }
 
+        // Catch index errors here
         const snapshot = await getDocs(q).catch(async (err) => {
-            if (err.message.includes('requires an index')) {
-                console.warn("Index missing. Fetching unsorted.");
+            if (err.message.includes('requires an index') || err.message.includes('failed-precondition')) {
+                console.warn("Sort index missing. Falling back to unsorted list. Check console for creation link.");
+                // --- ATTEMPT 2: UNSORTED (Fallback) ---
                 const fallbackQ = query(usersRef, limit(20));
                 return await getDocs(fallbackQ);
             }
-            throw err;
+            throw err; // Re-throw other errors
         });
 
         if (!loadMore) tbody.innerHTML = '';
@@ -387,11 +387,14 @@ async function loadStudents(loadMore = false) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No students found.</td></tr>';
             return;
         }
+
         lastStudentSnapshot = snapshot.docs[snapshot.docs.length - 1];
+
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const p = data.profile || {};
             const date = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'N/A';
+            
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-colors cursor-pointer";
             tr.onclick = (e) => { if(!e.target.closest('.delete-btn')) window.viewStudentDetails(docSnap.id, p); };
@@ -410,8 +413,10 @@ async function loadStudents(loadMore = false) {
             `;
             tbody.appendChild(tr);
         });
+        
         const loadBtn = document.getElementById('load-more-students');
         if(loadBtn) loadBtn.style.display = snapshot.size < 20 ? 'none' : 'block';
+
     } catch (e) {
         console.error("Student Load Error:", e);
         if(!loadMore) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-8">Error: ${e.message}</td></tr>`;
@@ -424,6 +429,7 @@ window.deleteStudent = async (uid, email) => {
     if (confirm(confirmMsg)) {
         try {
             const docRef = doc(db, "artifacts", APP_ID, "users", uid);
+            // --- FIX: Save Snapshot BEFORE Delete ---
             const docSnap = await getDoc(docRef);
             const previousData = docSnap.exists() ? docSnap.data() : null;
 
@@ -431,7 +437,9 @@ window.deleteStudent = async (uid, email) => {
             logAuditAction('delete_student', uid, `Deleted profile for ${email}`, `artifacts/${APP_ID}/users`, previousData);
             loadStudents();
             alert("Student data deleted.");
-        } catch (e) { alert("Failed to delete: " + e.message); }
+        } catch (e) {
+            alert("Failed to delete: " + e.message);
+        }
     }
 };
 
