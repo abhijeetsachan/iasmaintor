@@ -607,21 +607,23 @@
                 </div>
 
                 <form id="quizzie-form">
+                    <input type="hidden" name="test_type" value="sectional">
+
                     <div class="quiz-step-group active" data-step="1">
                         <h4 class="text-xl font-bold text-slate-800 mb-4">What do you want to practice?</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="cursor-pointer">
                                 <input type="radio" name="main_subject" value="gs" class="peer hidden" checked>
                                 <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all text-center group">
-                                    <div class="text-3xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:text-blue-600"><i class="fas fa-book-open"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:text-blue-800">General Studies</div>
+                                    <div class="text-3xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-blue-600"><i class="fas fa-book-open"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-blue-900">General Studies</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="main_subject" value="csat" class="peer hidden">
                                 <div class="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all text-center group">
-                                    <div class="text-3xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:text-blue-600"><i class="fas fa-calculator"></i></div>
-                                    <div class="font-semibold text-slate-700 peer-checked:text-blue-800">CSAT (Aptitude)</div>
+                                    <div class="text-3xl mb-2 text-slate-400 group-hover:text-blue-500 peer-checked:!text-blue-600"><i class="fas fa-calculator"></i></div>
+                                    <div class="font-semibold text-slate-700 peer-checked:!text-blue-900">CSAT (Aptitude)</div>
                                 </div>
                             </label>
                         </div>
