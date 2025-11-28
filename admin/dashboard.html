@@ -4,70 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | iasmAIntor Admin</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
     <style>
-        /* Admin Theme Overrides */
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #cbd5e1; }
-        
-        /* Sidebar Glass Effect */
-        .sidebar-glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Card Styles */
-        .admin-card {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
-        }
-        
-        /* Navigation Active State */
-        .nav-item.active {
-            background-color: #2563eb;
-            color: white;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-
-        /* Utility: Hide scrollbar */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Form Elements */
-        .admin-input {
-            width: 100%;
-            background-color: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            color: white;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .admin-input:focus { border-color: #3b82f6; ring: 1px solid #3b82f6; }
-
-        /* Table Styles */
-        .admin-table th { background-color: rgba(30, 41, 59, 0.5); color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; padding: 0.75rem 1.5rem; text-align: left; }
-        .admin-table td { padding: 1rem 1.5rem; border-bottom: 1px solid #334155; color: #e2e8f0; font-size: 0.875rem; }
-        .admin-table tr:last-child td { border-bottom: none; }
-        .admin-table tr:hover { background-color: rgba(51, 65, 85, 0.3); }
-
-        /* Quill Editor Dark Mode Overrides */
-        .ql-toolbar { background-color: #1e293b; border-color: #334155 !important; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
-        .ql-container { background-color: #0f172a; border-color: #334155 !important; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; color: white; font-family: 'Inter', sans-serif; font-size: 0.95rem; }
-        .ql-stroke { stroke: #94a3b8 !important; }
-        .ql-fill { fill: #94a3b8 !important; }
-        .ql-picker { color: #94a3b8 !important; }
+        .admin-input { @apply w-full bg-slate-900 border border-slate-700 rounded p-2 text-white outline-none focus:border-blue-500; }
     </style>
 </head>
 <body class="overflow-hidden">
@@ -78,453 +22,165 @@
     </div>
 
     <div id="app-layout" class="flex h-screen hidden">
-        
-        <aside class="w-64 sidebar-glass flex flex-col justify-between h-full flex-shrink-0 transition-all duration-300 z-20" id="sidebar">
+        <aside class="w-64 bg-slate-800 border-r border-slate-700 flex flex-col justify-between z-20">
             <div>
-                <div class="h-16 flex items-center px-6 border-b border-slate-700">
-                    <span class="text-xl font-bold text-white tracking-tight">
-                        <i class="fas fa-shield-alt text-blue-500 mr-2"></i> iasmAIntor
-                    </span>
-                </div>
-
+                <div class="h-16 flex items-center px-6 border-b border-slate-700 font-bold text-white">iasmAIntor Admin</div>
                 <nav class="p-4 space-y-2">
-                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Overview</p>
-                    
-                    <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                        <i class="fas fa-chart-pie w-6"></i> Dashboard
-                    </button>
-
-                    <button onclick="switchView('logs')" id="nav-logs" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                        <i class="fas fa-history w-6"></i> Activity Logs
-                    </button>
-
-                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Management</p>
-                    
-                    <button onclick="switchView('students')" id="nav-students" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                        <i class="fas fa-user-graduate w-6"></i> Students
-                    </button>
-
-                    <button onclick="switchView('mentorship')" id="nav-mentorship" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                        <i class="fas fa-inbox w-6"></i> Mentorship
-                    </button>
-
-                    <button onclick="switchView('questions')" id="nav-questions" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                        <i class="fas fa-database w-6"></i> Question Bank
-                    </button>
-
-                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">System</p>
-
-                    <button onclick="switchView('notifications')" id="nav-notifications" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                        <i class="fas fa-bullhorn w-6"></i> Broadcasts
-                    </button>
-                    
-                    <button onclick="switchView('users')" id="nav-users" class="nav-item w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
-                        <i class="fas fa-users-cog w-6"></i> Admin Users
-                    </button>
+                    <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-4 py-3 text-sm font-medium rounded hover:bg-slate-700 text-white">Dashboard</button>
+                    <button onclick="switchView('students')" id="nav-students" class="nav-item w-full text-left px-4 py-3 text-sm font-medium rounded hover:bg-slate-700 text-slate-300">Students</button>
+                    <button onclick="switchView('mentorship')" id="nav-mentorship" class="nav-item w-full text-left px-4 py-3 text-sm font-medium rounded hover:bg-slate-700 text-slate-300">Mentorship</button>
+                    <button onclick="switchView('questions')" id="nav-questions" class="nav-item w-full text-left px-4 py-3 text-sm font-medium rounded hover:bg-slate-700 text-slate-300">Questions</button>
+                    <button onclick="switchView('notifications')" id="nav-notifications" class="nav-item w-full text-left px-4 py-3 text-sm font-medium rounded hover:bg-slate-700 text-slate-300">Broadcasts</button>
+                    <button onclick="switchView('users')" id="nav-users" class="nav-item w-full text-left px-4 py-3 text-sm font-medium rounded hover:bg-slate-700 text-slate-300">Admins</button>
+                    <button onclick="switchView('logs')" id="nav-logs" class="nav-item w-full text-left px-4 py-3 text-sm font-medium rounded hover:bg-slate-700 text-slate-300">Logs</button>
                 </nav>
             </div>
-
-            <div class="p-4 border-t border-slate-700">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold" id="admin-avatar">A</div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-white truncate" id="admin-name-display">Admin User</p>
-                        <p class="text-xs text-slate-500 truncate" id="admin-role-display">Loading...</p>
-                    </div>
-                    <button id="logout-btn" class="text-slate-400 hover:text-red-400 transition-colors" title="Logout">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
+            <div class="p-4 border-t border-slate-700 flex items-center gap-3">
+                <div id="admin-avatar" class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">A</div>
+                <div class="flex-1 min-w-0">
+                    <p id="admin-name-display" class="text-sm font-medium text-white truncate">Admin</p>
+                    <p id="admin-role-display" class="text-xs text-slate-500">Staff</p>
                 </div>
+                <button id="logout-btn" class="text-slate-400 hover:text-white"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </aside>
 
-        <main class="flex-1 h-full overflow-y-auto no-scrollbar bg-slate-900 relative">
-            
-            <div id="view-dashboard" class="p-8 space-y-8 animate-fade-in">
-                <h1 class="text-2xl font-bold text-white">Platform Overview</h1>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="admin-card p-6">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-sm font-medium text-slate-400">Total Students</p>
-                                <h3 class="text-3xl font-bold text-white mt-2" id="stat-total-users">--</h3>
-                            </div>
-                            <div class="p-3 bg-blue-500/10 rounded-lg text-blue-500"><i class="fas fa-user-graduate text-xl"></i></div>
-                        </div>
+        <main class="flex-1 h-full overflow-y-auto bg-slate-900 p-8 relative">
+            <div id="view-dashboard" class="space-y-6">
+                <h1 class="text-2xl font-bold text-white">Overview</h1>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-slate-800 p-6 rounded border border-slate-700">
+                        <p class="text-slate-400 text-sm">Total Students</p>
+                        <h3 class="text-3xl font-bold text-white mt-2" id="stat-total-users">-</h3>
                     </div>
-                    <div class="admin-card p-6">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-sm font-medium text-slate-400">Mentorship Requests</p>
-                                <h3 class="text-3xl font-bold text-white mt-2" id="stat-mentorship">--</h3>
-                            </div>
-                            <div class="p-3 bg-purple-500/10 rounded-lg text-purple-500"><i class="fas fa-inbox text-xl"></i></div>
-                        </div>
+                    <div class="bg-slate-800 p-6 rounded border border-slate-700">
+                        <p class="text-slate-400 text-sm">Questions</p>
+                        <h3 class="text-3xl font-bold text-white mt-2" id="stat-questions">-</h3>
                     </div>
-                    <div class="admin-card p-6">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-sm font-medium text-slate-400">Questions in Bank</p>
-                                <h3 class="text-3xl font-bold text-white mt-2" id="stat-questions">--</h3>
-                            </div>
-                            <div class="p-3 bg-green-500/10 rounded-lg text-green-500"><i class="fas fa-database text-xl"></i></div>
-                        </div>
-                    </div>
-                    <div class="admin-card p-6">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-sm font-medium text-slate-400">Active Broadcasts</p>
-                                <h3 class="text-3xl font-bold text-white mt-2" id="stat-broadcasts">--</h3>
-                            </div>
-                            <div class="p-3 bg-orange-500/10 rounded-lg text-orange-500"><i class="fas fa-bullhorn text-xl"></i></div>
-                        </div>
+                    <div class="bg-slate-800 p-6 rounded border border-slate-700">
+                        <p class="text-slate-400 text-sm">Broadcasts</p>
+                        <h3 class="text-3xl font-bold text-white mt-2" id="stat-broadcasts">-</h3>
                     </div>
                 </div>
             </div>
 
-            <div id="view-logs" class="hidden p-8 space-y-6 animate-fade-in">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">Activity Logs</h1>
-                        <p class="text-slate-400 text-sm mt-1">Track and revert changes made in the last 7 days.</p>
-                    </div>
-                    <button onclick="loadActivityLogs()" class="text-blue-400 hover:text-white text-sm"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
-                </div>
-
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead>
-                            <tr>
-                                <th>Admin</th>
-                                <th>Action</th>
-                                <th>Target</th>
-                                <th>Date</th>
-                                <th class="text-right">Revert</th>
-                            </tr>
+            <div id="view-students" class="hidden space-y-6">
+                <h1 class="text-2xl font-bold text-white">Student Directory</h1>
+                <div class="bg-slate-800 rounded border border-slate-700 overflow-hidden">
+                    <table class="w-full text-left text-sm text-slate-400">
+                        <thead class="bg-slate-900 text-xs uppercase font-medium text-slate-500">
+                            <tr><th class="px-6 py-3">Name</th><th class="px-6 py-3">Email</th><th class="px-6 py-3">Joined</th><th class="px-6 py-3">Optional</th><th class="px-6 py-3 text-right">Actions</th></tr>
                         </thead>
-                        <tbody id="logs-table-body">
-                            <tr><td colspan="5" class="text-center py-8 text-slate-500">Loading logs...</td></tr>
-                        </tbody>
+                        <tbody id="students-table-body"></tbody>
                     </table>
-                    <div class="p-4 border-t border-slate-700 flex justify-center">
-                        <button id="load-more-logs" class="text-sm text-blue-400 hover:text-blue-300 font-medium" style="display: none;">Load More</button>
-                    </div>
                 </div>
+                <button id="load-more-students" class="hidden mx-auto block text-blue-400 hover:text-white">Load More</button>
             </div>
 
-            <div id="view-students" class="hidden p-8 space-y-6 animate-fade-in">
-                <div class="flex justify-between items-center">
-                    <h1 class="text-2xl font-bold text-white">Student Directory</h1>
-                    <div class="relative">
-                        <input type="text" id="student-search" placeholder="Search by exact email..." class="bg-slate-800 text-white text-sm border border-slate-700 rounded-lg px-4 py-2 pl-10 outline-none focus:border-blue-500 w-64">
-                        <i class="fas fa-search absolute left-3 top-3 text-slate-500"></i>
-                    </div>
-                </div>
-
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Joined Date</th>
-                                <th>Optional</th>
-                                <th class="text-right">Actions</th>
-                            </tr>
+            <div id="view-mentorship" class="hidden space-y-6">
+                <h1 class="text-2xl font-bold text-white">Mentorship Requests</h1>
+                <div class="bg-slate-800 rounded border border-slate-700 overflow-hidden">
+                    <table class="w-full text-left text-sm text-slate-400">
+                        <thead class="bg-slate-900 text-xs uppercase font-medium text-slate-500">
+                            <tr><th class="px-6 py-3">Student</th><th class="px-6 py-3">Note</th><th class="px-6 py-3">Status</th><th class="px-6 py-3 text-right">Actions</th></tr>
                         </thead>
-                        <tbody id="students-table-body">
-                            <tr><td colspan="5" class="text-center py-8 text-slate-500">Loading directory...</td></tr>
-                        </tbody>
-                    </table>
-                    <div class="p-4 border-t border-slate-700 flex justify-center">
-                        <button id="load-more-students" class="text-sm text-blue-400 hover:text-blue-300 font-medium" style="display: none;">Load More</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-mentorship" class="hidden p-8 space-y-6 animate-fade-in">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">Mentorship Inbox</h1>
-                        <p class="text-slate-400 text-sm mt-1">Requests submitted by students for 1:1 sessions.</p>
-                    </div>
-                    <button onclick="loadMentorshipRequests()" class="text-blue-400 hover:text-white text-sm"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
-                </div>
-
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead>
-                            <tr>
-                                <th>Student Details</th>
-                                <th>Request Note</th>
-                                <th>Date & Status</th>
-                                <th class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mentorship-table-body">
-                            <tr><td colspan="4" class="text-center py-8 text-slate-500">Loading requests...</td></tr>
-                        </tbody>
+                        <tbody id="mentorship-table-body"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div id="view-questions" class="hidden p-8 space-y-6 animate-fade-in">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">Question Bank</h1>
-                        <p class="text-slate-400 text-sm mt-1">Manage quiz content.</p>
-                    </div>
-                    <div class="flex gap-3">
-                         <select id="filter-subject" class="bg-slate-800 text-white text-sm border border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-blue-500">
-                            <option value="all">All Subjects</option>
-                            <option value="history">History</option>
-                            <option value="geography">Geography</option>
-                            <option value="polity">Polity</option>
-                            <option value="economy">Economy</option>
-                            <option value="environment">Environment</option>
-                            <option value="science-tech">Science & Tech</option>
-                        </select>
-                        <button onclick="openModal('modal-bulk-upload')" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                            <i class="fas fa-file-csv"></i> Bulk Upload
-                        </button>
-                        <button onclick="openQuestionModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                            <i class="fas fa-plus"></i> Add Question
-                        </button>
-                    </div>
-                </div>
-
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead>
-                            <tr>
-                                <th>Question</th>
-                                <th width="150">Subject</th>
-                                <th width="100">Difficulty</th>
-                                <th width="100" class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="questions-table-body">
-                            <tr><td colspan="4" class="text-center py-8 text-slate-500">Loading questions...</td></tr>
-                        </tbody>
-                    </table>
-                    <div class="p-4 border-t border-slate-700 flex justify-center">
-                        <button id="load-more-questions" class="text-sm text-blue-400 hover:text-blue-300 font-medium">Load More</button>
-                    </div>
-                </div>
+            <div id="view-questions" class="hidden space-y-6">
+                 <div class="flex justify-between">
+                    <h1 class="text-2xl font-bold text-white">Question Bank</h1>
+                    <button onclick="openQuestionModal()" class="bg-blue-600 text-white px-4 py-2 rounded">Add Question</button>
+                 </div>
+                 <div class="bg-slate-800 rounded border border-slate-700 overflow-hidden">
+                    <table class="w-full text-left text-sm text-slate-400"><tbody id="questions-table-body"></tbody></table>
+                 </div>
             </div>
 
-            <div id="view-notifications" class="hidden p-8 space-y-6 animate-fade-in">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">Global Broadcasts</h1>
-                        <p class="text-slate-400 text-sm mt-1">Manage site-wide alerts.</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                     <div class="lg:col-span-1 admin-card p-6 space-y-4 h-fit">
-                        <h3 class="text-lg font-semibold text-white border-b border-slate-700 pb-2">Create Notification</h3>
-                        <form id="notification-form">
-                            <div>
-                                <label class="block text-sm font-medium mb-1 text-slate-300">Message</label>
-                                <textarea id="notif-message" required rows="3" class="admin-input"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 text-slate-300">Type</label>
-                                <select id="notif-type" class="admin-input">
-                                    <option value="banner">Top Banner</option>
-                                    <option value="popup">Popup Modal</option>
-                                    <option value="toast">Toast</option>
-                                </select>
-                            </div>
-                            <div id="banner-upload-container" class="hidden">
-                                <label class="block text-sm font-medium mb-2 text-slate-300">Image</label>
-                                <input type="file" id="notif-image" accept="image/*" class="block w-full text-sm text-slate-400"/>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 text-slate-300">Target Pages</label>
-                                <div class="bg-slate-900/50 p-3 rounded border border-slate-700 space-y-2">
-                                    <label class="flex items-center space-x-2"><input type="checkbox" value="index.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600" checked><span class="text-sm text-slate-300">Home</span></label>
-                                    <label class="flex items-center space-x-2"><input type="checkbox" value="tracker.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600" checked><span class="text-sm text-slate-300">Tracker</span></label>
-                                    <label class="flex items-center space-x-2"><input type="checkbox" value="maintor.html" class="form-checkbox text-blue-500 rounded bg-slate-800 border-slate-600" checked><span class="text-sm text-slate-300">Evaluator</span></label>
-                                </div>
-                            </div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium mt-2">Publish</button>
+            <div id="view-notifications" class="hidden space-y-6">
+                <h1 class="text-2xl font-bold text-white">Broadcasts</h1>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="bg-slate-800 p-6 rounded border border-slate-700 col-span-1">
+                        <form id="notification-form" class="space-y-4">
+                            <div><label class="text-sm text-slate-400">Message</label><textarea id="notif-message" class="admin-input" required></textarea></div>
+                            <div><label class="text-sm text-slate-400">Type</label><select id="notif-type" class="admin-input"><option value="banner">Banner</option><option value="popup">Popup</option><option value="toast">Toast</option></select></div>
+                            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">Send</button>
                         </form>
                     </div>
-                    <div class="lg:col-span-2 admin-card p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4">Active Broadcasts</h3>
-                        <div id="active-notifications-list" class="space-y-3"><p class="text-slate-500 text-sm">Loading...</p></div>
+                    <div class="bg-slate-800 p-6 rounded border border-slate-700 col-span-2">
+                        <h3 class="text-white font-bold mb-4">Active</h3>
+                        <div id="active-notifications-list" class="space-y-2"></div>
                     </div>
                 </div>
             </div>
-            
-            <div id="view-users" class="hidden p-8 space-y-6 animate-fade-in">
-                 <div class="flex justify-between items-center">
-                    <h1 class="text-2xl font-bold text-white">Admin Team</h1>
-                    <button onclick="openModal('modal-add-admin')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm">Add New Member</button>
-                </div>
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead><tr><th>Name</th><th>Role</th><th>Email</th><th class="text-right">Actions</th></tr></thead>
-                        <tbody id="admin-table-body"><tr><td colspan="4" class="text-center py-8">Loading...</td></tr></tbody>
-                    </table>
-                </div>
+
+            <div id="view-users" class="hidden space-y-6">
+                <div class="flex justify-between"><h1 class="text-2xl font-bold text-white">Admins</h1><button onclick="openModal('modal-add-admin')" class="bg-blue-600 text-white px-4 py-2 rounded">Add Admin</button></div>
+                <div class="bg-slate-800 rounded border border-slate-700"><table class="w-full text-left text-sm text-slate-400"><tbody id="admin-table-body"></tbody></table></div>
+            </div>
+
+            <div id="view-logs" class="hidden space-y-6">
+                 <h1 class="text-2xl font-bold text-white">Logs</h1>
+                 <div class="bg-slate-800 rounded border border-slate-700"><table class="w-full text-left text-sm text-slate-400"><tbody id="logs-table-body"></tbody></table></div>
+                 <button id="load-more-logs" class="hidden mx-auto block text-blue-400 hover:text-white mt-4">Load More</button>
             </div>
 
         </main>
     </div>
 
-    <div id="modal-question-editor" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-200">
-        <div class="bg-slate-800 w-full max-w-3xl rounded-xl border border-slate-700 shadow-2xl flex flex-col max-h-[95vh]">
-            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-white" id="q-modal-title">Edit Question</h2>
-                <button onclick="closeModal('modal-question-editor')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-1">
-                <form id="question-form" class="space-y-4">
-                    <input type="hidden" id="q-id">
-                    
-                    <div>
-                        <label class="block text-sm text-slate-300 mb-1">Question</label>
-                        <div class="bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
-                            <div id="quill-q-text" class="h-32 text-white"></div> 
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="block text-xs text-slate-400 mb-1">Option A</label><input type="text" id="q-opt-0" required class="admin-input"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Option B</label><input type="text" id="q-opt-1" required class="admin-input"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Option C</label><input type="text" id="q-opt-2" required class="admin-input"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Option D</label><input type="text" id="q-opt-3" required class="admin-input"></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
-                        <div><label class="block text-xs text-slate-400 mb-1">Correct Answer</label><select id="q-answer" class="admin-input"></select></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Subject</label><select id="q-subject" class="admin-input"><option value="history">History</option><option value="geography">Geography</option><option value="polity">Polity</option><option value="economy">Economy</option><option value="environment">Environment</option><option value="science-tech">Science & Tech</option></select></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Difficulty</label><select id="q-difficulty" class="admin-input"><option value="basic">Basic</option><option value="advanced">Advanced</option></select></div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm text-slate-300 mb-1">Explanation</label>
-                        <div class="bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
-                            <div id="quill-q-explanation" class="h-32 text-white"></div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="p-6 border-t border-slate-700 flex justify-end gap-3">
-                <button onclick="closeModal('modal-question-editor')" class="px-4 py-2 text-slate-300 hover:text-white">Cancel</button>
-                <button onclick="saveQuestion()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-bulk-upload" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-200">
-        <div class="bg-slate-800 w-full max-w-2xl rounded-xl border border-slate-700 shadow-2xl p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white">Bulk Upload Questions (CSV)</h2>
-                <button onclick="closeModal('modal-bulk-upload')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            
-            <div class="space-y-4">
-                <p class="text-sm text-slate-400">Upload a CSV file with headers: <code class="bg-slate-900 px-1 rounded text-blue-300">question, optionA, optionB, optionC, optionD, answer, subject, difficulty, explanation</code></p>
-                
-                <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-lg p-10 text-center hover:bg-slate-700/30 transition-colors cursor-pointer">
-                    <i class="fas fa-cloud-upload-alt text-4xl text-slate-500 mb-3"></i>
-                    <p class="text-slate-300 font-medium">Drag & Drop CSV here or <span class="text-blue-400 hover:underline">Browse</span></p>
-                    <input type="file" id="csv-file-input" class="hidden" accept=".csv">
+    <div id="modal-question-editor" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
+        <div class="bg-slate-800 w-full max-w-3xl rounded-xl border border-slate-700 p-6">
+            <h2 class="text-xl font-bold text-white mb-4" id="q-modal-title">Edit Question</h2>
+            <form id="question-form" class="space-y-4">
+                <input type="hidden" id="q-id">
+                <div class="bg-slate-900 p-2 rounded"><div id="quill-q-text" class="h-24 text-white"></div></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="q-opt-0" class="admin-input" placeholder="Option A" required>
+                    <input type="text" id="q-opt-1" class="admin-input" placeholder="Option B" required>
+                    <input type="text" id="q-opt-2" class="admin-input" placeholder="Option C" required>
+                    <input type="text" id="q-opt-3" class="admin-input" placeholder="Option D" required>
                 </div>
-
-                <div id="upload-status" class="hidden bg-slate-900 p-4 rounded-lg border border-slate-700">
-                    <div class="flex items-center gap-3">
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500" id="upload-spinner"></div>
-                        <p class="text-sm text-slate-300" id="upload-status-text">Processing file...</p>
-                    </div>
-                    <div class="w-full bg-slate-700 rounded-full h-2 mt-3">
-                        <div id="upload-progress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <select id="q-answer" class="admin-input"></select>
+                    <select id="q-subject" class="admin-input"><option value="history">History</option><option value="geography">Geography</option><option value="polity">Polity</option><option value="economy">Economy</option><option value="environment">Environment</option><option value="science-tech">Science</option></select>
+                    <select id="q-difficulty" class="admin-input"><option value="basic">Basic</option><option value="advanced">Advanced</option></select>
                 </div>
-                
-                <div id="csv-errors" class="hidden bg-red-500/10 border border-red-500/30 p-4 rounded-lg max-h-40 overflow-y-auto">
-                    <p class="text-xs font-bold text-red-400 mb-2">Errors Found:</p>
-                    <ul class="list-disc pl-4 text-xs text-red-300 space-y-1" id="csv-error-list"></ul>
+                <div class="bg-slate-900 p-2 rounded"><div id="quill-q-explanation" class="h-24 text-white"></div></div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('modal-question-editor')" class="text-slate-400">Cancel</button>
+                    <button type="button" onclick="saveQuestion()" class="bg-blue-600 text-white px-6 py-2 rounded">Save</button>
                 </div>
-            </div>
-
-            <div class="flex justify-end gap-3 mt-8">
-                <button onclick="closeModal('modal-bulk-upload')" class="px-4 py-2 text-slate-300 hover:text-white">Cancel</button>
-                <button id="btn-process-csv" disabled class="bg-slate-600 text-slate-400 px-6 py-2 rounded-lg cursor-not-allowed">Upload</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-student-details" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-200">
-        <div class="bg-slate-800 w-full max-w-4xl rounded-xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold text-white" id="student-modal-avatar">U</div>
-                    <div>
-                        <h2 class="text-xl font-bold text-white" id="student-modal-name">Student Name</h2>
-                        <p class="text-xs text-slate-400" id="student-modal-email">email@example.com</p>
-                    </div>
-                </div>
-                <button onclick="closeModal('modal-student-details')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            
-            <div class="p-6 overflow-y-auto flex-1 space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                        <p class="text-xs text-slate-500 uppercase font-bold">Quizzes Taken</p>
-                        <p class="text-2xl font-bold text-white mt-1" id="student-stat-quizzes">0</p>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                        <p class="text-xs text-slate-500 uppercase font-bold">Avg. Score</p>
-                        <p class="text-2xl font-bold text-blue-400 mt-1" id="student-stat-score">0%</p>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                        <p class="text-xs text-slate-500 uppercase font-bold">Syllabus Progress</p>
-                        <p class="text-2xl font-bold text-green-400 mt-1" id="student-stat-progress">0%</p>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-sm font-bold text-white mb-3 uppercase tracking-wider">Topic Strength Analysis</h3>
-                    <div class="bg-slate-900 h-48 rounded-lg border border-slate-700 flex items-center justify-center text-slate-500">
-                        <p><i class="fas fa-chart-bar mr-2"></i> Progress Charts Loading...</p>
-                    </div>
-                </div>
-                
-                <div>
-                    <h3 class="text-sm font-bold text-white mb-3 uppercase tracking-wider">Recent Activity</h3>
-                     <div class="bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
-                        <table class="w-full text-sm text-left text-slate-400">
-                            <thead class="text-xs text-slate-500 uppercase bg-slate-800">
-                                <tr><th class="px-4 py-2">Activity</th><th class="px-4 py-2">Date</th></tr>
-                            </thead>
-                            <tbody id="student-activity-log">
-                                <tr><td colspan="2" class="px-4 py-3 text-center italic">No recent activity logged.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-add-admin" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-200">
-        <div class="bg-slate-800 w-full max-w-md rounded-xl border border-slate-700 shadow-2xl p-6 transform scale-95 transition-transform duration-200">
-            <h2 class="text-xl font-bold text-white mb-4">Add Admin User</h2>
-            <form id="add-admin-form" class="space-y-4">
-                <div><label class="block text-sm text-slate-300 mb-1">Name</label><input type="text" name="name" required class="admin-input"></div>
-                <div><label class="block text-sm text-slate-300 mb-1">Email</label><input type="email" name="email" required class="admin-input"></div>
-                <div><label class="block text-sm text-slate-300 mb-1">Role</label><select name="role" class="admin-input"><option value="editor">Editor</option><option value="mentor">Mentor</option><option value="super_admin">Super Admin</option></select></div>
-                <div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('modal-add-admin')" class="text-slate-300">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Add</button></div>
             </form>
         </div>
     </div>
 
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <div id="modal-add-admin" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
+         <div class="bg-slate-800 w-full max-w-md rounded-xl border border-slate-700 p-6">
+            <h2 class="text-xl font-bold text-white mb-4">Add Admin</h2>
+            <form id="add-admin-form" class="space-y-4">
+                <input type="text" name="name" placeholder="Name" class="admin-input" required>
+                <input type="email" name="email" placeholder="Email" class="admin-input" required>
+                <select name="role" class="admin-input"><option value="editor">Editor</option><option value="mentor">Mentor</option><option value="super_admin">Super Admin</option></select>
+                <div class="flex justify-end gap-3"><button type="button" onclick="closeModal('modal-add-admin')" class="text-slate-400">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Add</button></div>
+            </form>
+         </div>
+    </div>
     
+    <div id="modal-student-details" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
+        <div class="bg-slate-800 w-full max-w-2xl rounded-xl border border-slate-700 p-6">
+            <div class="flex justify-between mb-4"><h2 class="text-xl font-bold text-white" id="student-modal-name">Student</h2><button onclick="closeModal('modal-student-details')" class="text-slate-400">&times;</button></div>
+            <p id="student-modal-email" class="text-slate-400 mb-4"></p>
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-slate-900 p-4 rounded"><p class="text-xs text-slate-500">Quizzes</p><p class="text-xl text-white font-bold" id="student-stat-quizzes">-</p></div>
+                <div class="bg-slate-900 p-4 rounded"><p class="text-xs text-slate-500">Progress</p><p class="text-xl text-white font-bold" id="student-stat-progress">-</p></div>
+                <div class="bg-slate-900 p-4 rounded"><p class="text-xs text-slate-500">Score</p><p class="text-xl text-white font-bold" id="student-stat-score">-</p></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="module" src="js/dashboard.js"></script>
 </body>
 </html>
