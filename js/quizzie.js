@@ -161,15 +161,9 @@ const handleStepNavigation = (stepBtn) => {
     }
 };
 
-// --- ### REMOVED: generateQuizQuestions(params) ### ---
-// This function, which called the Gemini API directly from the client,
-// has been removed. Its logic will now live in the backend.
-
-
-// --- ### NEW: updateUserSeenQuestions(questionIds) ### ---
+// --- ### NEW: updateUserSeenQuestions(questionIds) SCALABLE VERSION ### ---
 /**
- * Saves the IDs of the questions the user just saw to their Firestore doc.
- * This prevents them from seeing the same questions again.
+ * Saves the IDs of the questions the user just saw to their Firestore `history` sub-collection.
  * @param {string[]} questionIds - An array of question document IDs.
  */
 const updateUserSeenQuestions = async (questionIds) => {
@@ -180,15 +174,20 @@ const updateUserSeenQuestions = async (questionIds) => {
     }
 
     try {
-        const { db, doc, setDoc, arrayUnion } = firebaseDB;
-        const seenDocRef = doc(db, 'users', user.uid, 'quizData', 'seen');
+        const { db, doc, collection, writeBatch, serverTimestamp } = firebaseDB;
         
-        // Use arrayUnion to safely add the new IDs to the array
-        await setDoc(seenDocRef, { 
-            seenQuestionIds: arrayUnion(...questionIds) 
-        }, { merge: true });
+        // --- NEW: Batch Write to Sub-Collection ---
+        const batch = writeBatch(db);
+        const historyRef = collection(db, 'users', user.uid, 'history');
 
-        console.log(`Updated seen questions for user ${user.uid}.`);
+        questionIds.forEach(qId => {
+            // Using ID as doc name ensures deduplication
+            const docRef = doc(historyRef, qId); 
+            batch.set(docRef, { seenAt: serverTimestamp() });
+        });
+
+        await batch.commit();
+        console.log(`Updated seen questions (history sub-collection) for user ${user.uid}.`);
 
     } catch (error) {
         console.error("Error updating user's seen questions:", error);
@@ -576,3 +575,5 @@ const handleQuizSubmit = async (e) => {
          if(quizFooter) quizFooter.classList.add('hidden');
     }
 };
+
+}
