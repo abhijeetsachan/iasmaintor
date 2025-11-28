@@ -49,7 +49,7 @@ let globalAppId = 'default-app-id';
 export async function initAuth(pageDOMElements, appId, showNotification, callbacks = {}) {
     DOMElements = pageDOMElements;
     globalShowNotification = showNotification;
-    globalAppId = appId;
+    globalAppId = appId || 'default-app-id'; // Fallback ensuring ID exists
     const { onLogin, onLogout } = callbacks;
 
     try {
@@ -167,6 +167,7 @@ function updateUIForAuthStateChange(user, isAdmin = false) {
     DOMElements.dashboardSection?.classList.toggle('hidden', !isVisibleUser);
 
     if (isVisibleUser) {
+        // Fallback Logic: Profile Name -> Email User -> 'User'
         let displayName = currentUserProfile?.firstName || (user.email ? user.email.split('@')[0] : 'User');
         displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
         if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
@@ -221,8 +222,20 @@ async function fetchUserProfile(userId) {
     try {
         const userDocRef = doc(db, 'artifacts', globalAppId, 'users', userId);
         const userDoc = await getDoc(userDocRef);
+        
         if (userDoc.exists()) {
             currentUserProfile = userDoc.data().profile;
+        } else {
+            console.warn("User profile missing. Attempting self-repair on login.");
+            // Best Practice: Self-healing. If user exists in Auth but not DB, create a stub.
+            currentUserProfile = { 
+                firstName: 'Aspirant', 
+                lastName: '', 
+                email: auth.currentUser?.email || '',
+                createdAt: serverTimestamp() 
+            };
+            // Note: We don't await this to keep login fast, but we fire it off.
+            setDoc(userDocRef, { profile: currentUserProfile }, { merge: true });
         }
 
         const adminDocRef = doc(db, 'admin_directory', userId);
@@ -246,6 +259,11 @@ function initSharedEventListeners() {
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
         
+        // Add loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.innerText : 'Log In';
+        if(submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'Verifying...'; }
+
         try {
             const userCred = await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
             const user = userCred.user;
@@ -294,10 +312,12 @@ function initSharedEventListeners() {
                  errorEl.textContent = msg; 
                  errorEl.classList.remove('hidden');
              } 
+        } finally {
+            if(submitBtn) { submitBtn.disabled = false; submitBtn.innerText = originalText; }
         }
     });
     
-    // 2. SIGNUP LISTENER
+    // 2. SIGNUP LISTENER (IMPROVED DATA INTEGRITY)
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         const firstName = e.target.elements['signup-first-name'].value;
@@ -314,15 +334,40 @@ function initSharedEventListeners() {
         let createdUser = null;
 
         try {
+            // 1. Create Auth User
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             createdUser = userCred.user;
             
+            // 2. IMMEDIATELY create Profile Document (Critical Step)
+            try {
+                const { doc, setDoc, serverTimestamp } = firestoreModule; 
+                // Best Practice: Ensure globalAppId is defined
+                const safeAppId = globalAppId || 'default-app-id';
+                const userDocRef = doc(db, 'artifacts', safeAppId, 'users', createdUser.uid);
+                
+                await setDoc(userDocRef, { 
+                    profile: { 
+                        firstName: firstName.trim(), 
+                        lastName: lastName.trim(), 
+                        email: email, 
+                        createdAt: serverTimestamp(), 
+                        optionalSubject: null 
+                    } 
+                }, { merge: true }); // Merge prevents overwriting if somehow exists
+                
+            } catch (dbErr) { 
+                console.error("Profile creation failed. Rolling back Auth.", dbErr);
+                // 3. Rollback: Delete the auth user if DB write fails to prevent 'zombie' accounts
+                await firebaseAuthModule.deleteUser(createdUser);
+                throw new Error("Database connection failed. Please try again.");
+            }
+
+            // 4. Send Verification Email
             try {
                 await firebaseAuthModule.sendEmailVerification(createdUser);
             } catch (emailError) {
-                console.error("Verification email failed.", emailError);
-                await firebaseAuthModule.deleteUser(createdUser);
-                throw new Error("Could not send verification email.");
+                console.warn("Verification email failed (non-fatal):", emailError);
+                // We don't rollback here, user can resend later
             }
 
             await firebaseAuthModule.signOut(auth);
@@ -341,14 +386,6 @@ function initSharedEventListeners() {
                 globalShowNotification("Verification email sent! Please check your inbox.", false);
             }
 
-            try {
-                const { doc, setDoc, serverTimestamp } = firestoreModule; 
-                const userDocRef = doc(db, 'artifacts', globalAppId, 'users', createdUser.uid);
-                await setDoc(userDocRef, { 
-                    profile: { firstName, lastName, email, createdAt: serverTimestamp(), optionalSubject: null } 
-                }, { merge: true });
-            } catch (dbErr) { console.error("Profile creation failed:", dbErr); }
-
         } catch(error){ 
             if(errorEl){
                 let msg = error.message || "Signup failed.";
@@ -361,21 +398,43 @@ function initSharedEventListeners() {
         }
     });
 
-    // 3. OTHER LISTENERS
+    // 3. ACCOUNT UPDATE LISTENER
     DOMElements.accountModal.form?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         if (!currentUser || currentUser.isAnonymous) return;
-        const firstName = e.target.elements['account-first-name'].value;
-        const lastName = e.target.elements['account-last-name'].value;
+        
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn ? btn.innerText : 'Save';
+        if(btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
+
+        const firstName = e.target.elements['account-first-name'].value.trim();
+        const lastName = e.target.elements['account-last-name'].value.trim();
+        
         try {
             const { doc, updateDoc } = firestoreModule; 
             const userDocRef = doc(db, 'artifacts', globalAppId, 'users', currentUser.uid);
-            await updateDoc(userDocRef, { 'profile.firstName': firstName, 'profile.lastName': lastName }); 
-            globalShowNotification('Account updated!');
-            if (currentUserProfile) { currentUserProfile.firstName = firstName; currentUserProfile.lastName = lastName; }
+            
+            // Note: We use updateDoc to avoid overwriting other fields like optionalSubject
+            await updateDoc(userDocRef, { 
+                'profile.firstName': firstName, 
+                'profile.lastName': lastName 
+            }); 
+            
+            globalShowNotification('Account updated successfully!');
+            
+            // Update local state immediately for UI responsiveness
+            if (currentUserProfile) { 
+                currentUserProfile.firstName = firstName; 
+                currentUserProfile.lastName = lastName; 
+            }
             updateUIForAuthStateChange(currentUser);
             closeModal(DOMElements.accountModal.modal);
-        } catch(error){ console.error(error); }
+        } catch(error){ 
+            console.error("Account update failed:", error); 
+            globalShowNotification("Failed to update profile. Please try again.", true);
+        } finally {
+            if(btn) { btn.disabled = false; btn.innerText = originalText; }
+        }
     });
 
     DOMElements.authModal.forgotPasswordForm?.addEventListener('submit', async (e) => { 
@@ -422,10 +481,16 @@ function initSharedEventListeners() {
         if (target.closest('#my-account-btn, #mobile-my-account-btn')) {
             e.preventDefault();
             if (!authReady || !currentUser || currentUser.isAnonymous) { openAuthModal('login'); return; }
+            
+            // Populate Modal with current data
             const { form } = DOMElements.accountModal;
             form.elements['account-first-name'].value = currentUserProfile?.firstName || '';
             form.elements['account-last-name'].value = currentUserProfile?.lastName || '';
             form.elements['account-email'].value = currentUser.email || '';
+            
+            // Explicitly ensure email is read-only visually (logic handled in HTML)
+            form.elements['account-email'].classList.add('bg-slate-100', 'cursor-not-allowed');
+            
             openModal(DOMElements.accountModal.modal);
         }
         if (targetId === 'close-auth-modal') closeModal(DOMElements.authModal.modal);
