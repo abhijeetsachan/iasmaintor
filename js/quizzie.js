@@ -1,9 +1,9 @@
-// js/quizzie.js (Modified for Database-First Approach & Dark Mode Fix)
+// js/quizzie.js (Refactored for Scalability & Security)
 
-// Import the new API endpoint
+// Import the new API endpoint (Points to /api/proxy based on config)
 import { GEMINI_API_ENDPOINT } from './firebase-config.js';
 
-// --- ### NEW: Define the endpoint for our backend logic ---
+// Endpoint for fetching quiz questions (Node.js backend)
 const GET_QUIZ_ENDPOINT = '/api/getQuizQuestions';
 
 // --- State Variables (Module Scope) ---
@@ -16,25 +16,24 @@ let DOMElements = {};
 let showNotification = () => {}; // Placeholder for notification function
 let closeModal = () => {}; // Placeholder for closeModal function
 
-// --- ### NEW: Firebase & User State ---
-let firebaseDB = {}; // Will hold { db, doc, getDoc, setDoc, arrayUnion, etc. }
+// --- Firebase & User State ---
+// firebaseDB will hold { db, doc, collection, writeBatch, serverTimestamp, etc. }
+let firebaseDB = {}; 
 let getCurrentUser = () => null; // Will hold the function from app.js
 
-
 // --- Initialization ---
-// *** MODIFICATION: Now accepts firebaseDB and userFn from app.js ***
-export function initQuizzie(elements, notifyFn, closeModalFn, db, userFn) {
+export function initQuizzie(elements, notifyFn, closeModalFn, dbContext, userFn) {
     DOMElements = elements;
     showNotification = notifyFn;
     closeModal = closeModalFn;
     
-    // --- ### NEW: Store Firebase and Auth functions ---
-    firebaseDB = db;
+    // Store Firebase Context (includes db instance + SDK functions)
+    firebaseDB = dbContext;
     getCurrentUser = userFn;
 
     // Add specific listeners for Quizzie
     DOMElements.form?.addEventListener('change', updateQuizzieForm);
-    DOMElements.form?.addEventListener('submit', handleQuizSubmit); // This now calls our backend
+    DOMElements.form?.addEventListener('submit', handleQuizSubmit);
 
     // Use event delegation for step buttons within the form
     DOMElements.form?.addEventListener('click', (e) => {
@@ -50,7 +49,7 @@ export function initQuizzie(elements, notifyFn, closeModalFn, db, userFn) {
      });
 
      // Listener for quiz navigation (added dynamically)
-     const quizFooter = document.getElementById('quiz-footer'); // Get footer reference
+     const quizFooter = document.getElementById('quiz-footer');
      if (quizFooter) {
          quizFooter.addEventListener('click', (e) => {
              if (e.target.id === 'next-q-btn') navigateQuiz('next');
@@ -70,51 +69,56 @@ export function initQuizzie(elements, notifyFn, closeModalFn, db, userFn) {
         closeModal(DOMElements.modal);
     });
 
-    console.log("Quizzie module initialized with Database access.");
+    console.log("Quizzie module initialized with Scalable Database access.");
 }
 
-// Export reset function to be called from app.js when clicking the feature card
+// Export reset function to be called from app.js
 export const resetQuizzieModal = () => {
-    // ... (This function remains the same as before)
     const { form, result, activeView, modal } = DOMElements;
     if (!form || !result || !activeView || !modal) return;
+    
     form.reset();
     form.classList.remove('hidden');
     result.classList.add('hidden');
     activeView.classList.add('hidden');
+    
     const quizFooter = document.getElementById('quiz-footer');
     if(quizFooter) quizFooter.classList.add('hidden');
+    
     result.innerHTML = '';
     activeView.innerHTML = '';
     quizQuestions = [];
     userAnswers = [];
-    currentQuestionIndex = 0; // Reset index
+    currentQuestionIndex = 0;
+    
     // Reset to first step
     form.querySelectorAll('[data-step]').forEach((step, index) => {
         step.classList.toggle('active', index === 0);
     });
 
     // Show progress bar again
-    const progressContainer = DOMElements.progressContainer; // Use cached ref
+    const progressContainer = DOMElements.progressContainer;
     if (progressContainer) progressContainer.classList.remove('hidden');
 
-    updateQuizzieForm(); // Ensure form state is correct on reset
+    updateQuizzieForm();
     updateQuizProgressBar(1, 4);
 };
 
 // --- Quizzie Functions ---
 
 const updateQuizzieForm = () => {
-    // ... (This function remains the same as before)
     const { gsSectionalGroup, csatSectionalGroup, numQuestionsGroup, questionTypeGroup, form } = DOMElements;
     if (!gsSectionalGroup || !csatSectionalGroup || !numQuestionsGroup || !questionTypeGroup || !form) return;
+    
     const formData = new FormData(form);
     const mainSubject = formData.get('main_subject');
     const testType = formData.get('test_type');
+    
     gsSectionalGroup.style.display = 'none';
     csatSectionalGroup.style.display = 'none';
     numQuestionsGroup.style.display = 'none';
     questionTypeGroup.style.display = 'none';
+    
     if (testType === 'sectional') {
         numQuestionsGroup.style.display = 'block';
         if (mainSubject === 'gs') {
@@ -127,7 +131,6 @@ const updateQuizzieForm = () => {
 };
 
 const updateQuizProgressBar = (current, total) => {
-    // ... (This function remains the same as before)
     const { progressIndicator, progressText } = DOMElements;
     if(!progressIndicator || !progressText) return;
     const percentage = Math.max(0, Math.min(100, (current / total) * 100));
@@ -136,14 +139,16 @@ const updateQuizProgressBar = (current, total) => {
 };
 
 const handleStepNavigation = (stepBtn) => {
-    // ... (This function remains the same as before)
     const modalForm = stepBtn.closest('form');
     if (!modalForm) return;
     const currentStep = stepBtn.closest('[data-step]');
     if (!currentStep) return;
+    
     const currentStepNumber = parseInt(currentStep.dataset.step);
     let nextStepNumber = stepBtn.classList.contains('next-step-btn') ? currentStepNumber + 1 : currentStepNumber - 1;
+    
     if (modalForm.id === 'quizzie-form') {
+        // Logic to skip steps if needed (e.g. if test type changes)
         if (stepBtn.classList.contains('next-step-btn') && currentStepNumber === 2) {
             const testType = new FormData(modalForm).get('test_type');
             if (testType === 'flt') nextStepNumber = 4;
@@ -153,53 +158,60 @@ const handleStepNavigation = (stepBtn) => {
             if (testType === 'flt') nextStepNumber = 2;
         }
     }
+    
     const nextStep = modalForm.querySelector(`[data-step="${nextStepNumber}"]`);
     if (nextStep) {
         currentStep.classList.remove('active');
         nextStep.classList.add('active');
-        updateQuizProgressBar(nextStepNumber, 4); // Update progress bar
+        updateQuizProgressBar(nextStepNumber, 4);
     }
 };
 
-// --- ### NEW: updateUserSeenQuestions(questionIds) SCALABLE VERSION ### ---
+// --- SCALABLE DATABASE WRITE ---
 /**
- * Saves the IDs of the questions the user just saw to their Firestore `history` sub-collection.
- * @param {string[]} questionIds - An array of question document IDs.
+ * Saves the IDs of questions seen to the user's `history` sub-collection.
+ * Using a sub-collection prevents the 1MB document limit issue.
+ * @param {string[]} questionIds - Array of question document IDs.
  */
 const updateUserSeenQuestions = async (questionIds) => {
     const user = getCurrentUser();
-    if (!user || !firebaseDB.db || questionIds.length === 0) {
-        console.warn("User, DB, or questions missing. Cannot update seen list.");
+    // Ensure we have the user, the DB instance, and the necessary SDK functions
+    if (!user || !firebaseDB.db || !firebaseDB.writeBatch) {
+        console.warn("User, DB, or writeBatch missing. Cannot update seen list.");
         return;
     }
+    
+    if (questionIds.length === 0) return;
 
     try {
         const { db, doc, collection, writeBatch, serverTimestamp } = firebaseDB;
         
-        // --- NEW: Batch Write to Sub-Collection ---
+        // Initialize Batch
         const batch = writeBatch(db);
         const historyRef = collection(db, 'users', user.uid, 'history');
 
         questionIds.forEach(qId => {
-            // Using ID as doc name ensures deduplication
+            // Use the Question ID as the Document ID for automatic deduplication
             const docRef = doc(historyRef, qId); 
             batch.set(docRef, { seenAt: serverTimestamp() });
         });
 
+        // Commit the batch
         await batch.commit();
         console.log(`Updated seen questions (history sub-collection) for user ${user.uid}.`);
 
     } catch (error) {
         console.error("Error updating user's seen questions:", error);
-        showNotification("Failed to save quiz progress. You might see these questions again.", true);
+        showNotification("Failed to save quiz progress.", true);
     }
 };
 
+// --- AI FEEDBACK (SECURE PROXY) ---
 const generateAIFeedback = async (correctCount, incorrectCount, unansweredCount, totalQuestions, wrongQuestions) => {
-    // *** THIS FUNCTION REMAINS, but its AI call is secure via the proxy ***
     
-    // 1. Define Prompts (same as before)
+    // 1. Define Prompts
     const systemPrompt = `You are an expert mentor for the UPSC Civil Services Exam. Your task is to provide a concise, insightful, and encouraging analysis of a student's quiz performance. Your analysis should be in a single paragraph. Focus on constructive feedback.`;
+    
     const MAX_WRONG_TO_SEND = 5;
     const wrongQuestionsSample = wrongQuestions.slice(0, MAX_WRONG_TO_SEND).map(wq => ({
          question: wq.question.substring(0, 150) + (wq.question.length > 150 ? '...' : ''),
@@ -217,60 +229,52 @@ Here is a sample of questions the student answered incorrectly (up to ${MAX_WRON
 ${JSON.stringify(wrongQuestionsSample, null, 2)}
 
 Based ONLY on this data, provide a concise, insightful, and encouraging analysis (max 100 words, single paragraph). Address:
-1. Overall assessment (e.g., "Good effort," "Solid understanding," "Needs more focus").
-2. Potential patterns in mistakes (mentioning subject areas like 'Polity' or 'History' IF identifiable from the sample, otherwise suggest general review).
-3. Specific, actionable improvement suggestions (e.g., 'Revisiting NCERT chapters,' 'Focusing on PYQs').
-4. Maintain a supportive tone. Do not simply list the wrong questions.`;
+1. Overall assessment.
+2. Potential patterns in mistakes.
+3. Specific, actionable improvement suggestions.
+4. Maintain a supportive tone.`;
 
-    // 2. Define Payload (this goes to *our* backend)
-    const payload = {
+    // 2. Define Payload (Standard Gemini Structure)
+    const geminiPayload = {
         contents: [{ parts: [{ text: userQuery }] }],
         systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {}
     };
 
     try {
-        // 3. Call *our* backend endpoint (GEMINI_API_ENDPOINT)
+        // 3. Call Secure Proxy (api/proxy.js)
+        // WE MUST WRAP THE PAYLOAD with 'mode' for the proxy
         const response = await fetch(GEMINI_API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                mode: 'generate', // Tells proxy to just pass this to Gemini
+                payload: geminiPayload
+            })
         });
-        // A more robust way to handle errors in js/quizzie.js
-if (!response.ok) {
-    let errorMessage = `Request failed (${response.status})`;
-    try {
-        // Check if the response is actually JSON before parsing
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            const errorData = await response.json();
-            errorMessage = errorData.error?.message || errorMessage;
-        } else {
-            // It's not JSON, just get the raw text error
-            errorMessage = await response.text();
-        }
-    } catch (e) {
-        // Parsing failed or .text() failed, just use the status
-        console.error("Error parsing error response:", e);
-    }
-    // This will now throw the *actual* server error message
-    // (e.g., "A server error occurred") instead of "Unexpected token 'A'"
-    throw new Error(errorMessage);
-}
 
-        // 4. The rest of the parsing logic is the same
+        if (!response.ok) {
+            let errorMessage = `Request failed (${response.status})`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error?.message || errorMessage;
+            } catch (e) { /* ignore parse error */ }
+            throw new Error(errorMessage);
+        }
+
+        // 4. Parse Response
         const result = await response.json();
         const candidate = result.candidates?.[0];
-        if (!candidate || (candidate.finishReason !== 'STOP' && candidate.finishReason !== 'MAX_TOKENS')) {
-             console.warn("Feedback generation issue:", candidate?.finishReason);
+        if (!candidate) {
+             console.warn("Feedback generation issue: No candidate returned.");
              return "Could not generate feedback analysis at this time.";
         }
         const feedbackText = candidate.content?.parts?.[0]?.text;
         if (!feedbackText) { 
-            console.warn("Feedback generation finished but content is empty.");
             return "Could not generate feedback analysis at this time."; 
         }
         return feedbackText.replace(/```/g, '').trim();
+
     } catch(error) {
         console.error("AI Feedback generation failed:", error);
         return "Could not generate AI feedback due to a network or API issue.";
@@ -278,19 +282,19 @@ if (!response.ok) {
 };
 
 const displayQuiz = () => {
-    // ... (This function remains the same as before)
     const { activeView } = DOMElements;
     if (!activeView) return;
     const footer = document.getElementById('quiz-footer');
     if (!footer) return;
+    
     currentQuestionIndex = 0; // Start at the first question
     renderQuestion(); // Render the first question
+    
     footer.classList.remove('hidden');
-    updateFooterButtons(); // Ensure buttons are in correct initial state
+    updateFooterButtons(); 
 };
 
 function renderQuestion() {
-    // ... (This function remains the same as before)
      const { activeView } = DOMElements;
      if (!activeView) return;
      const footer = document.getElementById('quiz-footer');
@@ -304,18 +308,10 @@ function renderQuestion() {
         console.error("Invalid question index:", currentQuestionIndex);
         return;
     }
+    
     const q = quizQuestions[currentQuestionIndex];
-    if (!q || !Array.isArray(q.options)) { 
-        console.error("Invalid question data at index:", currentQuestionIndex, q);
-        activeView.innerHTML = `<div class="p-4 text-center text-red-600 bg-red-50 rounded">Error displaying question ${currentQuestionIndex + 1}.</div>`;
-        updateFooterButtons();
-        return;
-    }
-
-    // ### THIS IS THE FIX (Dark Mode Visibility) ###
-    // We remove the hard-coded Tailwind classes like 'hover:bg-slate-50'
-    // 'border-slate-200', and 'text-slate-700' from the generated HTML.
-    // The styling is now handled by 'radio-card' in css/style.css
+    
+    // Theme-aware styling for options
     let optionsHTML = q.options.map((opt, index) => `
         <label>
             <input type="radio" name="q${currentQuestionIndex}" value="${index}" class="hidden" ${userAnswers[currentQuestionIndex] == index ? 'checked' : ''}>
@@ -324,7 +320,6 @@ function renderQuestion() {
             </div>
         </label>
     `).join('');
-    // ### END FIX ###
 
     activeView.innerHTML = `
         <div class="quiz-question active">
@@ -337,21 +332,22 @@ function renderQuestion() {
 }
 
 function updateFooterButtons() {
-    // ... (This function remains the same as before)
     const prevBtn = document.getElementById('prev-q-btn');
     const nextBtn = document.getElementById('next-q-btn');
     if (!prevBtn || !nextBtn) return;
+    
     prevBtn.disabled = currentQuestionIndex === 0;
     prevBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
     prevBtn.classList.toggle('cursor-not-allowed', currentQuestionIndex === 0);
+    
     nextBtn.textContent = currentQuestionIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next';
 }
 
 
 function navigateQuiz(direction) {
-    // ... (This function remains the same as before)
     const { activeView } = DOMElements;
     if (!activeView) return;
+    
     // Save current answer before navigating
     const selectedOption = activeView.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
     userAnswers[currentQuestionIndex] = selectedOption ? parseInt(selectedOption.value) : undefined;
@@ -361,7 +357,7 @@ function navigateQuiz(direction) {
             currentQuestionIndex++;
             renderQuestion();
         } else {
-            // At last question, button says "Submit", so calculate results
+            // At last question, button says "Submit"
             calculateAndShowResults();
         }
     } else if (direction === 'prev') {
@@ -373,33 +369,30 @@ function navigateQuiz(direction) {
 }
 
 const calculateAndShowResults = async () => {
-    // *** MODIFICATION: This function now saves seen questions ***
     const { activeView, modal } = DOMElements;
     if (!activeView || !modal) return;
+    
     const quizFooter = document.getElementById('quiz-footer');
     if(quizFooter) quizFooter.classList.add('hidden');
+    
     const progressContainer = DOMElements.progressContainer;
     if(progressContainer) progressContainer.classList.add('hidden');
 
     let score = 0, correctCount = 0, incorrectCount = 0, unansweredCount = 0;
     const wrongQuestions = [];
-    
-    // --- ### NEW: Get question IDs to save to DB ### ---
     const seenQuestionIds = [];
 
     quizQuestions.forEach((q, index) => {
-         // --- ### NEW: Add ID to the list to be saved ### ---
          if (q.id) {
             seenQuestionIds.push(q.id);
          }
 
          const userAnswerIndex = userAnswers[index];
-         // --- Fix: Find the index of the correct answer string in the options array ---
          const correctAnswerIndex = q.options.findIndex(opt => opt === q.answer);
 
          if (userAnswerIndex === undefined || userAnswerIndex === null) {
              unansweredCount++;
-         } else if (userAnswerIndex === correctAnswerIndex) { // Compare index to index
+         } else if (userAnswerIndex === correctAnswerIndex) {
              correctCount++;
              score += 2;
          } else {
@@ -414,16 +407,14 @@ const calculateAndShowResults = async () => {
              });
          }
      });
-     score = Math.max(0, parseFloat(score.toFixed(2))); // Round score and ensure non-negative
+     score = Math.max(0, parseFloat(score.toFixed(2)));
 
-    // --- ### NEW: Asynchronously save progress to DB ### ---
-    // We call this *before* generating AI feedback.
-    // We don't need to `await` it; let it run in the background.
+    // --- ASYNC SAVE TO HISTORY (SCALABLE) ---
     updateUserSeenQuestions(seenQuestionIds).catch(err => {
         console.error("Failed to update seen questions in background:", err);
     });
 
-    // ... (Rest of the HTML generation remains the same)
+    // Render Results HTML
     let resultHTML = `
         <div class="text-center"> <h3 class="text-3xl font-bold text-slate-800">Quiz Results</h3> </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
@@ -438,18 +429,18 @@ const calculateAndShowResults = async () => {
         </div>
         <h3 class="text-xl font-bold mt-8 mb-4">Review Your Answers</h3>
     `;
+    
     resultHTML += quizQuestions.map((q, index) => {
          const userAnswerIndex = userAnswers[index];
-         // --- Fix: Find the index of the correct answer string in the options array ---
          const correctAnswerIndex = q.options.findIndex(opt => opt === q.answer);
 
          const optionsReview = q.options.map((opt, optIndex) => {
              let classes = 'p-3 border rounded-lg flex items-center text-left text-sm';
              let icon = '';
-             if(optIndex === correctAnswerIndex) { // Compare index to index
+             if(optIndex === correctAnswerIndex) {
                  classes += ' option-correct';
                  icon = `<i class="fas fa-check-circle text-green-500 mr-2 text-base"></i>`;
-             } else if (userAnswerIndex === optIndex && userAnswerIndex !== correctAnswerIndex) { // Compare index to index
+             } else if (userAnswerIndex === optIndex && userAnswerIndex !== correctAnswerIndex) {
                  classes += ' option-incorrect';
                  icon = `<i class="fas fa-times-circle text-red-500 mr-2 text-base"></i>`;
              } else {
@@ -458,6 +449,7 @@ const calculateAndShowResults = async () => {
               }
              return `<div class="${classes}">${icon}<span>${opt}</span></div>`;
          }).join('');
+         
          return `
              <div class="mb-6 border-b pb-6">
                  <p class="font-semibold mb-3 text-slate-800 whitespace-pre-wrap">Q ${index + 1}: ${q.question.replace(/\\n/g, '\n')}</p>
@@ -465,10 +457,11 @@ const calculateAndShowResults = async () => {
                  <div class="mt-3 p-3 bg-slate-100 rounded-lg text-sm text-slate-700 whitespace-pre-wrap"> <p><strong>Explanation:</strong> ${q.explanation.replace(/\\n/g, '\n')}</p></div>
              </div>`;
     }).join('');
+    
     resultHTML += `<div class="mt-8 flex justify-end items-center"><button data-action="retake-quiz" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Take Another Quiz</button></div>`;
     activeView.innerHTML = resultHTML;
 
-    // Fetch and display AI feedback (this remains the same)
+    // Fetch and display AI feedback
     const aiFeedbackContainer = activeView.querySelector('#ai-feedback-content');
      if (aiFeedbackContainer) {
          try {
@@ -482,19 +475,17 @@ const calculateAndShowResults = async () => {
 };
 
 const handleQuizSubmit = async (e) => {
-    // *** MODIFICATION: This function now calls our backend, not Gemini directly ***
     e.preventDefault();
     const { form, activeView, modal } = DOMElements;
     if (!form || !activeView || !modal) return;
+    
     const progressContainer = DOMElements.progressContainer;
     if (progressContainer) progressContainer.classList.add('hidden');
 
     form.classList.add('hidden');
     activeView.classList.remove('hidden');
     
-    // ### THIS IS THE FIX (Dark Mode Loading Box) ###
-    // Removed 'bg-blue-50' and 'text-slate-700' and added a new class 'quiz-loading-box'
-    // This new class is defined in css/style.css to be theme-aware
+    // Loading State
     activeView.innerHTML = `
         <div class="p-4 rounded-lg text-center quiz-loading-box">
             <div class="loader-bars" aria-label="Loading AI response">
@@ -503,7 +494,6 @@ const handleQuizSubmit = async (e) => {
             <p class="font-semibold mt-4">Finding the best questions for you...</p>
         </div>
     `;
-    // ### END FIX ###
 
     const user = getCurrentUser();
     if (!user) {
@@ -521,42 +511,32 @@ const handleQuizSubmit = async (e) => {
         const formData = new FormData(form);
         const params = Object.fromEntries(formData.entries());
 
-        // 3. Call our NEW backend endpoint
+        // 3. Call backend endpoint (api/getQuizQuestions.js)
+        // Note: This endpoint handles checking seen questions from the new history sub-collection
         const response = await fetch(GET_QUIZ_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Send auth token
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(params) // Send quiz parameters
+            body: JSON.stringify(params)
         });
 
         if (!response.ok) {
-            // ### THIS IS THE FIX for the "A server e..." error ###
             let errorMessage = `Request failed (${response.status})`;
             try {
-                // Check if the response is actually JSON before parsing
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    errorMessage = errorData.error?.message || errorMessage;
-                } else {
-                    // It's not JSON, just get the raw text error
-                    const errorText = await response.text();
-                    errorMessage = errorText || errorMessage;
-                }
+                const errorData = await response.json();
+                errorMessage = errorData.error?.message || errorMessage;
             } catch (e) {
-                // Parsing failed or .text() failed, just use the status
-                console.error("Error parsing error response:", e);
+                const errorText = await response.text();
+                errorMessage = errorText || errorMessage;
             }
-            // This will now throw the *actual* server error message
             throw new Error(errorMessage);
         }
 
         const { questions } = await response.json();
         
-        // Store questions and user answers
-        // --- Fix: Store the index of the correct answer for easier comparison ---
+        // Store questions
         quizQuestions = questions.map(q => ({
             ...q,
             answerIndex: q.options.findIndex(opt => opt === q.answer)
@@ -575,5 +555,3 @@ const handleQuizSubmit = async (e) => {
          if(quizFooter) quizFooter.classList.add('hidden');
     }
 };
-
-}
