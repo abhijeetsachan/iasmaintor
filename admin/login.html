@@ -1,96 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Portal | iasmAIntor</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+// admin/js/admin-auth.js
 
-    <link rel="stylesheet" href="css/admin.css">
+import { firebaseConfig } from '../../js/firebase-config.js';
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a; /* Slate 900 - Dark background for Admin */
-            background-image: radial-gradient(circle at 50% 50%, #1e293b 1px, transparent 1px);
-            background-size: 24px 24px;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    onAuthStateChanged,
+    signOut 
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { 
+    getFirestore, 
+    doc, 
+    getDoc 
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const loginForm = document.getElementById('admin-login-form');
+const loginBtn = document.getElementById('login-btn');
+const errorContainer = document.getElementById('login-error');
+const errorText = document.getElementById('login-error-text');
+
+// Prevent redirect loop: Only redirect if on login page
+if (window.location.pathname.endsWith('login.html')) {
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const isAdmin = await verifyAdminRole(user.uid);
+            if (isAdmin) {
+                window.location.href = 'dashboard.html';
+            } else {
+                await signOut(auth);
+                showError("Access Denied. Not an admin.");
+            }
         }
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    });
+}
+
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        setLoading(true);
+        hideError();
+
+        try {
+            const userCred = await signInWithEmailAndPassword(auth, email, password);
+            const isAdmin = await verifyAdminRole(userCred.user.uid);
+
+            if (isAdmin) {
+                window.location.href = 'dashboard.html';
+            } else {
+                throw new Error("Unauthorized");
+            }
+        } catch (error) {
+            console.error("Login Error:", error);
+            let msg = "Login failed.";
+            if (error.message === "Unauthorized") msg = "Access Denied.";
+            else if (error.code === 'auth/invalid-credential') msg = "Invalid credentials.";
+            showError(msg);
+            await signOut(auth);
+            setLoading(false);
         }
-    </style>
-</head>
-<body class="text-slate-200 h-screen flex items-center justify-center p-4">
+    });
+}
 
-    <div class="w-full max-w-md">
-        <div class="text-center mb-8">
-            <div class="inline-block p-4 rounded-full bg-blue-600/20 mb-4">
-                <i class="fas fa-shield-alt text-4xl text-blue-500"></i>
-            </div>
-            <h1 class="text-3xl font-bold text-white tracking-tight">Admin Portal</h1>
-            <p class="text-slate-400 mt-2">Secure access for iasmAIntor staff</p>
-        </div>
+async function verifyAdminRole(uid) {
+    try {
+        const snap = await getDoc(doc(db, "admin_directory", uid));
+        return snap.exists();
+    } catch (e) { return false; }
+}
 
-        <div class="glass-card rounded-2xl p-8">
-            <form id="admin-login-form" class="space-y-6">
-                
-                <div id="login-error" class="hidden bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
-                    <i class="fas fa-exclamation-circle mt-0.5"></i>
-                    <span id="login-error-text"></span>
-                </div>
+function setLoading(isLoading) {
+    if(loginBtn) {
+        loginBtn.disabled = isLoading;
+        loginBtn.textContent = isLoading ? "Verifying..." : "Sign In";
+    }
+}
 
-                <div>
-                    <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-envelope text-slate-500"></i>
-                        </div>
-                        <input type="email" id="email" required 
-                            class="block w-full pl-10 pr-3 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-slate-500 transition-all"
-                            placeholder="admin@iasmaintor.com">
-                    </div>
-                </div>
+function showError(msg) {
+    if(errorContainer && errorText) {
+        errorText.textContent = msg;
+        errorContainer.classList.remove('hidden');
+    }
+}
 
-                <div>
-                    <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Password</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-lock text-slate-500"></i>
-                        </div>
-                        <input type="password" id="password" required 
-                            class="block w-full pl-10 pr-3 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-slate-500 transition-all"
-                            placeholder="••••••••">
-                    </div>
-                </div>
-
-                <button type="submit" id="login-btn" 
-                    class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-600 transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40">
-                    <span>Sign In</span>
-                    <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                </button>
-            </form>
-
-            <div class="mt-6 text-center">
-                <p class="text-xs text-slate-500">
-                    Authorized personnel only. All activities are logged.<br>
-                    <span class="opacity-50">&copy; 2025 iasmAIntor</span>
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <script type="module" src="../js/firebase-config.js"></script> 
-    <script type="module" src="js/admin-auth.js"></script>
-
-</body>
-</html>
+function hideError() {
+    if(errorContainer) errorContainer.classList.add('hidden');
+}
