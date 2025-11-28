@@ -27,7 +27,8 @@ import {
     query,
     onSnapshot,
     orderBy,
-    getDocs
+    getDocs,
+    writeBatch // <-- NEW IMPORT
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // --- Module State ---
@@ -62,7 +63,8 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
             // Map modules for internal use
             Object.assign(firestoreModule, { 
                 getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc, 
-                enableIndexedDbPersistence, collection, query, onSnapshot, orderBy, getDocs 
+                enableIndexedDbPersistence, collection, query, onSnapshot, orderBy, getDocs,
+                writeBatch // <-- EXPORTED HERE
             });
             
             Object.assign(firebaseAuthModule, { 
