@@ -72,8 +72,8 @@ export default async function handler(request, response) {
     const difficulty = params.difficulty || 'basic';
     const type = params.question_type || 'blend';
 
-    // 3. Get User's Seen Questions
-    const seenQuestionIds = await getUserSeenQuestions(userId);
+    // 3. Get User's Seen Questions (SCALABLE SUB-COLLECTION READ)
+    const seenIdsSet = await getUserSeenQuestionsSet(userId);
 
     // 4. Find Questions in Database
     let dbQuery = db.collection('quizzieQuestionBank')
@@ -83,17 +83,13 @@ export default async function handler(request, response) {
     if (type !== 'blend') {
       dbQuery = dbQuery.where('type', '==', type);
     }
-    dbQuery = dbQuery.limit(30);
+    dbQuery = dbQuery.limit(50); // Fetch a bit more to filter
           
     const snapshot = await dbQuery.get();
     
-    // ### THIS IS THE FIX ###
-    // Initialize seenIdsSet using the 'seenQuestionIds' variable
-    const seenIdsSet = new Set(seenQuestionIds);
-    // ### END FIX ###
-
     let dbQuestions = [];
     snapshot.forEach(doc => {
+      // SCALABLE CHECK: Check against the Set
       if (!seenIdsSet.has(doc.id) && dbQuestions.length < requestedCount) {
         dbQuestions.push({ id: doc.id, ...doc.data() });
       }
@@ -136,11 +132,11 @@ export default async function handler(request, response) {
       }
     }
 
-    // 6. Asynchronously update user's 'seen' list
+    // 6. Asynchronously update user's 'seen' history (SCALABLE BATCH WRITE)
     const allSeenIds = finalQuestions.map(q => q.id);
     if (allSeenIds.length > 0) {
-      updateUserSeenQuestions(userId, allSeenIds).catch(err => {
-        console.error("CRITICAL: Failed to update user's seen questions:", err);
+      updateUserSeenHistory(userId, allSeenIds).catch(err => {
+        console.error("CRITICAL: Failed to update user's history:", err);
       });
     }
 
@@ -160,27 +156,36 @@ export default async function handler(request, response) {
 
 // --- Helper Functions ---
 
-async function getUserSeenQuestions(userId) {
+// REFACTORED: Fetches IDs from sub-collection 'history'
+async function getUserSeenQuestionsSet(userId) {
   try {
-    const docRef = db.doc(`users/${userId}/quizData/seen`);
-    const doc = await docRef.get();
-    if (doc.exists) {
-      return doc.data().seenQuestionIds || [];
-    }
-    return [];
+    const historyRef = db.collection('users').doc(userId).collection('history');
+    // We only need the IDs, not the full data. This is efficient.
+    const snapshot = await historyRef.select().get(); 
+    
+    const ids = new Set();
+    snapshot.forEach(doc => ids.add(doc.id));
+    return ids;
   } catch (error) {
-    console.error("Error getting user seen questions:", error);
-    return [];
+    console.error("Error getting user seen questions from sub-collection:", error);
+    return new Set();
   }
 }
 
-async function updateUserSeenQuestions(userId, questionIds) {
+// REFACTORED: Writes to sub-collection 'history'
+async function updateUserSeenHistory(userId, questionIds) {
   if (questionIds.length === 0) return;
-  const docRef = db.doc(`users/${userId}/quizData/seen`);
-  // ### Use modular FieldValue ###
-  await docRef.set({
-    seenQuestionIds: FieldValue.arrayUnion(...questionIds)
-  }, { merge: true });
+  
+  const batch = db.batch();
+  const historyRef = db.collection('users').doc(userId).collection('history');
+  
+  questionIds.forEach(qId => {
+      // Doc ID = Question ID. Ensures automatic deduplication.
+      const docRef = historyRef.doc(qId); 
+      batch.set(docRef, { seenAt: FieldValue.serverTimestamp() });
+  });
+
+  await batch.commit();
 }
 
 function getSubject(params) {
