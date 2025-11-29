@@ -45,7 +45,7 @@ let DOMElements = {};
 let globalShowNotification = (message, isError) => console.log(`Notification: ${message}`);
 let globalAppId = 'default-app-id';
 
-// --- Local State for Signup ---
+// --- Local State for Dropdowns ---
 let selectedOptionalId = null; // Stores the ID (e.g., 'history') of the selected optional
 
 /**
@@ -120,7 +120,10 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
     }
     
     initSharedEventListeners();
-    initOptionalSubjectDropdown(); // Initialize the smart dropdown logic
+    
+    // Initialize Dropdowns for BOTH Signup and Account forms
+    initOptionalSubjectDropdown('signup');
+    initOptionalSubjectDropdown('account');
 
     return { 
         db, auth, firestoreModule, firebaseAuthModule, 
@@ -268,10 +271,11 @@ async function fetchUserProfile(userId) {
     }
 }
 
-// --- OPTIONAL SUBJECT DROPDOWN LOGIC ---
-function initOptionalSubjectDropdown() {
-    const searchInput = document.getElementById('signup-optional-search');
-    const dropdown = document.getElementById('signup-optional-dropdown');
+// --- NEW: Reusable Dropdown Initialization ---
+// This function handles both the Signup and My Account dropdowns
+function initOptionalSubjectDropdown(prefix) {
+    const searchInput = document.getElementById(`${prefix}-optional-search`);
+    const dropdown = document.getElementById(`${prefix}-optional-dropdown`);
 
     if (!searchInput || !dropdown) return;
 
@@ -284,37 +288,36 @@ function initOptionalSubjectDropdown() {
             return;
         }
 
-        // Filter subjects starting with the term
         const matches = OPTIONAL_SUBJECT_LIST.filter(sub => 
             sub.name.toLowerCase().startsWith(term)
-        ).slice(0, 5); // Limit to 5 suggestions
+        ).slice(0, 5);
 
         if (matches.length > 0) {
             dropdown.style.display = 'block';
             matches.forEach(sub => {
                 const div = document.createElement('div');
-                div.className = 'optional-option'; // Style handled in index.html CSS
+                div.className = 'optional-option';
                 div.textContent = sub.name;
                 div.onclick = () => {
                     searchInput.value = sub.name;
-                    selectedOptionalId = sub.id;
+                    selectedOptionalId = sub.id; // Updates the module-level variable
                     dropdown.style.display = 'none';
                 };
                 dropdown.appendChild(div);
             });
         } else {
             dropdown.style.display = 'none';
-            selectedOptionalId = null; // Reset if no match
+            selectedOptionalId = null; 
         }
     });
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
         if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.style.display = 'none';
         }
     });
 }
+
 
 // --- EVENT LISTENERS ---
 
@@ -414,7 +417,6 @@ function initSharedEventListeners() {
             createdUser = userCred.user;
             
             // 2. Create Profile Document (CRITICAL STEP)
-            // We await this to ensure it exists before any future login reads it.
             try {
                 const { doc, setDoc, serverTimestamp } = firestoreModule; 
                 const safeAppId = globalAppId || 'default-app-id';
@@ -436,7 +438,6 @@ function initSharedEventListeners() {
                 
             } catch (dbErr) { 
                 // 3. ROLLBACK: Delete Auth User if DB write fails
-                // This prevents "Zombie" accounts with no names
                 console.error("Profile creation failed. Rolling back Auth.", dbErr);
                 await firebaseAuthModule.deleteUser(createdUser);
                 throw new Error("Database connection failed. Please try again.");
@@ -478,7 +479,7 @@ function initSharedEventListeners() {
         }
     });
 
-    // 3. ACCOUNT UPDATE LISTENER (Simple)
+    // 3. ACCOUNT UPDATE LISTENER (Enhanced)
     DOMElements.accountModal.form?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         if (!currentUser || currentUser.isAnonymous) return;
@@ -487,29 +488,49 @@ function initSharedEventListeners() {
         const originalText = btn ? btn.innerText : 'Save';
         if(btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
 
-        const firstName = e.target.elements['account-first-name'].value.trim();
-        const lastName = e.target.elements['account-last-name'].value.trim();
+        const firstName = document.getElementById('account-first-name').value.trim();
+        const lastName = document.getElementById('account-last-name').value.trim();
+        
+        // Capture New Edit Fields
+        const mobile = document.getElementById('account-mobile').value.trim();
+        const mode = document.getElementById('account-mode').value;
+        const medium = document.getElementById('account-medium').value;
+        const year = document.getElementById('account-year').value;
         
         try {
             const { doc, updateDoc } = firestoreModule; 
             const userDocRef = doc(db, 'artifacts', globalAppId, 'users', currentUser.uid);
             
-            await updateDoc(userDocRef, { 
+            const updateData = { 
                 'profile.firstName': firstName, 
-                'profile.lastName': lastName 
-            }); 
+                'profile.lastName': lastName,
+                'profile.mobile': mobile,
+                'profile.preparationMode': mode,
+                'profile.medium': medium,
+                'profile.appearingYear': year
+            };
             
-            globalShowNotification('Account updated successfully!');
+            // Only update optional if changed/selected via dropdown
+            if (selectedOptionalId) {
+                updateData['profile.optionalSubject'] = selectedOptionalId;
+            }
+
+            await updateDoc(userDocRef, updateData); 
             
+            globalShowNotification('Account updated!');
+            
+            // Local state update so UI reflects changes immediately
             if (currentUserProfile) { 
-                currentUserProfile.firstName = firstName; 
-                currentUserProfile.lastName = lastName; 
+                Object.assign(currentUserProfile, { 
+                    firstName, lastName, mobile, preparationMode: mode, medium, appearingYear: year 
+                });
+                if(selectedOptionalId) currentUserProfile.optionalSubject = selectedOptionalId;
             }
             updateUIForAuthStateChange(currentUser);
             closeModal(DOMElements.accountModal.modal);
         } catch(error){ 
             console.error("Account update failed:", error); 
-            globalShowNotification("Failed to update profile. Please try again.", true);
+            globalShowNotification("Failed to save changes.", true);
         } finally {
             if(btn) { btn.disabled = false; btn.innerText = originalText; }
         }
@@ -531,11 +552,13 @@ function initSharedEventListeners() {
     // User Menu Dropdown
     const userMenuBtn = document.getElementById('user-menu-button');
     const userDropdown = document.getElementById('user-dropdown');
+
     if (userMenuBtn && userDropdown) {
         userMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             userDropdown.classList.toggle('hidden');
         });
+
         document.body.addEventListener('click', (e) => {
             if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
                 userDropdown.classList.add('hidden');
@@ -543,7 +566,7 @@ function initSharedEventListeners() {
         });
     }
 
-    // Global Clicks
+    // Global Clicks (Login/Logout/Account)
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         const targetId = target.id;
@@ -555,18 +578,43 @@ function initSharedEventListeners() {
              try { await firebaseAuthModule.signOut(auth); globalShowNotification('Logged out.'); }
              catch (error) { console.error(error); }
         }
+        
+        // Open Account Modal & Populate Fields
         if (target.closest('#my-account-btn, #mobile-my-account-btn')) {
             e.preventDefault();
             if (!authReady || !currentUser || currentUser.isAnonymous) { openAuthModal('login'); return; }
             
-            const { form } = DOMElements.accountModal;
-            form.elements['account-first-name'].value = currentUserProfile?.firstName || '';
-            form.elements['account-last-name'].value = currentUserProfile?.lastName || '';
-            form.elements['account-email'].value = currentUser.email || '';
-            form.elements['account-email'].classList.add('bg-slate-100', 'cursor-not-allowed');
+            // Populate Basic Fields
+            document.getElementById('account-first-name').value = currentUserProfile?.firstName || '';
+            document.getElementById('account-last-name').value = currentUserProfile?.lastName || '';
+            document.getElementById('account-email').value = currentUser.email || '';
+            
+            // Populate New Fields (with safe fallbacks)
+            document.getElementById('account-mobile').value = currentUserProfile?.mobile || '';
+            document.getElementById('account-mode').value = currentUserProfile?.preparationMode || 'Self Study';
+            document.getElementById('account-medium').value = currentUserProfile?.medium || 'English';
+            document.getElementById('account-year').value = currentUserProfile?.appearingYear || '2026';
+
+            // Populate Optional (Convert ID to Name using list)
+            const optId = currentUserProfile?.optionalSubject;
+            const accountSearch = document.getElementById('account-optional-search');
+            
+            if (optId && accountSearch) {
+                const subjectObj = OPTIONAL_SUBJECT_LIST.find(s => s.id === optId);
+                accountSearch.value = subjectObj ? subjectObj.name : optId;
+                selectedOptionalId = optId; // Set module state so we don't lose it if they don't edit
+            } else if (accountSearch) {
+                accountSearch.value = '';
+                selectedOptionalId = null;
+            }
+
+            // Explicitly ensure email is visually read-only
+            const emailField = document.getElementById('account-email');
+            if(emailField) emailField.classList.add('bg-slate-100', 'cursor-not-allowed');
             
             openModal(DOMElements.accountModal.modal);
         }
+        
         if (targetId === 'close-auth-modal') closeModal(DOMElements.authModal.modal);
         if (targetId === 'auth-switch-to-signup') openAuthModal('signup');
         if (targetId === 'auth-switch-to-login' || targetId === 'auth-switch-to-login-from-reset') openAuthModal('login');
