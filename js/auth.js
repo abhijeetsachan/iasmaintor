@@ -28,7 +28,7 @@ import {
     onSnapshot,
     orderBy,
     getDocs,
-    writeBatch // <-- NEW IMPORT
+    writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // --- Module State ---
@@ -64,7 +64,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
             Object.assign(firestoreModule, { 
                 getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc, 
                 enableIndexedDbPersistence, collection, query, onSnapshot, orderBy, getDocs,
-                writeBatch // <-- EXPORTED HERE
+                writeBatch
             });
             
             Object.assign(firebaseAuthModule, { 
@@ -95,6 +95,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
                     const userId = user?.uid;
 
                     if (verifiedUser && !verifiedUser.isAnonymous) {
+                        // Only try to fetch profile if we have a valid verified user
                         await fetchUserProfile(userId);
                         if (onLogin) onLogin(verifiedUser, db, firestoreModule, authHasChecked);
                     } else {
@@ -221,6 +222,8 @@ function updateUIForAuthStateChange(user, isAdmin = false) {
 }
 
 async function fetchUserProfile(userId) {
+    let isAdmin = false;
+    
     try {
         const userDocRef = doc(db, 'artifacts', globalAppId, 'users', userId);
         const userDoc = await getDoc(userDocRef);
@@ -229,24 +232,42 @@ async function fetchUserProfile(userId) {
             currentUserProfile = userDoc.data().profile;
         } else {
             console.warn("User profile missing. Attempting self-repair on login.");
-            // Best Practice: Self-healing. If user exists in Auth but not DB, create a stub.
+            // Self-healing: Create stub profile if missing
             currentUserProfile = { 
                 firstName: 'Aspirant', 
                 lastName: '', 
                 email: auth.currentUser?.email || '',
                 createdAt: serverTimestamp() 
             };
-            // Note: We don't await this to keep login fast, but we fire it off.
-            setDoc(userDocRef, { profile: currentUserProfile }, { merge: true });
+            
+            // Safe write attempt
+            try {
+                await setDoc(userDocRef, { profile: currentUserProfile }, { merge: true });
+                console.log("Self-repair successful.");
+            } catch (writeErr) {
+                console.error("Self-repair failed (likely permission issue):", writeErr);
+                // Do NOT re-throw. Allow login to proceed with in-memory profile.
+            }
         }
 
-        const adminDocRef = doc(db, 'admin_directory', userId);
-        const adminDoc = await getDoc(adminDocRef);
-        const isAdmin = adminDoc.exists();
+        // Admin Check (Wrapped safely)
+        try {
+            const adminDocRef = doc(db, 'admin_directory', userId);
+            const adminDoc = await getDoc(adminDocRef);
+            isAdmin = adminDoc.exists();
+        } catch (adminCheckErr) {
+            // Ignore admin check failures for normal users
+            console.log("Admin check skipped/failed:", adminCheckErr.code);
+        }
 
+    } catch (error) { 
+        console.error("Critical Profile Fetch Error:", error); 
+        // Fallback for critical error
+        currentUserProfile = { firstName: 'User', email: auth.currentUser?.email };
+    } finally {
+        // ALWAYS Update UI, even if profile fetch failed
         updateUIForAuthStateChange(auth.currentUser, isAdmin);
-
-    } catch (error) { console.error("Profile fetch error:", error); }
+    }
 }
 
 // --- EVENT LISTENERS ---
