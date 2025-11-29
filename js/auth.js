@@ -2,6 +2,7 @@
 // Robust Authentication Module with Email Verification & UI Gates
 
 import { firebaseConfig } from './firebase-config.js';
+import { OPTIONAL_SUBJECT_LIST } from './optional-syllabus-data.js'; // Import Optional List
 
 // --- Firebase SDK Imports ---
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -44,13 +45,16 @@ let DOMElements = {};
 let globalShowNotification = (message, isError) => console.log(`Notification: ${message}`);
 let globalAppId = 'default-app-id';
 
+// --- Local State for Signup ---
+let selectedOptionalId = null; // Stores the ID (e.g., 'history') of the selected optional
+
 /**
  * Initialize Auth Module
  */
 export async function initAuth(pageDOMElements, appId, showNotification, callbacks = {}) {
     DOMElements = pageDOMElements;
     globalShowNotification = showNotification;
-    globalAppId = appId || 'default-app-id'; // Fallback ensuring ID exists
+    globalAppId = appId || 'default-app-id'; 
     const { onLogin, onLogout } = callbacks;
 
     try {
@@ -60,7 +64,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
             auth = getAuth(app);
             firebaseEnabled = true;
 
-            // Map modules for internal use
+            // Map modules
             Object.assign(firestoreModule, { 
                 getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc, 
                 enableIndexedDbPersistence, collection, query, onSnapshot, orderBy, getDocs,
@@ -95,7 +99,6 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
                     const userId = user?.uid;
 
                     if (verifiedUser && !verifiedUser.isAnonymous) {
-                        // Only try to fetch profile if we have a valid verified user
                         await fetchUserProfile(userId);
                         if (onLogin) onLogin(verifiedUser, db, firestoreModule, authHasChecked);
                     } else {
@@ -117,6 +120,7 @@ export async function initAuth(pageDOMElements, appId, showNotification, callbac
     }
     
     initSharedEventListeners();
+    initOptionalSubjectDropdown(); // Initialize the smart dropdown logic
 
     return { 
         db, auth, firestoreModule, firebaseAuthModule, 
@@ -151,13 +155,20 @@ function openAuthModal(mode = 'login') {
     if(error) error.classList.add('hidden');
     if(loginForm) loginForm.reset();
     if(signupForm) signupForm.reset();
+    
+    // Reset Dropdown UI
+    const searchInput = document.getElementById('signup-optional-search');
+    const dropdown = document.getElementById('signup-optional-dropdown');
+    if(searchInput) searchInput.value = '';
+    if(dropdown) dropdown.style.display = 'none';
+    selectedOptionalId = null;
+
     if(forgotPasswordView) forgotPasswordView.classList.add('hidden');
     document.getElementById('login-view')?.classList.toggle('hidden', mode !== 'login');
     document.getElementById('signup-view')?.classList.toggle('hidden', mode !== 'signup');
     openModal(modal);
 }
 
-// --- UI UPDATE LOGIC ---
 function updateUIForAuthStateChange(user, isAdmin = false) {
     const isLoggedIn = !!user;
     const isAnon = user?.isAnonymous ?? false;
@@ -170,12 +181,11 @@ function updateUIForAuthStateChange(user, isAdmin = false) {
     DOMElements.dashboardSection?.classList.toggle('hidden', !isVisibleUser);
 
     if (isVisibleUser) {
-        // Fallback Logic: Profile Name -> Email User -> 'User'
         let displayName = currentUserProfile?.firstName || (user.email ? user.email.split('@')[0] : 'User');
         displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
         if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = `Hi, ${displayName}`;
 
-        // --- INJECT ADMIN LINK (Dropdown) ---
+        // Admin Link Injection (Dropdown)
         const dropdown = DOMElements.userDropdown;
         const adminLinkId = 'dropdown-admin-link';
         let adminLink = document.getElementById(adminLinkId);
@@ -197,7 +207,7 @@ function updateUIForAuthStateChange(user, isAdmin = false) {
             adminLink.style.display = 'none';
         }
 
-        // --- INJECT ADMIN LINK (Mobile) ---
+        // Admin Link Injection (Mobile)
         const mobileMenu = DOMElements.mobileUserActions;
         const mobileAdminId = 'mobile-admin-link';
         let mobileAdmin = document.getElementById(mobileAdminId);
@@ -223,7 +233,6 @@ function updateUIForAuthStateChange(user, isAdmin = false) {
 
 async function fetchUserProfile(userId) {
     let isAdmin = false;
-    
     try {
         const userDocRef = doc(db, 'artifacts', globalAppId, 'users', userId);
         const userDoc = await getDoc(userDocRef);
@@ -231,43 +240,80 @@ async function fetchUserProfile(userId) {
         if (userDoc.exists()) {
             currentUserProfile = userDoc.data().profile;
         } else {
-            console.warn("User profile missing. Attempting self-repair on login.");
-            // Self-healing: Create stub profile if missing
+            console.warn("User profile missing. Attempting self-repair.");
             currentUserProfile = { 
                 firstName: 'Aspirant', 
                 lastName: '', 
                 email: auth.currentUser?.email || '',
                 createdAt: serverTimestamp() 
             };
-            
-            // Safe write attempt
             try {
                 await setDoc(userDocRef, { profile: currentUserProfile }, { merge: true });
-                console.log("Self-repair successful.");
             } catch (writeErr) {
-                console.error("Self-repair failed (likely permission issue):", writeErr);
-                // Do NOT re-throw. Allow login to proceed with in-memory profile.
+                console.error("Self-repair failed:", writeErr);
             }
         }
 
-        // Admin Check (Wrapped safely)
         try {
             const adminDocRef = doc(db, 'admin_directory', userId);
             const adminDoc = await getDoc(adminDocRef);
             isAdmin = adminDoc.exists();
-        } catch (adminCheckErr) {
-            // Ignore admin check failures for normal users
-            console.log("Admin check skipped/failed:", adminCheckErr.code);
-        }
+        } catch (e) { /* Ignore admin check fail */ }
 
     } catch (error) { 
-        console.error("Critical Profile Fetch Error:", error); 
-        // Fallback for critical error
+        console.error("Profile Fetch Error:", error); 
         currentUserProfile = { firstName: 'User', email: auth.currentUser?.email };
     } finally {
-        // ALWAYS Update UI, even if profile fetch failed
         updateUIForAuthStateChange(auth.currentUser, isAdmin);
     }
+}
+
+// --- OPTIONAL SUBJECT DROPDOWN LOGIC ---
+function initOptionalSubjectDropdown() {
+    const searchInput = document.getElementById('signup-optional-search');
+    const dropdown = document.getElementById('signup-optional-dropdown');
+
+    if (!searchInput || !dropdown) return;
+
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        dropdown.innerHTML = '';
+        
+        if (term.length < 1) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        // Filter subjects starting with the term
+        const matches = OPTIONAL_SUBJECT_LIST.filter(sub => 
+            sub.name.toLowerCase().startsWith(term)
+        ).slice(0, 5); // Limit to 5 suggestions
+
+        if (matches.length > 0) {
+            dropdown.style.display = 'block';
+            matches.forEach(sub => {
+                const div = document.createElement('div');
+                div.className = 'optional-option'; // Style handled in index.html CSS
+                div.textContent = sub.name;
+                div.onclick = () => {
+                    searchInput.value = sub.name;
+                    selectedOptionalId = sub.id;
+                    dropdown.style.display = 'none';
+                };
+                dropdown.appendChild(div);
+            });
+        } else {
+            dropdown.style.display = 'none';
+            selectedOptionalId = null; // Reset if no match
+        }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
 }
 
 // --- EVENT LISTENERS ---
@@ -282,7 +328,6 @@ function initSharedEventListeners() {
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
         
-        // Add loading state
         const submitBtn = e.target.querySelector('button[type="submit"]');
         const originalText = submitBtn ? submitBtn.innerText : 'Log In';
         if(submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'Verifying...'; }
@@ -340,13 +385,20 @@ function initSharedEventListeners() {
         }
     });
     
-    // 2. SIGNUP LISTENER (IMPROVED DATA INTEGRITY)
+    // 2. SIGNUP LISTENER (Enhanced with New Fields & Robustness)
     DOMElements.authModal.signupForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
-        const firstName = e.target.elements['signup-first-name'].value;
-        const lastName = e.target.elements['signup-last-name'].value;
-        const email = e.target.elements['signup-email'].value;
-        const password = e.target.elements['signup-password'].value;
+        
+        // Grab Values
+        const firstName = document.getElementById('signup-first-name').value.trim();
+        const lastName = document.getElementById('signup-last-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const mobile = document.getElementById('signup-mobile').value.trim();
+        const mode = document.getElementById('signup-mode').value;
+        const medium = document.getElementById('signup-medium').value;
+        const year = document.getElementById('signup-year').value;
+        
         const errorEl = DOMElements.authModal.error; 
         if(errorEl) errorEl.classList.add('hidden');
         
@@ -361,26 +413,31 @@ function initSharedEventListeners() {
             const userCred = await firebaseAuthModule.createUserWithEmailAndPassword(auth, email, password); 
             createdUser = userCred.user;
             
-            // 2. IMMEDIATELY create Profile Document (Critical Step)
+            // 2. Create Profile Document (CRITICAL STEP)
+            // We await this to ensure it exists before any future login reads it.
             try {
                 const { doc, setDoc, serverTimestamp } = firestoreModule; 
-                // Best Practice: Ensure globalAppId is defined
                 const safeAppId = globalAppId || 'default-app-id';
                 const userDocRef = doc(db, 'artifacts', safeAppId, 'users', createdUser.uid);
                 
-                await setDoc(userDocRef, { 
-                    profile: { 
-                        firstName: firstName.trim(), 
-                        lastName: lastName.trim(), 
-                        email: email, 
-                        createdAt: serverTimestamp(), 
-                        optionalSubject: null 
-                    } 
-                }, { merge: true }); // Merge prevents overwriting if somehow exists
+                const profileData = { 
+                    firstName, 
+                    lastName, 
+                    email,
+                    mobile,
+                    preparationMode: mode,
+                    medium: medium,
+                    appearingYear: year,
+                    optionalSubject: selectedOptionalId || null,
+                    createdAt: serverTimestamp()
+                };
+
+                await setDoc(userDocRef, { profile: profileData }, { merge: true });
                 
             } catch (dbErr) { 
+                // 3. ROLLBACK: Delete Auth User if DB write fails
+                // This prevents "Zombie" accounts with no names
                 console.error("Profile creation failed. Rolling back Auth.", dbErr);
-                // 3. Rollback: Delete the auth user if DB write fails to prevent 'zombie' accounts
                 await firebaseAuthModule.deleteUser(createdUser);
                 throw new Error("Database connection failed. Please try again.");
             }
@@ -390,9 +447,9 @@ function initSharedEventListeners() {
                 await firebaseAuthModule.sendEmailVerification(createdUser);
             } catch (emailError) {
                 console.warn("Verification email failed (non-fatal):", emailError);
-                // We don't rollback here, user can resend later
             }
 
+            // 5. Sign Out (Force login after verification)
             await firebaseAuthModule.signOut(auth);
 
             closeModal(DOMElements.authModal.modal); 
@@ -421,7 +478,7 @@ function initSharedEventListeners() {
         }
     });
 
-    // 3. ACCOUNT UPDATE LISTENER
+    // 3. ACCOUNT UPDATE LISTENER (Simple)
     DOMElements.accountModal.form?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         if (!currentUser || currentUser.isAnonymous) return;
@@ -437,7 +494,6 @@ function initSharedEventListeners() {
             const { doc, updateDoc } = firestoreModule; 
             const userDocRef = doc(db, 'artifacts', globalAppId, 'users', currentUser.uid);
             
-            // Note: We use updateDoc to avoid overwriting other fields like optionalSubject
             await updateDoc(userDocRef, { 
                 'profile.firstName': firstName, 
                 'profile.lastName': lastName 
@@ -445,7 +501,6 @@ function initSharedEventListeners() {
             
             globalShowNotification('Account updated successfully!');
             
-            // Update local state immediately for UI responsiveness
             if (currentUserProfile) { 
                 currentUserProfile.firstName = firstName; 
                 currentUserProfile.lastName = lastName; 
@@ -460,6 +515,7 @@ function initSharedEventListeners() {
         }
     });
 
+    // Password Reset
     DOMElements.authModal.forgotPasswordForm?.addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         const email = e.target.elements['reset-email'].value; 
@@ -472,16 +528,14 @@ function initSharedEventListeners() {
 
     DOMElements.mobileMenuButton?.addEventListener('click', () => DOMElements.mobileMenu?.classList.toggle('hidden'));
     
-    // --- USER MENU LOGIC (Fixed) ---
+    // User Menu Dropdown
     const userMenuBtn = document.getElementById('user-menu-button');
     const userDropdown = document.getElementById('user-dropdown');
-
     if (userMenuBtn && userDropdown) {
         userMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent immediate close from body listener
+            e.stopPropagation();
             userDropdown.classList.toggle('hidden');
         });
-
         document.body.addEventListener('click', (e) => {
             if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
                 userDropdown.classList.add('hidden');
@@ -489,7 +543,7 @@ function initSharedEventListeners() {
         });
     }
 
-    // Global Clicks (Login/Logout/Account)
+    // Global Clicks
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         const targetId = target.id;
@@ -505,13 +559,10 @@ function initSharedEventListeners() {
             e.preventDefault();
             if (!authReady || !currentUser || currentUser.isAnonymous) { openAuthModal('login'); return; }
             
-            // Populate Modal with current data
             const { form } = DOMElements.accountModal;
             form.elements['account-first-name'].value = currentUserProfile?.firstName || '';
             form.elements['account-last-name'].value = currentUserProfile?.lastName || '';
             form.elements['account-email'].value = currentUser.email || '';
-            
-            // Explicitly ensure email is read-only visually (logic handled in HTML)
             form.elements['account-email'].classList.add('bg-slate-100', 'cursor-not-allowed');
             
             openModal(DOMElements.accountModal.modal);
