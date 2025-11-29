@@ -4,7 +4,7 @@
 import { STATUSES, addSRSProperties } from './utils.js';
 
 // --- Main Optional Subject Database ---
-// Contains metadata for all optionals. Full syllabus trees added for key subjects.
+// Micro-topics should NOT have `children: []`
 const OPTIONAL_SUBJECT_DATA = {
     "agriculture": { name: "Agriculture" },
     "animal_husbandry": { name: "Animal Husbandry & Vet Sci" },
@@ -118,41 +118,39 @@ const OPTIONAL_SUBJECT_DATA = {
     },
     "statistics": { name: "Statistics" },
     "zoology": { name: "Zoology" },
-    "lit_assamese": { name: "Literature - Assamese" },
-    "lit_bengali": { name: "Literature - Bengali" },
-    "lit_bodo": { name: "Literature - Bodo" },
-    "lit_dogri": { name: "Literature - Dogri" },
-    "lit_gujarati": { name: "Literature - Gujarati" },
-    "lit_hindi": { name: "Literature - Hindi" },
-    "lit_kannada": { name: "Literature - Kannada" },
-    "lit_kashmiri": { name: "Literature - Kashmiri" },
-    "lit_konkani": { name: "Literature - Konkani" },
-    "lit_maithili": { name: "Literature - Maithili" },
-    "lit_malayalam": { name: "Literature - Malayalam" },
-    "lit_manipuri": { name: "Literature - Manipuri" },
-    "lit_marathi": { name: "Literature - Marathi" },
-    "lit_nepali": { name: "Literature - Nepali" },
-    "lit_odia": { name: "Literature - Odia" },
-    "lit_punjabi": { name: "Literature - Punjabi" },
-    "lit_sanskrit": { name: "Literature - Sanskrit" },
-    "lit_santhali": { name: "Literature - Santhali" },
-    "lit_sindhi": { name: "Literature - Sindhi" },
-    "lit_tamil": { name: "Literature - Tamil" },
-    "lit_telugu": { name: "Literature - Telugu" },
-    "lit_urdu": { name: "Literature - Urdu" },
-    "lit_english": { name: "Literature - English" }
+    "lit_assamese": { name: "Assamese Literature" },
+    "lit_bengali": { name: "Bengali Literature" },
+    "lit_bodo": { name: "Bodo Literature" },
+    "lit_dogri": { name: "Dogri Literature" },
+    "lit_gujarati": { name: "Gujarati Literature" },
+    "lit_hindi": { name: "Hindi Literature" },
+    "lit_kannada": { name: "Kannada Literature" },
+    "lit_kashmiri": { name: "Kashmiri Literature" },
+    "lit_konkani": { name: "Konkani Literature" },
+    "lit_maithili": { name: "Maithili Literature" },
+    "lit_malayalam": { name: "Malayalam Literature" },
+    "lit_manipuri": { name: "Manipuri Literature" },
+    "lit_marathi": { name: "Marathi Literature" },
+    "lit_nepali": { name: "Nepali Literature" },
+    "lit_odia": { name: "Odia Literature" },
+    "lit_punjabi": { name: "Punjabi Literature" },
+    "lit_sanskrit": { name: "Sanskrit Literature" },
+    "lit_santhali": { name: "Santhali Literature" },
+    "lit_sindhi": { name: "Sindhi Literature" },
+    "lit_tamil": { name: "Tamil Literature" },
+    "lit_telugu": { name: "Telugu Literature" },
+    "lit_urdu": { name: "Urdu Literature" },
+    "lit_english": { name: "English Literature" }
 };
 
 
 // --- EXPORTS ---
 
-// Generate the list for the dropdown search
 export const OPTIONAL_SUBJECT_LIST = Object.keys(OPTIONAL_SUBJECT_DATA).map(id => ({
     id: id,
     name: OPTIONAL_SUBJECT_DATA[id].name
 }));
 
-// Helper to get syllabus data (with fallback for subjects without detailed tree)
 export function getOptionalSyllabusById(id) {
     const subjectData = OPTIONAL_SUBJECT_DATA[id];
     
@@ -183,7 +181,6 @@ export function getOptionalSyllabusById(id) {
             const paper1Copy = JSON.parse(JSON.stringify(subjectData.paper1));
             processedPaper1 = addSRSProperties(paper1Copy);
         } else {
-            // Use default if explicit paper1 data is missing
             processedPaper1 = addSRSProperties(defaultStructure('P-I'));
         }
 
@@ -191,7 +188,6 @@ export function getOptionalSyllabusById(id) {
             const paper2Copy = JSON.parse(JSON.stringify(subjectData.paper2));
             processedPaper2 = addSRSProperties(paper2Copy);
         } else {
-            // Use default if explicit paper2 data is missing
             processedPaper2 = addSRSProperties(defaultStructure('P-II'));
         }
     } catch (error) {
