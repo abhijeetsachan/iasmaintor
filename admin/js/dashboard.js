@@ -85,10 +85,8 @@ onAuthStateChanged(auth, async (user) => {
 
 // --- UI HELPERS ---
 function revealDashboard() {
-    const loader = document.getElementById('auth-loader');
-    if(loader) loader.classList.add('hidden');
-    const layout = document.getElementById('app-layout');
-    if(layout) layout.classList.remove('hidden');
+    document.getElementById('auth-loader')?.classList.add('hidden');
+    document.getElementById('app-layout')?.classList.remove('hidden');
 }
 
 function handleAuthError(msg) {
@@ -104,16 +102,12 @@ function handleAuthError(msg) {
 }
 
 function updateProfileUI(profile) {
-    const nameEl = document.getElementById('admin-name-display');
-    if(nameEl) nameEl.textContent = profile.name || "Admin";
-    const roleEl = document.getElementById('admin-role-display');
-    if(roleEl) roleEl.textContent = (profile.role || "Staff").replace('_', ' ').toUpperCase();
-    const avatarEl = document.getElementById('admin-avatar');
-    if(avatarEl) avatarEl.textContent = (profile.name || "A").charAt(0).toUpperCase();
+    document.getElementById('admin-name-display').textContent = profile.name || "Admin";
+    document.getElementById('admin-role-display').textContent = (profile.role || "Staff").replace('_', ' ').toUpperCase();
+    document.getElementById('admin-avatar').textContent = (profile.name || "A").charAt(0).toUpperCase();
 }
 
-const logoutBtn = document.getElementById('logout-btn');
-if(logoutBtn) logoutBtn.addEventListener('click', () => signOut(auth));
+document.getElementById('logout-btn')?.addEventListener('click', () => signOut(auth));
 
 // --- NAVIGATION ---
 window.switchView = (viewId) => {
@@ -453,7 +447,9 @@ window.viewStudentDetails = async (uid, profile) => {
     const optId = profile.optionalSubject;
     const optName = optId ? (OPTIONAL_SUBJECT_LIST.find(s => s.id === optId)?.name || optId) : 'Not Selected';
     
-    document.getElementById('student-modal-optional').textContent = `Optional: ${optId ? optId.toUpperCase() : 'N/A'}`;
+    // Remove old element ref if it still exists in HTML, else ignore
+    if(document.getElementById('student-modal-optional')) document.getElementById('student-modal-optional').textContent = `Optional: ${optId ? optId.toUpperCase() : 'N/A'}`;
+    
     document.getElementById('student-prep-year').textContent = profile.appearingYear || 'Not Set';
     document.getElementById('student-prep-optional').textContent = optName;
     document.getElementById('student-prep-medium').textContent = profile.medium || '-';
