@@ -979,7 +979,7 @@ footer .border-slate-700 {
 #notification {
     background-color: var(--text-primary);
     color: var(--bg-primary);
-    z-index: 90;
+    z-index: 200;
     /* --- FIX START: Add base opacity and pointer-events --- */
     opacity: 0;
     pointer-events: none;
