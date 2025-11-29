@@ -22,7 +22,7 @@
             background-image: radial-gradient(circle at 50% 50%, #1e293b 1px, transparent 1px);
             background-size: 24px 24px;
             color: #cbd5e1; 
-            overflow: hidden; /* Prevent body scroll, let main scroll */
+            overflow: hidden; 
         }
         
         /* Sidebar Glass Effect */
@@ -34,22 +34,23 @@
 
         /* Card Styles */
         .admin-card {
-            background: rgba(30, 41, 59, 0.6); /* Slate 800 with opacity */
+            background: rgba(30, 41, 59, 0.6); 
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s ease-in-out;
+            transition: transform 0.2s ease-in-out, border-color 0.2s;
         }
         .admin-card:hover {
             border-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
         }
         
         /* Navigation Active State */
         .nav-item.active {
             background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
             border-left: 3px solid #3b82f6;
-            color: #60a5fa; /* Blue 400 */
+            color: #60a5fa; 
         }
         .nav-item {
             border-left: 3px solid transparent;
@@ -74,6 +75,11 @@
             border-color: #3b82f6; 
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
+        .admin-input[readonly] {
+            background-color: rgba(15, 23, 42, 0.4);
+            color: #64748b;
+            cursor: not-allowed;
+        }
 
         /* Table Styles */
         .admin-table th { 
@@ -95,26 +101,6 @@
         .admin-table tr:last-child td { border-bottom: none; }
         .admin-table tr:hover { background-color: rgba(59, 130, 246, 0.05); }
 
-        /* Quill Editor Dark Mode Overrides */
-        .ql-toolbar { 
-            background-color: #1e293b; 
-            border-color: #334155 !important; 
-            border-top-left-radius: 0.5rem; 
-            border-top-right-radius: 0.5rem; 
-        }
-        .ql-container { 
-            background-color: rgba(15, 23, 42, 0.8); 
-            border-color: #334155 !important; 
-            border-bottom-left-radius: 0.5rem; 
-            border-bottom-right-radius: 0.5rem; 
-            color: white; 
-            font-family: 'Inter', sans-serif; 
-            font-size: 0.95rem; 
-        }
-        .ql-stroke { stroke: #94a3b8 !important; }
-        .ql-fill { fill: #94a3b8 !important; }
-        .ql-picker { color: #94a3b8 !important; }
-
         /* Animations */
         @keyframes fade-in {
             from { opacity: 0; transform: translateY(10px); }
@@ -123,9 +109,29 @@
         .animate-fade-in {
             animation: fade-in 0.4s ease-out forwards;
         }
+
+        /* Modal Tab Styles */
+        .modal-tab-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #94a3b8;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .modal-tab-btn.active {
+            color: #60a5fa;
+            border-bottom-color: #3b82f6;
+        }
+        .modal-tab-content {
+            display: none;
+        }
+        .modal-tab-content.active {
+            display: block;
+        }
     </style>
 </head>
-<body class="flex h-screen w-screen">
+<body class="flex h-screen w-screen overflow-hidden">
 
     <div id="auth-loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white transition-opacity duration-500">
         <div class="relative">
@@ -146,35 +152,28 @@
 
                 <nav class="p-4 space-y-1">
                     <p class="px-4 pt-2 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Overview</p>
-                    
                     <button onclick="window.switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all text-slate-300 hover:bg-white/5 hover:text-white">
                         <i class="fas fa-chart-pie w-5 text-center"></i> Dashboard
                     </button>
-
                     <button onclick="window.switchView('logs')" id="nav-logs" class="nav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all text-slate-300 hover:bg-white/5 hover:text-white">
                         <i class="fas fa-history w-5 text-center"></i> Activity Logs
                     </button>
 
                     <p class="px-4 pt-6 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Management</p>
-                    
                     <button onclick="window.switchView('students')" id="nav-students" class="nav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all text-slate-300 hover:bg-white/5 hover:text-white">
                         <i class="fas fa-user-graduate w-5 text-center"></i> Students
                     </button>
-
                     <button onclick="window.switchView('mentorship')" id="nav-mentorship" class="nav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all text-slate-300 hover:bg-white/5 hover:text-white">
                         <i class="fas fa-inbox w-5 text-center"></i> Mentorship
                     </button>
-
                     <button onclick="window.switchView('questions')" id="nav-questions" class="nav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all text-slate-300 hover:bg-white/5 hover:text-white">
                         <i class="fas fa-database w-5 text-center"></i> Question Bank
                     </button>
 
                     <p class="px-4 pt-6 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">System</p>
-
                     <button onclick="window.switchView('notifications')" id="nav-notifications" class="nav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all text-slate-300 hover:bg-white/5 hover:text-white">
                         <i class="fas fa-bullhorn w-5 text-center"></i> Broadcasts
                     </button>
-                    
                     <button onclick="window.switchView('users')" id="nav-users" class="nav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all text-slate-300 hover:bg-white/5 hover:text-white">
                         <i class="fas fa-users-cog w-5 text-center"></i> Admin Users
                     </button>
@@ -251,37 +250,11 @@
             </div>
 
             <div id="view-logs" class="hidden space-y-6 animate-fade-in">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">Activity Logs</h1>
-                        <p class="text-slate-400 text-sm mt-1">Track and revert changes (Last 7 Days)</p>
-                    </div>
-                    <button onclick="window.loadActivityLogs()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium border border-slate-700 transition-all">
-                        <i class="fas fa-sync-alt mr-2"></i>Refresh
-                    </button>
-                </div>
-
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead>
-                            <tr>
-                                <th>Admin</th>
-                                <th>Action</th>
-                                <th>Details</th>
-                                <th>Time</th>
-                                <th class="text-right">Controls</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-table-body">
-                            <tr><td colspan="5" class="text-center py-12 text-slate-500">Loading logs...</td></tr>
-                        </tbody>
-                    </table>
-                    <div class="p-4 border-t border-white/5 flex justify-center">
-                        <button id="load-more-logs" class="text-sm text-blue-400 hover:text-blue-300 font-medium" style="display: none;">Load More</button>
-                    </div>
-                </div>
+                <div class="flex justify-between items-center"><div><h1 class="text-2xl font-bold text-white">Activity Logs</h1><p class="text-slate-400 text-sm mt-1">Track changes</p></div><button onclick="window.loadActivityLogs()" class="bg-slate-800 text-white px-4 py-2 rounded border border-slate-700">Refresh</button></div>
+                <div class="admin-card overflow-hidden"><table class="w-full admin-table"><thead><tr><th>Admin</th><th>Action</th><th>Details</th><th>Time</th><th class="text-right">Controls</th></tr></thead><tbody id="logs-table-body"></tbody></table></div>
+                <div class="p-4 border-t border-white/5 flex justify-center"><button id="load-more-logs" class="text-sm text-blue-400 hover:text-blue-300 font-medium" style="display: none;">Load More</button></div>
             </div>
-
+            
             <div id="view-students" class="hidden space-y-6 animate-fade-in">
                 <div class="flex justify-between items-center">
                     <h1 class="text-2xl font-bold text-white">Student Directory</h1>
@@ -290,21 +263,10 @@
                         <i class="fas fa-search absolute left-3 top-3.5 text-slate-500"></i>
                     </div>
                 </div>
-
                 <div class="admin-card overflow-hidden">
                     <table class="w-full admin-table">
-                        <thead>
-                            <tr>
-                                <th>Profile</th>
-                                <th>Email</th>
-                                <th>Joined</th>
-                                <th>Optional</th>
-                                <th class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="students-table-body">
-                            <tr><td colspan="5" class="text-center py-12 text-slate-500">Loading directory...</td></tr>
-                        </tbody>
+                        <thead><tr><th>Profile</th><th>Email</th><th>Joined</th><th>Optional</th><th class="text-right">Actions</th></tr></thead>
+                        <tbody id="students-table-body"><tr><td colspan="5" class="text-center py-12 text-slate-500">Loading directory...</td></tr></tbody>
                     </table>
                     <div class="p-4 border-t border-white/5 flex justify-center">
                         <button id="load-more-students" class="text-sm text-blue-400 hover:text-blue-300 font-medium" style="display: none;">Load More</button>
@@ -313,250 +275,161 @@
             </div>
 
             <div id="view-mentorship" class="hidden space-y-6 animate-fade-in">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">Mentorship Inbox</h1>
-                        <p class="text-slate-400 text-sm mt-1">Manage 1:1 session requests</p>
-                    </div>
-                    <button onclick="window.loadMentorshipRequests()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium border border-slate-700 transition-all">
-                        <i class="fas fa-sync-alt mr-2"></i>Refresh
-                    </button>
-                </div>
-
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Request Note</th>
-                                <th>Date / Status</th>
-                                <th class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mentorship-table-body">
-                            <tr><td colspan="4" class="text-center py-12 text-slate-500">Loading requests...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <div class="flex justify-between items-center"><div><h1 class="text-2xl font-bold text-white">Mentorship Inbox</h1></div><button onclick="window.loadMentorshipRequests()" class="bg-slate-800 text-white px-4 py-2 rounded border border-slate-700">Refresh</button></div>
+                <div class="admin-card overflow-hidden"><table class="w-full admin-table"><thead><tr><th>Student</th><th>Request</th><th>Status</th><th class="text-right">Actions</th></tr></thead><tbody id="mentorship-table-body"></tbody></table></div>
             </div>
 
             <div id="view-questions" class="hidden space-y-6 animate-fade-in">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">Question Bank</h1>
-                        <p class="text-slate-400 text-sm mt-1">Manage quiz content</p>
-                    </div>
-                    <div class="flex gap-3">
-                         <select id="filter-subject" class="admin-input w-auto text-sm">
-                            <option value="all">All Subjects</option>
-                            <option value="history">History</option>
-                            <option value="geography">Geography</option>
-                            <option value="polity">Polity</option>
-                            <option value="economy">Economy</option>
-                        </select>
-                        <button onclick="window.openModal('modal-bulk-upload')" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-green-500/20">
-                            <i class="fas fa-file-csv"></i> Bulk Upload
-                        </button>
-                        <button onclick="window.openQuestionModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20">
-                            <i class="fas fa-plus"></i> Add Question
-                        </button>
-                    </div>
-                </div>
-
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead>
-                            <tr>
-                                <th>Question</th>
-                                <th width="150">Subject</th>
-                                <th width="100">Difficulty</th>
-                                <th width="100" class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="questions-table-body">
-                            <tr><td colspan="4" class="text-center py-12 text-slate-500">Loading questions...</td></tr>
-                        </tbody>
-                    </table>
-                    <div class="p-4 border-t border-white/5 flex justify-center">
-                        <button id="load-more-questions" class="text-sm text-blue-400 hover:text-blue-300 font-medium">Load More</button>
-                    </div>
-                </div>
+                 <div class="flex justify-between"><h1 class="text-2xl font-bold text-white">Question Bank</h1><div class="flex gap-2"><button onclick="window.openModal('modal-bulk-upload')" class="bg-green-600 text-white px-4 py-2 rounded">Bulk Upload</button><button onclick="window.openQuestionModal()" class="bg-blue-600 text-white px-4 py-2 rounded">Add Question</button></div></div>
+                 <div class="admin-card overflow-hidden"><table class="w-full admin-table"><tbody id="questions-table-body"></tbody></table></div>
             </div>
 
             <div id="view-notifications" class="hidden space-y-6 animate-fade-in">
-                <h1 class="text-2xl font-bold text-white">Global Broadcasts</h1>
+                <h1 class="text-2xl font-bold text-white">Broadcasts</h1>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                     <div class="lg:col-span-1 admin-card p-6 h-fit">
-                        <h3 class="text-lg font-semibold text-white border-b border-white/10 pb-4 mb-4">Create Notification</h3>
-                        <form id="notification-form" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-medium mb-1 text-slate-400 uppercase">Message</label>
-                                <textarea id="notif-message" required rows="3" class="admin-input resize-none"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-1 text-slate-400 uppercase">Type</label>
-                                <select id="notif-type" class="admin-input">
-                                    <option value="banner">Top Banner</option>
-                                    <option value="popup">Popup Modal</option>
-                                    <option value="toast">Toast</option>
-                                </select>
-                            </div>
-                            <div id="banner-upload-container" class="hidden">
-                                <label class="block text-xs font-medium mb-2 text-slate-400 uppercase">Image</label>
-                                <input type="file" id="notif-image" accept="image/*" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"/>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-2 text-slate-400 uppercase">Target Pages</label>
-                                <div class="bg-slate-900/50 p-3 rounded border border-white/10 space-y-2">
-                                    <label class="flex items-center space-x-2"><input type="checkbox" value="index.html" class="rounded bg-slate-800 border-slate-600 text-blue-500" checked><span class="text-sm text-slate-300">Home</span></label>
-                                    <label class="flex items-center space-x-2"><input type="checkbox" value="tracker.html" class="rounded bg-slate-800 border-slate-600 text-blue-500" checked><span class="text-sm text-slate-300">Tracker</span></label>
-                                    <label class="flex items-center space-x-2"><input type="checkbox" value="maintor.html" class="rounded bg-slate-800 border-slate-600 text-blue-500" checked><span class="text-sm text-slate-300">Evaluator</span></label>
-                                </div>
-                            </div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-500/20">Publish</button>
-                        </form>
-                    </div>
-                    <div class="lg:col-span-2 admin-card p-6">
-                        <h3 class="text-lg font-semibold text-white mb-6">Active Broadcasts</h3>
-                        <div id="active-notifications-list" class="space-y-3">
-                            <p class="text-slate-500 text-sm">Loading...</p>
-                        </div>
-                    </div>
+                     <div class="lg:col-span-1 admin-card p-6"><h3 class="text-white font-bold mb-4">Create</h3><form id="notification-form" class="space-y-4"><textarea id="notif-message" class="admin-input" required></textarea><select id="notif-type" class="admin-input"><option value="banner">Banner</option><option value="popup">Popup</option></select><button class="w-full bg-blue-600 text-white py-2 rounded">Send</button></form></div>
+                     <div class="lg:col-span-2 admin-card p-6"><h3 class="text-white font-bold mb-4">Active</h3><div id="active-notifications-list" class="space-y-2"></div></div>
                 </div>
             </div>
-            
+
             <div id="view-users" class="hidden space-y-6 animate-fade-in">
-                 <div class="flex justify-between items-center">
-                    <h1 class="text-2xl font-bold text-white">Admin Team</h1>
-                    <button onclick="window.openModal('modal-add-admin')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-blue-500/20">Add New Member</button>
-                </div>
-                <div class="admin-card overflow-hidden">
-                    <table class="w-full admin-table">
-                        <thead><tr><th>Name</th><th>Role</th><th>Email</th><th class="text-right">Actions</th></tr></thead>
-                        <tbody id="admin-table-body"><tr><td colspan="4" class="text-center py-12">Loading...</td></tr></tbody>
-                    </table>
-                </div>
+                <div class="flex justify-between"><h1 class="text-2xl font-bold text-white">Admins</h1><button onclick="window.openModal('modal-add-admin')" class="bg-blue-600 text-white px-4 py-2 rounded">Add Admin</button></div>
+                <div class="admin-card overflow-hidden"><table class="w-full admin-table"><tbody id="admin-table-body"></tbody></table></div>
             </div>
 
         </main>
     </div>
 
-    <div id="modal-question-editor" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center transition-opacity">
-        <div class="bg-slate-800 w-full max-w-3xl rounded-xl border border-white/10 shadow-2xl flex flex-col max-h-[95vh] animate-fade-in">
-            <div class="p-6 border-b border-white/10 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-white" id="q-modal-title">Edit Question</h2>
-                <button onclick="window.closeModal('modal-question-editor')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-1">
-                <form id="question-form" class="space-y-4">
-                    <input type="hidden" id="q-id">
-                    <div>
-                        <label class="block text-sm text-slate-300 mb-1">Question</label>
-                        <div class="bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
-                            <div id="quill-q-text" class="h-32 text-white"></div> 
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="block text-xs text-slate-400 mb-1">Option A</label><input type="text" id="q-opt-0" required class="admin-input"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Option B</label><input type="text" id="q-opt-1" required class="admin-input"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Option C</label><input type="text" id="q-opt-2" required class="admin-input"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Option D</label><input type="text" id="q-opt-3" required class="admin-input"></div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/50 p-4 rounded-lg border border-white/5">
-                        <div><label class="block text-xs text-slate-400 mb-1">Correct Answer</label><select id="q-answer" class="admin-input"></select></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Subject</label><select id="q-subject" class="admin-input"><option value="history">History</option><option value="geography">Geography</option><option value="polity">Polity</option><option value="economy">Economy</option><option value="environment">Environment</option><option value="science-tech">Science & Tech</option></select></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Difficulty</label><select id="q-difficulty" class="admin-input"><option value="basic">Basic</option><option value="advanced">Advanced</option></select></div>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-slate-300 mb-1">Explanation</label>
-                        <div class="bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
-                            <div id="quill-q-explanation" class="h-32 text-white"></div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="p-6 border-t border-white/10 flex justify-end gap-3">
-                <button onclick="window.closeModal('modal-question-editor')" class="px-4 py-2 text-slate-300 hover:text-white">Cancel</button>
-                <button onclick="window.saveQuestion()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-bulk-upload" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center">
-        <div class="bg-slate-800 w-full max-w-2xl rounded-xl border border-white/10 shadow-2xl p-6 animate-fade-in">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white">Bulk Upload (CSV)</h2>
-                <button onclick="window.closeModal('modal-bulk-upload')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="space-y-4">
-                <p class="text-sm text-slate-400">Required headers: <code class="bg-slate-900 px-2 py-1 rounded text-blue-300 text-xs">question, optionA, optionB, optionC, optionD, answer, subject, difficulty, explanation</code></p>
-                <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-lg p-10 text-center hover:bg-slate-700/30 transition-colors cursor-pointer group">
-                    <i class="fas fa-cloud-upload-alt text-4xl text-slate-500 group-hover:text-blue-400 mb-3 transition-colors"></i>
-                    <p class="text-slate-300 font-medium">Click to browse or drag file here</p>
-                    <input type="file" id="csv-file-input" class="hidden" accept=".csv">
-                </div>
-                <div id="upload-status" class="hidden bg-slate-900 p-4 rounded-lg border border-slate-700">
-                    <div class="flex items-center gap-3">
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                        <p class="text-sm text-slate-300" id="upload-status-text">Processing...</p>
-                    </div>
-                    <div class="w-full bg-slate-700 rounded-full h-1.5 mt-3 overflow-hidden">
-                        <div id="upload-progress" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div id="csv-errors" class="hidden bg-red-500/10 border border-red-500/30 p-4 rounded-lg max-h-40 overflow-y-auto text-xs text-red-300"></div>
-            </div>
-            <div class="flex justify-end gap-3 mt-8">
-                <button onclick="window.closeModal('modal-bulk-upload')" class="px-4 py-2 text-slate-300 hover:text-white">Cancel</button>
-                <button id="btn-process-csv" disabled class="bg-slate-600 text-slate-400 px-6 py-2 rounded-lg cursor-not-allowed font-medium">Upload</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-student-details" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center">
-        <div class="bg-slate-800 w-full max-w-4xl rounded-xl border border-white/10 shadow-2xl flex flex-col max-h-[90vh] animate-fade-in">
-            <div class="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/50">
+    <div id="modal-student-details" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 w-full max-w-5xl h-[85vh] rounded-xl border border-white/10 shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+            
+            <div class="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/50 flex-shrink-0">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center text-xl font-bold text-white" id="student-modal-avatar">U</div>
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg" id="student-modal-avatar">U</div>
                     <div>
-                        <h2 class="text-xl font-bold text-white" id="student-modal-name">Student Name</h2>
-                        <p class="text-xs text-slate-400" id="student-modal-email">email@example.com</p>
+                        <h2 class="text-2xl font-bold text-white tracking-tight" id="student-modal-name">Student Name</h2>
+                        <p class="text-sm text-slate-400 flex items-center gap-2">
+                            <i class="fas fa-envelope"></i> <span id="student-modal-email">email@example.com</span>
+                        </p>
                     </div>
                 </div>
-                <button onclick="window.closeModal('modal-student-details')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <button onclick="window.closeModal('modal-student-details')" class="text-slate-400 hover:text-white transition-colors"><i class="fas fa-times text-2xl"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto flex-1 space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-900/80 p-4 rounded-lg border border-white/5">
-                        <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Quizzes</p>
-                        <p class="text-2xl font-bold text-white mt-1" id="student-stat-quizzes">0</p>
+
+            <div class="border-b border-white/5 bg-slate-900/30 px-6 flex space-x-6 flex-shrink-0">
+                <button class="modal-tab-btn active" onclick="window.switchModalTab('overview')">Overview</button>
+                <button class="modal-tab-btn" onclick="window.switchModalTab('syllabus')">Syllabus Tracker</button>
+                <button class="modal-tab-btn" onclick="window.switchModalTab('plans')">Study Plans</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-900/20">
+                
+                <div id="tab-overview" class="modal-tab-content active space-y-8">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-800 p-6 rounded-xl border border-white/5 shadow-lg relative group">
+                             <h3 class="text-sm text-slate-400 font-bold uppercase tracking-wider mb-4 border-b border-white/5 pb-2 flex items-center gap-2">
+                                <i class="fas fa-user text-blue-500"></i> Personal Profile
+                            </h3>
+                            <button onclick="window.openEditStudentModal()" id="btn-edit-student" class="hidden absolute top-4 right-4 text-slate-500 hover:text-white transition-colors bg-slate-700/50 hover:bg-slate-700 p-2 rounded-full">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+
+                            <div class="space-y-4">
+                                <div><label class="text-xs text-slate-500 uppercase">Full Name</label><p class="text-white font-medium" id="student-profile-name">-</p></div>
+                                <div><label class="text-xs text-slate-500 uppercase">Email</label><p class="text-white font-medium" id="student-profile-email">-</p></div>
+                                <div><label class="text-xs text-slate-500 uppercase">Mobile</label><p class="text-white font-medium" id="student-profile-mobile">-</p></div>
+                                <div><label class="text-xs text-slate-500 uppercase">Joined On</label><p class="text-white font-medium" id="student-profile-joined">-</p></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800 p-6 rounded-xl border border-white/5 shadow-lg">
+                            <h3 class="text-sm text-blue-400 font-bold uppercase tracking-wider mb-4 border-b border-white/5 pb-2 flex items-center gap-2">
+                                <i class="fas fa-chart-pie"></i> Preparation Strategy
+                            </h3>
+                            <div class="space-y-4">
+                                <div><label class="text-xs text-slate-500 uppercase">Target Year</label><p class="text-white font-bold text-lg" id="student-prep-year">-</p></div>
+                                <div><label class="text-xs text-slate-500 uppercase">Optional Subject</label><p class="text-white font-medium" id="student-prep-optional">-</p></div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="text-xs text-slate-500 uppercase">Medium</label><p class="text-white font-medium" id="student-prep-medium">-</p></div>
+                                    <div><label class="text-xs text-slate-500 uppercase">Mode</label><p class="text-white font-medium" id="student-prep-mode">-</p></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-slate-900/80 p-4 rounded-lg border border-white/5">
-                        <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Avg. Score</p>
-                        <p class="text-2xl font-bold text-blue-400 mt-1" id="student-stat-score">0%</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-slate-800 p-5 rounded-xl border border-white/5 shadow-lg relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-5"><i class="fas fa-chart-line text-6xl"></i></div>
+                            <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mb-2">Syllabus Coverage</p>
+                            <div class="flex items-end gap-2"><p class="text-4xl font-bold text-white" id="student-stat-progress">0%</p></div>
+                            <div class="mt-3 w-full bg-slate-700 rounded-full h-1.5"><div id="progress-bar-overall" class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div></div>
+                        </div>
+                        <div class="bg-slate-800 p-5 rounded-xl border border-white/5 shadow-lg relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-5"><i class="fas fa-question-circle text-6xl"></i></div>
+                            <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mb-2">Questions Practiced</p>
+                            <div class="flex items-end gap-2"><p class="text-4xl font-bold text-white" id="student-stat-quizzes">0</p></div>
+                        </div>
+                        <div class="bg-slate-800 p-5 rounded-xl border border-white/5 shadow-lg relative overflow-hidden">
+                             <div class="absolute top-0 right-0 p-4 opacity-5"><i class="fas fa-clock text-6xl"></i></div>
+                            <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mb-2">Platform Status</p>
+                            <div class="flex items-center gap-2 h-10"><span class="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-sm font-medium border border-green-500/20">Active User</span></div>
+                        </div>
                     </div>
-                    <div class="bg-slate-900/80 p-4 rounded-lg border border-white/5">
-                        <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Progress</p>
-                        <p class="text-2xl font-bold text-green-400 mt-1" id="student-stat-progress">0%</p>
-                    </div>
+                </div>
+
+                <div id="tab-syllabus" class="modal-tab-content space-y-6">
+                    <h3 class="text-lg font-bold text-white mb-4">Detailed Syllabus Progress</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="syllabus-breakdown-container"><div class="text-center text-slate-500 italic">Loading syllabus data...</div></div>
+                </div>
+
+                <div id="tab-plans" class="modal-tab-content">
+                    <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold text-white">AI Generated Study Plans</h3><span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded border border-slate-700">Recent</span></div>
+                    <div class="space-y-4" id="student-plans-list"><div class="text-center text-slate-500 italic p-8 border border-dashed border-slate-700 rounded-lg">No study plans generated yet.</div></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="modal-add-admin" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center">
-        <div class="bg-slate-800 w-full max-w-md rounded-xl border border-white/10 shadow-2xl p-6 animate-fade-in">
-            <h2 class="text-xl font-bold text-white mb-4">Add Admin User</h2>
-            <form id="add-admin-form" class="space-y-4">
-                <div><label class="block text-xs text-slate-400 uppercase mb-1">Name</label><input type="text" name="name" required class="admin-input"></div>
-                <div><label class="block text-xs text-slate-400 uppercase mb-1">Email</label><input type="email" name="email" required class="admin-input"></div>
-                <div><label class="block text-xs text-slate-400 uppercase mb-1">Role</label><select name="role" class="admin-input"><option value="editor">Editor</option><option value="mentor">Mentor</option><option value="super_admin">Super Admin</option></select></div>
-                <div class="flex justify-end gap-3 mt-6"><button type="button" onclick="window.closeModal('modal-add-admin')" class="text-slate-300 hover:text-white">Cancel</button><button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium">Add User</button></div>
+    <div id="modal-edit-student" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center">
+        <div class="bg-slate-800 w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
+            <h2 class="text-xl font-bold text-white mb-4">Edit Student Profile</h2>
+            <form id="edit-student-form" class="space-y-4">
+                <input type="hidden" id="edit-student-uid">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs text-slate-500 uppercase">First Name</label><input type="text" id="edit-first-name" class="admin-input" required></div>
+                    <div><label class="text-xs text-slate-500 uppercase">Last Name</label><input type="text" id="edit-last-name" class="admin-input" required></div>
+                </div>
+                <div><label class="text-xs text-slate-500 uppercase">Email</label><input type="email" id="edit-email" class="admin-input" readonly></div>
+                <div><label class="text-xs text-slate-500 uppercase">Mobile</label><input type="text" id="edit-mobile" class="admin-input"></div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="window.closeModal('modal-edit-student')" class="text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-500">Save Changes</button>
+                </div>
             </form>
         </div>
     </div>
 
+    <div id="modal-question-editor" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center"><div class="bg-slate-800 w-full max-w-3xl rounded-xl border border-slate-700 p-6"><h2 class="text-white font-bold text-xl mb-4">Edit Question</h2><form id="question-form"><div id="quill-q-text" class="h-24 text-white mb-4"></div><div class="flex justify-end gap-3"><button type="button" onclick="closeModal('modal-question-editor')" class="text-slate-400">Cancel</button><button type="button" onclick="saveQuestion()" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button></div></form></div></div>
+    <div id="modal-add-admin" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center"><div class="bg-slate-800 w-full max-w-md rounded-xl border border-slate-700 p-6"><h2 class="text-white font-bold mb-4">Add Admin</h2><form id="add-admin-form" class="space-y-4"><input name="name" class="admin-input" placeholder="Name" required><input name="email" class="admin-input" placeholder="Email" required><select name="role" class="admin-input"><option value="editor">Editor</option><option value="mentor">Mentor</option></select><div class="flex justify-end gap-3"><button type="button" onclick="closeModal('modal-add-admin')" class="text-slate-400">Cancel</button><button class="bg-blue-600 text-white px-4 py-2 rounded">Add</button></div></form></div></div>
+    <div id="modal-bulk-upload" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center"><div class="bg-slate-800 w-full max-w-md p-6 rounded-xl"><h2 class="text-white font-bold mb-4">Bulk Upload</h2><input type="file" id="csv-file-input" accept=".csv" class="text-white"><button id="btn-process-csv" class="bg-green-600 text-white px-4 py-2 rounded mt-4">Upload</button><button onclick="closeModal('modal-bulk-upload')" class="text-slate-400 ml-4">Cancel</button></div></div>
+
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="module" src="js/dashboard.js"></script>
+    
+    <script>
+        // Simple Tab Switcher for Student Modal
+        window.switchModalTab = (tabId) => {
+            document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.modal-tab-content').forEach(content => content.classList.remove('active'));
+            
+            const buttons = document.querySelectorAll('.modal-tab-btn');
+            if(tabId === 'overview') buttons[0].classList.add('active');
+            if(tabId === 'syllabus') buttons[1].classList.add('active');
+            if(tabId === 'plans') buttons[2].classList.add('active');
+
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        };
+    </script>
 </body>
 </html>
